@@ -24,6 +24,7 @@ goal -> constraints/assumptions -> L0/L1/L2 plan -> execute -> observe evidence
 - Failure re-planning, stagnation circuit breaker, rollback discipline, and real-state reconciliation.
 - Optional adversarial review for high-impact or irreversible changes.
 - Git-backed and non-Git project-state recovery.
+- Release-readiness checks for public documentation and skill publishing.
 
 ## Install
 
@@ -70,6 +71,7 @@ Use after the L2 scope is clear. Execute only the smallest approved mutation, re
 - `templates/plan.md`: L0/L1/L2 plan and current focus.
 - `templates/change-record.md`: one EXECUTE mutation and its reconciliation.
 - `templates/round.md`: one planning iteration and its outcome.
+- `templates/release-check.md`: publication inventory, scans, remote verification, and limitations.
 
 ## Scope
 

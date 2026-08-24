@@ -12,6 +12,7 @@ The publication set contains only the following intended artifacts:
 - `templates/plan.md`
 - `templates/change-record.md`
 - `templates/round.md`
+- `templates/release-check.md`
 - `README.md`
 - `docs/TECHNICAL_GUIDE.md`
 - `docs/AUDIT_REPORT.md`
@@ -33,6 +34,7 @@ The source set was checked to ensure the release remains an engineering planning
 - YAML frontmatter has `name: tech-lead` and a trigger description.
 - The skill version is `v5.2`.
 - The four templates referenced by the skill exist.
+- The release-check template covers allowlist inventory, sensitive-content scanning, reference checks, scope checks, publication results, and remote verification.
 - The plan includes PLAN/EXECUTE, L0/L1/L2, protected assets, mutation protocol, E0-E4 evidence, completion levels, stagnation control, state recovery, and real-state reconciliation.
 - No stale predecessor/version markers, unresolved placeholders, or broken section references remain in the publication set.
 

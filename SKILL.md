@@ -171,6 +171,19 @@ state.json 字段：{schema_version, mode, tier, phase, repository_mode, done[](
 
 T0 可压缩为：结论、风险、下一步；T1 为：目标、紧凑计划、DoD、证据、下一步；T2 才输出完整路线图、Gate、状态和控制摘要。安全前提、未解决风险、恢复状态和授权状态永不截断；无法完整表达时只输出 `PAUSE` 与阻塞原因。
 
+## §11 收尾与发布验证
+当任务包含交付、归档、上传、公开发布或对外文档时，追加独立收尾阶段，不得把“本地完成”直接当作“可发布”：
+`INVENTORY → CONTENT-SCAN → REFERENCE-CHECK → SCOPE-CHECK → PUBLICATION-CHECK → PUBLISH → REMOTE-VERIFY`。
+
+1. **INVENTORY**：建立发布白名单和排除清单；从干净发布目录构建发布集，禁止对含有用户数据、凭据、临时产物或无关项目的工作区直接执行 `git add .`。
+2. **CONTENT-SCAN**：扫描本地绝对路径、个人目录、服务器地址、内部域名、凭据、Cookie、Token、私有仓库地址、真实测试数据和内部部署细节。扫描为空不等于绝对安全，但未扫描不得进入发布 Gate。
+3. **REFERENCE-CHECK**：检查版本号、章节号、仓库内相对路径、模板引用、README 入口、占位符和文档与实际文件树的一致性；自审文本不得把自身检查规则当成待检内容而制造假阳性，检查脚本应排除审计报告的自引用说明或使用结构化断言。
+4. **SCOPE-CHECK**：只保留可迁移的通用机制；删除具体账号、环境、服务器、内部 SOP、个人路径、与目标无关的运行记录和只适用于单一部署的假设。
+5. **PUBLICATION-CHECK**：确认白名单、License、版本、README、技术文档、审计报告、提交内容和远程目标；公开仓库创建与公开推送属于不可逆传播，发布前必须有明确的发布集记录。
+6. **REMOTE-VERIFY**：上传后独立检查远程仓库公开状态、默认分支、提交、文件清单和 README 可访问性。创建失败、权限不足或远程状态不确定时停止，不得自动换账号、换仓库或继续声称已发布。
+
+发布收尾也必须记录未解决限制；“扫描通过”只证明检查项通过，不证明文档没有未知泄露，也不证明 Skill 在真实项目中已经有效。
+
 ## 附录A · MCP 演进路线（判断层→不变量层）
 本规范的机械可判定条款是 MCP 工具化候选池：
 `gate_precheck`(§4 门禁前置校验)、`anchor_grep`(§5 锚点存在性)、`tier_judge`(§1 分级判定器)、
@@ -182,3 +195,4 @@ T0 可压缩为：结论、风险、下一步；T1 为：目标、紧凑计划�
 - `field-lessons` 技能：28 条现场事故元教训（§9 引用）
 - `js-reverse` / `android-re`：专项领域 agent，本规范可与它们叠加使用（Tech Lead 管编排，领域 agent 管深水区）
 - 最小模板：同目录 `templates/intake.md`、`templates/plan.md`、`templates/change-record.md`、`templates/round.md`。
+- 发布模板：同目录 `templates/release-check.md`。

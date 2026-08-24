@@ -90,3 +90,18 @@ On resume, reconcile saved state with the real environment. If they conflict, re
 ## 7. Future Toolization
 
 The skill deliberately remains prose-first. After at least three real projects, record repeated violations and near misses. Tool candidates should be chosen using both severity and frequency: a rare catastrophic invariant is not ignored merely because it is rare, while common low-risk checks are good efficiency candidates.
+
+## 8. Release Readiness
+
+When publishing a skill or technical document, do not publish the mixed working directory. Build a clean staging directory from an explicit allowlist, then run:
+
+```text
+allowlist -> content scan -> reference check -> scope check
+          -> publication check -> publish -> remote verify
+```
+
+The content scan covers local paths, personal data, credentials, cookies, tokens, internal hosts, deployment details, private repository links, and real test data. The reference check covers versions, section numbers, repository-relative paths, template references, placeholders, and the README entry point. The scope check removes project-specific operational details and retains only mechanisms that can be reused elsewhere.
+
+After publication, independently check the remote visibility, default branch, commit, file inventory, and README access. A local commit is not evidence that a remote publication succeeded. If repository creation or push fails, stop the dependent verification steps and report the actual remote state.
+
+The release check must record limitations. A clean scan is evidence that the defined checks passed, not proof that unknown sensitive information does not exist.
