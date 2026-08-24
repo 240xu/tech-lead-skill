@@ -75,7 +75,7 @@ Use after the L2 scope is clear. Execute only the smallest approved mutation, re
 
 ## Scope
 
-This is an engineering planning skill. It focuses on correctness of planning, safe handling of user files and code changes, evidence quality, rollback, and real-environment reconciliation. It intentionally does not attempt to define organization-wide governance, external approval infrastructure, or general project-management policy.
+This is an engineering planning skill. It focuses on correctness of planning, safe handling of user files and code changes, evidence quality, rollback, and real-environment reconciliation. It intentionally stays focused on project-level engineering work rather than organization-wide process design.
 
 ## Limitations
 

@@ -25,10 +25,6 @@ No unrelated home-directory files, project histories, server notes, credentials,
 
 The source set was scanned for local absolute paths, passwords, API-key prefixes, SSH host details, private domains, and server IP patterns. No matching sensitive operational material was found in the publication set.
 
-### Scope scan
-
-The source set was checked to ensure the release remains an engineering planning skill rather than an organization-wide governance or external approval system. No such subsystem is part of the release design.
-
 ### Structural scan
 
 - YAML frontmatter has `name: tech-lead` and a trigger description.
