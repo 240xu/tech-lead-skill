@@ -1,0 +1,89 @@
+# Tech Lead Skill
+
+An evidence-driven planning and delivery skill for software, infrastructure, research, reverse-engineering, and operations work.
+
+## What It Solves
+
+Many plans fail in one of two ways: they are vague and cannot guide execution, or they are over-detailed and become false after the first environmental change. This skill keeps the plan coarse until evidence justifies detail, then continuously revises it against observed reality.
+
+The control loop is:
+
+```text
+goal -> constraints/assumptions -> L0/L1/L2 plan -> execute -> observe evidence
+     -> revise -> choose CONTINUE / PAUSE / SCOPE-DOWN / PIVOT / STOP
+```
+
+## Core Features
+
+- PLAN and EXECUTE modes with a clear boundary between planning and side effects.
+- Progressive disclosure: L0 architecture, L1 milestones, L2 executable focus.
+- Goal, metric, fact, assumption, decision, risk, dependency, and evidence ledgers.
+- Protected asset handling for source, user data, configuration, secrets, runtime state, and generated artifacts.
+- Minimal mutation protocol: `READ -> CLASSIFY -> PROTECT -> CHANGE -> VERIFY -> RECONCILE -> ROLLBACK/RECORD`.
+- Evidence levels E0-E4, from model inference to observed user outcomes.
+- Failure re-planning, stagnation circuit breaker, rollback discipline, and real-state reconciliation.
+- Optional adversarial review for high-impact or irreversible changes.
+- Git-backed and non-Git project-state recovery.
+
+## Install
+
+Copy `SKILL.md` and the `templates/` directory into the skills directory of your OpenCode-compatible environment:
+
+```text
+~/.config/opencode/skills/tech-lead/
+```
+
+The skill is triggered by project construction, system building, greenfield work, restructuring, and substantial planning requests. It can also be loaded explicitly.
+
+## Operating Modes
+
+### PLAN
+
+Use for intake, goal definition, architecture, decomposition, risk analysis, and verification design. PLAN does not edit files or run side-effecting commands.
+
+### EXECUTE
+
+Use after the L2 scope is clear. Execute only the smallest approved mutation, record the change, verify behavior, reconcile actual state, and update the plan.
+
+## Protected Assets
+
+| Class | Default handling |
+|---|---|
+| `SOURCE` | Inspectable diff, tests, and restore point |
+| `USER_DATA` | Read-only by default; write only to an explicit target with recovery |
+| `CONFIG` | Read current state, make the smallest change, reload, verify |
+| `SECRET` | Never place in plans, logs, ordinary backups, or diffs |
+| `RUNTIME` | Inspect live state before restart, kill, replace, or migration |
+| `GENERATED` | Prefer regeneration; do not treat as the source of truth |
+
+## Evidence Levels
+
+- `E0`: model inference; hypothesis only.
+- `E1`: static inspection, grep, or configuration inspection.
+- `E2`: local command or unit test; local behavior only.
+- `E3`: integration test, real process, or real endpoint.
+- `E4`: user acceptance, real business result, or production observation.
+
+## Templates
+
+- `templates/intake.md`: goal, constraints, assets, risk, and completion level.
+- `templates/plan.md`: L0/L1/L2 plan and current focus.
+- `templates/change-record.md`: one EXECUTE mutation and its reconciliation.
+- `templates/round.md`: one planning iteration and its outcome.
+
+## Scope
+
+This is an engineering planning skill. It focuses on correctness of planning, safe handling of user files and code changes, evidence quality, rollback, and real-environment reconciliation. It intentionally does not attempt to define organization-wide governance, external approval infrastructure, or general project-management policy.
+
+## Limitations
+
+- The rules are currently prose, not a machine-enforced state machine.
+- Evidence freshness and state reconciliation are operator/agent responsibilities until dedicated tooling exists.
+- The skill does not provide a sandbox; untrusted code must not be executed unless an actual isolated execution environment is already available.
+- MCP candidates should be selected only after observing repeated real-project violations.
+
+## Version
+
+Current version: `v5.2`.
+
+See [`docs/TECHNICAL_GUIDE.md`](docs/TECHNICAL_GUIDE.md) for the full operating model and [`docs/AUDIT_REPORT.md`](docs/AUDIT_REPORT.md) for the publication audit.
