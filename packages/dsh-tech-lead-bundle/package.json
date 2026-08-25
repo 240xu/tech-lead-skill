@@ -1,0 +1,26 @@
+{
+  "name": "@240xu/dsh-tech-lead-bundle",
+  "version": "0.1.0",
+  "description": "Opt-in dsh profile bundle exposing the read-only tech-lead tool surface",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/240xu/tech-lead-skill.git",
+    "directory": "packages/dsh-tech-lead-bundle"
+  },
+  "files": [
+    "cordis.patch.yml"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "@240xu/dsh-tech-lead-plugin": "file:../dsh-tech-lead-plugin"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}
