@@ -44,7 +44,18 @@ tech-lead-skill          # 安装到 ~/.config/opencode/skills/tech-lead
 npx github:240xu/tech-lead-skill
 ```
 
-安装器幂等，重复执行会先把旧文件备份为 `*.bak-<时间戳>`；`--target <目录>` 可自定义目标；`--uninstall` 卸载。安装目标会由安装器写入标记；卸载时拒绝递归删除没有标记的目录。
+安装器幂等，重复执行会先把旧文件备份为 `*.bak-<时间戳>`；`--target <目录>` 可自定义目标；`--check` 校验已装副本与包的哈希/版本漂移；`--dry-run` 预览不写入；`--uninstall` 卸载时只删除清单受管文件，用户文件与 `*.bak-*` 备份全部保留。
+
+### DeepSeek Harness 插件（只读工具）
+
+本仓库同时提供可选 DSH bundle，暴露九个只读生命周期工具（`tech_lead_classify`、`tech_lead_state_validate`、`tech_lead_transition_check`、`tech_lead_plan_lint`、`tech_lead_evidence_lint`、`tech_lead_gate_precheck`、`tech_lead_release_audit`、`tech_lead_install_audit`、`tech_lead_resume_card`）。工具仅对调用方传入的 JSON 做计算——无文件写入、无子进程、无网络访问。
+
+```bash
+dsh plugin --profile headless add /path/to/tech-lead-skill/packages/dsh-tech-lead-bundle
+dsh --profile headless --dump-config   # 确认 tech-lead-tools 行已注入
+```
+
+架构与权限矩阵见 [`docs/superpowers/specs/2026-08-25-dsh-tech-lead-system.md`](docs/superpowers/specs/2026-08-25-dsh-tech-lead-system.md)。
 
 ### 手动方式
 
@@ -112,6 +123,6 @@ npx github:240xu/tech-lead-skill
 
 ## 版本
 
-当前版本：`v5.3.0`。
+当前版本：`v5.4.0`。
 
 完整运行模型见[技术指南](docs/TECHNICAL_GUIDE.zh-CN.md)，发布审计见 [docs/AUDIT_REPORT.md](docs/AUDIT_REPORT.md)。

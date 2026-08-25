@@ -44,7 +44,18 @@ One-shot without a global install:
 npx github:240xu/tech-lead-skill
 ```
 
-The installer is idempotent: repeated runs back up existing files as `*.bak-<timestamp>` first. Use `--target <dir>` to choose another destination and `--uninstall` to remove. Installed targets are marked by the installer; uninstall refuses to recursively remove an unmarked directory.
+The installer is idempotent: repeated runs back up existing files as `*.bak-<timestamp>` first. Use `--target <dir>` to choose another destination, `--check` to verify an installed copy against the package (hash + version drift), `--dry-run` to preview without writing, and `--uninstall` to remove. Uninstall removes only manifest-managed files — user files and `*.bak-*` backups are kept.
+
+### DeepSeek Harness plugin (read-only tools)
+
+The repository also ships an opt-in DSH bundle exposing nine read-only lifecycle tools (`tech_lead_classify`, `tech_lead_state_validate`, `tech_lead_transition_check`, `tech_lead_plan_lint`, `tech_lead_evidence_lint`, `tech_lead_gate_precheck`, `tech_lead_release_audit`, `tech_lead_install_audit`, `tech_lead_resume_card`). The tools compute over caller-supplied JSON only — no filesystem writes, no subprocesses, no network access.
+
+```bash
+dsh plugin --profile headless add /path/to/tech-lead-skill/packages/dsh-tech-lead-bundle
+dsh --profile headless --dump-config   # verify the tech-lead-tools row is present
+```
+
+See [`docs/superpowers/specs/2026-08-25-dsh-tech-lead-system.md`](docs/superpowers/specs/2026-08-25-dsh-tech-lead-system.md) for the architecture and permission matrix.
 
 ### Manual
 
@@ -112,6 +123,6 @@ The executable skill body (`SKILL.md`) is authored in Simplified Chinese; coding
 
 ## Version
 
-Current version: `v5.3.0`.
+Current version: `v5.4.0`.
 
 See [`docs/TECHNICAL_GUIDE.md`](docs/TECHNICAL_GUIDE.md) for the full operating model and [`docs/AUDIT_REPORT.md`](docs/AUDIT_REPORT.md) for the publication audit.
