@@ -1,5 +1,6 @@
 export { validateState } from './state.js';
 export { classify } from './classify.js';
+export { transitionCheck } from './transition.js';
 export { evidenceLint } from './evidence.js';
 export { planLint } from './plan.js';
 export { gatePrecheck } from './gate.js';
