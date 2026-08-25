@@ -291,6 +291,8 @@
 **Files:**
 - Modify: `packages/dsh-tech-lead-plugin/test/composition/driver.ts`
 - Modify: `packages/dsh-tech-lead-plugin/test/composition/cordis.yml`
+- Create: `packages/dsh-tech-lead-plugin/test/composition/run.mjs`
+- Modify: `packages/dsh-tech-lead-plugin/package.json` (cordis + plugin-loader/include devDependencies)
 - Create: `tests/plugin-static-safety.test.js`
 - Create: `tests/composition-workflow.test.js`
 - Modify: `tests/run-tests.js`
@@ -299,7 +301,7 @@
 - [x] Step 2: Add negative coverage for stale evidence, JSON null roots, malformed Gate inputs, and executable mutation operations.
 - [x] Step 3: Implement driver assertions for all new tool names and exact success marker.
 - [x] Step 4: Add static scan over plugin/core source for forbidden APIs and unapproved dynamic imports.
-- [x] Step 5: Run `npm test` and the real Cordis composition harness.
+- [x] Step 5: Run `npm test` and `npm run test:composition` (workspace-resolved Cordis loader; no global DSH path).
 
 ## Task M5.2: Documentation and Release Audit
 

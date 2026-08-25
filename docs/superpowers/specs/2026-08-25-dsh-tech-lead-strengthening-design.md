@@ -3,7 +3,7 @@
 日期：2026-08-25
 状态：已批准，Phase M0-M5 已实现并验证
 分级：T2
-基线：Skill v5.4.1 / DSH plugin v0.2.0
+基线：Skill v5.4.2 / DSH plugin v0.2.0
 
 ## 1. 目标账本
 

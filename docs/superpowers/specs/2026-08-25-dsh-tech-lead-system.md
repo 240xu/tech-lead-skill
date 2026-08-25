@@ -153,7 +153,9 @@ dsh.profile.bundles 并跑 pnpm）。顺序：先建隔离 profile `techtest` �
    marker.files==实际、--check 漂移检测、安全卸载保留外来文件与 .bak、--dry-run 无写入、
    validateState 合法/非法 fixture。全绿才进 B。
 2. **Phase B/C**：core 每函数 ≥3 用例（正常/违例/边界）node:test；plugin 组合测试经真实
-   Loader（vendor cordis bin.js）驱动 21 工具各一次，断言关键字段，打印 `TLT-PASS n/21`。
+   Loader（`npm run test:composition`，经插件 workspace 的 cordis/cordis-plugin-loader/include
+   devDependencies 本地解析 bin.js，不依赖全局 DSH 安装路径）驱动 21 工具各一次，
+   断言关键字段，打印 `TLT-PASS n/21`。
 3. **Phase D**：techtest profile 启动加载成功（工具出现在注册日志/driver 断言），随后
    headless、web 同样验证；每次改 profile 前备份配置。
 4. 回滚点：每个 Phase 一个 commit；profile 改动有 .bak-techlead-<ts>。
