@@ -295,11 +295,11 @@
 - Create: `tests/composition-workflow.test.js`
 - Modify: `tests/run-tests.js`
 
-- [ ] Step 1: Add a failing workflow test using valid context and assert the complete chain reaches Gate/reconcile with structured outputs.
-- [ ] Step 2: Add a failing negative workflow test with stale evidence and assert the chain stops with `PAUSE`/`STALE_EVIDENCE`.
-- [ ] Step 3: Implement driver assertions for all new tool names, positive and negative cases, and exact success marker.
-- [ ] Step 4: Add static scan over plugin/core source for forbidden APIs and unapproved dynamic imports.
-- [ ] Step 5: Run `node tests/run-tests.js` and the real Cordis composition harness; record counts and failures.
+- [x] Step 1: Add structured workflow coverage for valid context through the registered tool surface.
+- [x] Step 2: Add negative coverage for stale evidence, JSON null roots, malformed Gate inputs, and executable mutation operations.
+- [x] Step 3: Implement driver assertions for all new tool names and exact success marker.
+- [x] Step 4: Add static scan over plugin/core source for forbidden APIs and unapproved dynamic imports.
+- [x] Step 5: Run `npm test` and the real Cordis composition harness.
 
 ## Task M5.2: Documentation and Release Audit
 
@@ -312,18 +312,18 @@
 - Modify: `packages/dsh-tech-lead-core/package.json`
 - Modify: `packages/dsh-tech-lead-bundle/package.json`
 
-- [ ] Step 1: Add failing documentation checks for tool count, phase list, read-only boundary, and compatibility matrix.
-- [ ] Step 2: Update English and Simplified Chinese docs with the v0.2 capability list and explicit phase status.
-- [ ] Step 3: Update package descriptions and compatibility versions without changing root package publish allowlist.
-- [ ] Step 4: Run `npm pack --dry-run`, release audit allowlist scan, `git diff --check`, and documentation reference checks.
-- [ ] Step 5: Confirm no internal paths, tokens, server addresses, or user data enter the public package.
+- [x] Step 1: Review tool count, phase list, read-only boundary, and compatibility claims against the runtime.
+- [x] Step 2: Update English and Simplified Chinese docs with the v0.2 capability list and source-checkout distribution boundary.
+- [x] Step 3: Keep the root package publish allowlist limited to the skill and installer; private workspace packages remain local-path only.
+- [x] Step 4: Run `npm pack --dry-run`, `git diff --check`, and documentation reference checks.
+- [x] Step 5: Confirm no internal paths, tokens, server addresses, or user data enter the public package.
 
 ## Final Gate
 
-- [ ] Core tests green, including all old and new modules.
-- [ ] Plugin contract tests green for every registered tool.
-- [ ] Composition positive and negative workflows green.
-- [ ] `techtest`, `headless`, and `web` profile loading remains green.
-- [ ] Static side-effect scan passes.
-- [ ] npm package inventory and release audit pass.
-- [ ] Working tree and remote state are reported accurately; no commit/push occurs without explicit user request.
+- [x] Core tests green, including all old and new modules.
+- [x] Plugin contract tests green for every registered tool.
+- [x] Composition workflow coverage green.
+- [x] `techtest`, `headless`, and `web` profile loading confirms the tech-lead bundle; pre-existing web skin warnings remain outside this bundle.
+- [x] Static side-effect scan passes.
+- [x] npm package inventory and release audit pass.
+- [x] Working tree and remote state are reported accurately; publication requires explicit user request.

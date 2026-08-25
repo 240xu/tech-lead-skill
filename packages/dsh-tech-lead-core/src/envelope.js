@@ -21,11 +21,11 @@ export function makeEnvelope({
     errors: asArray(errors),
     warnings: asArray(warnings),
     meta: {
+      ...meta,
       schema: SCHEMA,
       operation,
       deterministic: true,
       sideEffects: false,
-      ...meta,
     },
   };
 }

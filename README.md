@@ -48,7 +48,7 @@ The installer is idempotent: repeated runs back up existing files as `*.bak-<tim
 
 ### DeepSeek Harness plugin (read-only tools)
 
-The repository also ships an opt-in DSH bundle exposing 21 read-only lifecycle tools. The original nine audit tools remain compatible, and the strengthened surface adds context validation, evidence graph/freshness analysis, progress decisions, critical-path and impact analysis, resume reconciliation, gate planning/aggregation/reopen checks, and mutation preview. The tools compute over caller-supplied JSON only — no filesystem writes, no subprocesses, no network access.
+This source repository includes an opt-in DSH bundle exposing 21 read-only lifecycle tools. The original nine audit tools remain compatible, and the strengthened surface adds context validation, evidence graph/freshness analysis, progress decisions, critical-path and impact analysis, resume reconciliation, gate planning/aggregation/reopen checks, and mutation preview. The tools compute over caller-supplied JSON only — no filesystem writes, no subprocesses, no network access. The root npm package distributes the skill and installer only; clone this repository before installing the private workspace bundle.
 
 ```bash
 dsh plugin --profile headless add /path/to/tech-lead-skill/packages/dsh-tech-lead-bundle
@@ -123,6 +123,6 @@ The executable skill body (`SKILL.md`) is authored in Simplified Chinese; coding
 
 ## Version
 
-Current version: `v5.4.0`.
+Current version: `v5.4.1`.
 
 See [`docs/TECHNICAL_GUIDE.md`](docs/TECHNICAL_GUIDE.md) for the full operating model and [`docs/AUDIT_REPORT.md`](docs/AUDIT_REPORT.md) for the publication audit.

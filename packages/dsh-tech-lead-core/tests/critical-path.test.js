@@ -17,3 +17,8 @@ test('critical path reports cycles and unknown dependencies', () => {
   assert.ok(result.findings.some((item) => item.code === 'CYCLE'));
   assert.ok(result.findings.some((item) => item.code === 'UNKNOWN_DEPENDENCY'));
 });
+
+test('critical path reports duplicate task ids instead of silently collapsing them', () => {
+  const result = criticalPath([{ id: 'a' }, { id: 'a' }], []);
+  assert.ok(result.findings.some((item) => item.code === 'DUPLICATE_TASK_ID'));
+});

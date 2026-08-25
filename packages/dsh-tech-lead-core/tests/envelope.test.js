@@ -33,3 +33,10 @@ test('makeEnvelope does not mutate caller arrays', () => {
   errors.push({ code: 'Y' });
   assert.deepEqual(result.errors, [{ code: 'X' }]);
 });
+
+test('envelope contract metadata cannot be overridden by callers', () => {
+  const result = makeEnvelope({ meta: { schema: 'other', deterministic: false, sideEffects: true } });
+  assert.equal(result.meta.schema, 'tech-lead.result.v1');
+  assert.equal(result.meta.deterministic, true);
+  assert.equal(result.meta.sideEffects, false);
+});

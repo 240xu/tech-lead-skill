@@ -32,3 +32,13 @@ test('missing recovery and verification fields are invalid', () => {
   input.verification = [];
   assert.equal(validateMutationIntent(input).valid, false);
 });
+
+test('mutation preview refuses executable target operations and returns defensive data', () => {
+  const input = valid();
+  input.target = [{ path: 'production', operation: 'deploy' }];
+  assert.equal(previewMutation(input).ok, false);
+
+  const preview = previewMutation(valid());
+  preview.data.targets[0].path = 'changed';
+  assert.notEqual(valid().target[0].path, 'changed');
+});

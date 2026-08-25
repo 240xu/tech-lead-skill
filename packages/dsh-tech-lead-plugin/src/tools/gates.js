@@ -12,6 +12,12 @@ const parsePair = (args, left, right) => {
   const b = parse(args[right], right);
   return b.ok ? { ok: true, values: [a.value, b.value] } : b;
 };
+const objectInput = (value, path) => value !== null && typeof value === 'object' && !Array.isArray(value)
+  ? { ok: true, value }
+  : { ok: false, error: { code: 'BAD_INPUT', path, message: 'expected JSON object' } };
+const arrayInput = (value, path) => Array.isArray(value)
+  ? { ok: true, value }
+  : { ok: false, error: { code: 'BAD_INPUT', path, message: 'expected JSON array' } };
 
 export function registerGateTools(defineTool, core) {
   const output = [];
@@ -23,7 +29,10 @@ export function registerGateTools(defineTool, core) {
     async execute(args) {
       const input = parsePair(args, 'impactJson', 'contextJson');
       if (!input.ok) return render(errorEnvelope('gate_plan', input.error.code, [input.error]));
-      return render(okEnvelope('gate_plan', core.gatePlan(input.values[0], input.values[1])));
+      const impact = objectInput(input.values[0], 'impactJson');
+      const context = objectInput(input.values[1], 'contextJson');
+      if (!impact.ok || !context.ok) return render(errorEnvelope('gate_plan', 'BAD_INPUT', [impact.error ?? context.error]));
+      return render(okEnvelope('gate_plan', core.gatePlan(impact.value, context.value)));
     },
   });
   add({
@@ -33,7 +42,10 @@ export function registerGateTools(defineTool, core) {
     async execute(args) {
       const input = parsePair(args, 'reportsJson', 'planJson');
       if (!input.ok) return render(errorEnvelope('gate_aggregate', input.error.code, [input.error]));
-      const result = core.gateAggregate(input.values[0], input.values[1]);
+      const reports = arrayInput(input.values[0], 'reportsJson');
+      const plan = objectInput(input.values[1], 'planJson');
+      if (!reports.ok || !plan.ok || !Array.isArray(plan.value?.requiredRoles) || plan.value.requiredRoles.length === 0 || !Number.isInteger(plan.value.quorum) || plan.value.quorum <= 0) return render(errorEnvelope('gate_aggregate', 'BAD_INPUT', [reports.error ?? plan.error ?? { code: 'BAD_INPUT', path: 'planJson', message: 'plan needs requiredRoles and positive integer quorum' }]));
+      const result = core.gateAggregate(reports.value, plan.value);
       return render(result.pass ? okEnvelope('gate_aggregate', result) : errorEnvelope('gate_aggregate', 'GATE_BLOCKED', result.findings, result));
     },
   });

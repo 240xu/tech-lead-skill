@@ -40,3 +40,20 @@ test('invalid freshness options warn and use seven-day default', () => {
   const result = evidenceFreshness({ evidence: [] }, { maxAgeDays: -1 });
   assert.ok(result.warnings.some((item) => item.code === 'INVALID_MAX_AGE'));
 });
+
+test('evidence graph supports forward references and rejects cycles', () => {
+  const result = evidenceGraphLint(context({ evidence: [
+    { id: 'e1', supports: ['e2'] },
+    { id: 'e2', supports: ['e1'] },
+  ] }));
+  assert.equal(result.valid, false);
+  assert.equal(result.findings.some((item) => item.code === 'UNKNOWN_REFERENCE'), false);
+  assert.ok(result.findings.some((item) => item.code === 'CYCLE'));
+});
+
+test('freshness rejects null options and invalid clocks without throwing', () => {
+  assert.doesNotThrow(() => evidenceFreshness({ evidence: [] }, null));
+  const result = evidenceFreshness({ evidence: [{ id: 'e1', time: '2020-01-01T00:00:00Z' }] }, { now: 'bad-clock' });
+  assert.ok(result.warnings.some((item) => item.code === 'INVALID_NOW'));
+  assert.equal(result.stale, true);
+});

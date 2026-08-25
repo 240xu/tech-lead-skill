@@ -1,6 +1,8 @@
 const items = (value) => Array.isArray(value) ? value : [];
 
 export function changeImpact(change = {}, context = {}) {
+  change = change !== null && typeof change === 'object' && !Array.isArray(change) ? change : {};
+  context = context !== null && typeof context === 'object' && !Array.isArray(context) ? context : {};
   const modules = items(change.modules);
   const assets = items(change.assets);
   const high = Boolean(change.irreversible || change.publicInterface || modules.length >= 2 || assets.some((item) => ['USER_DATA', 'SECRET', 'RUNTIME'].includes(item)));

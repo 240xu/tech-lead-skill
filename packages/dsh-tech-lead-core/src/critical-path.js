@@ -1,8 +1,20 @@
 const items = (value) => Array.isArray(value) ? value : [];
 
 export function criticalPath(tasks, dependencies) {
-  const nodes = new Map(items(tasks).map((task) => [String(task?.id), task]));
   const findings = [];
+  const nodes = new Map();
+  for (const [index, task] of items(tasks).entries()) {
+    const id = typeof task?.id === 'string' ? task.id : '';
+    if (!id) {
+      findings.push({ code: 'INVALID_TASK_ID', path: `/tasks/${index}/id` });
+      continue;
+    }
+    if (nodes.has(id)) {
+      findings.push({ code: 'DUPLICATE_TASK_ID', path: `/tasks/${index}/id`, id });
+      continue;
+    }
+    nodes.set(id, task);
+  }
   const outgoing = new Map([...nodes.keys()].map((id) => [id, []]));
   const incoming = new Map([...nodes.keys()].map((id) => [id, 0]));
   for (const edge of items(dependencies)) {
@@ -18,8 +30,8 @@ export function criticalPath(tasks, dependencies) {
   const originalIncoming = new Map(incoming);
   const queue = [...incoming.entries()].filter(([, count]) => count === 0).map(([id]) => id);
   const order = [];
-  while (queue.length) {
-    const id = queue.shift();
+  for (let cursor = 0; cursor < queue.length; cursor += 1) {
+    const id = queue[cursor];
     order.push(id);
     for (const next of outgoing.get(id)) {
       incoming.set(next, incoming.get(next) - 1);

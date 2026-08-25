@@ -14,8 +14,8 @@ export function evidenceGraphLint(context) {
       nodes.set(id, { type: collection, item });
     }
   }
-  const edges = [];
-  for (const [index, item] of asArray(context?.evidence).entries()) {
+  const evidence = asArray(context?.evidence);
+  for (const [index, item] of evidence.entries()) {
     if (!isObject(item) || !String(item.id ?? '').trim()) {
       findings.push(finding('INVALID_EVIDENCE', `/evidence/${index}`, 'evidence must have an id'));
       continue;
@@ -23,21 +23,51 @@ export function evidenceGraphLint(context) {
     const evidenceId = String(item.id);
     if (nodes.has(evidenceId)) findings.push(finding('DUPLICATE_ID', `/evidence/${index}/id`, `duplicate id: ${evidenceId}`));
     nodes.set(evidenceId, { type: 'evidence', item });
+  }
+  const edges = [];
+  const evidenceEdges = new Map();
+  for (const [index, item] of evidence.entries()) {
+    if (!isObject(item) || !String(item.id ?? '').trim()) continue;
+    const evidenceId = String(item.id);
     for (const target of asArray(item.supports)) {
       if (!nodes.has(String(target))) findings.push(finding('UNKNOWN_REFERENCE', `/evidence/${index}/supports`, `unknown reference: ${target}`));
-      else edges.push({ from: evidenceId, to: String(target), relation: 'supports' });
+      else {
+        const targetId = String(target);
+        edges.push({ from: evidenceId, to: targetId, relation: 'supports' });
+        if (nodes.get(targetId)?.type === 'evidence') {
+          if (!evidenceEdges.has(evidenceId)) evidenceEdges.set(evidenceId, []);
+          evidenceEdges.get(evidenceId).push(targetId);
+        }
+      }
     }
   }
+  const visiting = new Set();
+  const visited = new Set();
+  const visit = (id) => {
+    if (visiting.has(id)) return true;
+    if (visited.has(id)) return false;
+    visiting.add(id);
+    const cycle = (evidenceEdges.get(id) ?? []).some(visit);
+    visiting.delete(id);
+    visited.add(id);
+    return cycle;
+  };
+  if ([...evidenceEdges.keys()].some(visit)) findings.push(finding('CYCLE', '/evidence', 'evidence graph contains a cycle'));
   return { valid: findings.length === 0, findings, graph: { nodes: [...nodes.keys()], edges } };
 }
 
 export function evidenceFreshness(context, options = {}) {
+  options = isObject(options) ? options : {};
   const warnings = [];
   const findings = [];
   const maxAge = Number(options.maxAgeDays);
   const ageDays = Number.isFinite(maxAge) && maxAge >= 0 ? maxAge : 7;
   if (ageDays !== maxAge) warnings.push({ code: 'INVALID_MAX_AGE', message: 'using default maxAgeDays=7' });
-  const now = Date.parse(options.now ?? new Date().toISOString());
+  let now = Date.parse(options.now ?? new Date().toISOString());
+  if (!Number.isFinite(now)) {
+    warnings.push({ code: 'INVALID_NOW', message: 'using current time because now is not parseable' });
+    now = Date.now();
+  }
   for (const [index, item] of asArray(context?.evidence).entries()) {
     const time = Date.parse(item?.time);
     if (!Number.isFinite(time)) {

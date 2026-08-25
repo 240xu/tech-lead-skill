@@ -1,6 +1,6 @@
 {
   "name": "tech-lead-skill",
-  "version": "5.4.0",
+  "version": "5.4.1",
   "description": "Evidence-driven planning and safe change-control skill for OpenCode-compatible agents",
   "license": "MIT",
   "repository": {
@@ -11,6 +11,9 @@
   "bugs": "https://github.com/240xu/tech-lead-skill/issues",
   "bin": {
     "tech-lead-skill": "bin/install.js"
+  },
+  "scripts": {
+    "test": "node tests/run-tests.js"
   },
   "files": [
     "skill/",

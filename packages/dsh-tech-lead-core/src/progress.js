@@ -4,6 +4,7 @@ export function progressDecide(context, options = {}) {
   if (!context || typeof context !== 'object') return {
     outcome: 'PAUSE', allowed: false, reasons: [{ code: 'BAD_INPUT', message: 'context must be an object' }], blockers: [], requiredActions: ['provide context'], confidence: 1,
   };
+  options = options && typeof options === 'object' && !Array.isArray(options) ? options : {};
   const blockers = list(context.dependencies).filter((item) => item?.blocker && item.status !== 'done').map((item) => String(item.id ?? 'unknown'));
   const reasons = [];
   const stale = list(context.evidence).filter((item) => item?.stale).map((item) => String(item.id ?? 'unknown'));

@@ -26,3 +26,10 @@ test('gate reopen reports drift', async () => {
   assert.equal(result.ok, false);
   assert.equal(result.code, 'DRIFT_DETECTED');
 });
+
+test('gate tools return BAD_INPUT for JSON null roots and malformed aggregate schemas', async () => {
+  const planResult = JSON.parse(await tool('tech_lead_gate_plan').execute({ impactJson: 'null', contextJson: '{}' }));
+  const aggregateResult = JSON.parse(await tool('tech_lead_gate_aggregate').execute({ reportsJson: '{}', planJson: '{}' }));
+  assert.equal(planResult.code, 'BAD_INPUT');
+  assert.equal(aggregateResult.code, 'BAD_INPUT');
+});

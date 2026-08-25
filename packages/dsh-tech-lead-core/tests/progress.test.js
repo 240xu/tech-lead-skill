@@ -30,3 +30,7 @@ test('stale evidence forces pause before continue', () => {
 test('invalid context input does not throw', () => {
   assert.equal(progressDecide(null).outcome, 'PAUSE');
 });
+
+test('invalid options input does not throw', () => {
+  assert.doesNotThrow(() => progressDecide({ dependencies: [], evidence: [], gates: [] }, null));
+});

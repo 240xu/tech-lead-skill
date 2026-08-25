@@ -27,3 +27,27 @@ test('gate reopen detects snapshot and evidence drift', () => {
   assert.equal(result.reopen, true);
   assert.deepEqual(result.changedInputs, ['context', 'evidence']);
 });
+
+test('gate functions tolerate invalid runtime shapes without throwing', () => {
+  assert.doesNotThrow(() => gatePlan(null, null));
+  assert.doesNotThrow(() => gateAggregate(null, null));
+  assert.doesNotThrow(() => gateReopen(null, null));
+});
+
+test('gate aggregation requires distinct passing reviewers for every required role', () => {
+  const result = gateAggregate([
+    { role: 'eng', verdict: 'pass', anchors: ['a'] },
+    { role: 'eng', verdict: 'pass', anchors: ['b'] },
+  ], { requiredRoles: ['eng'], quorum: 2 });
+  assert.equal(result.pass, false);
+  assert.equal(result.verdict, 'conditional');
+  assert.ok(result.findings.some((item) => item.code === 'DUPLICATE_ROLE'));
+});
+
+test('gate aggregation rejects invalid report verdicts', () => {
+  const result = gateAggregate([
+    { role: 'eng', verdict: 'wat', anchors: ['a'] },
+  ], { requiredRoles: ['eng'], quorum: 1 });
+  assert.equal(result.pass, false);
+  assert.ok(result.findings.some((item) => item.code === 'INVALID_VERDICT'));
+});

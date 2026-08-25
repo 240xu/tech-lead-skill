@@ -43,3 +43,11 @@ test('non-object context returns structured invalid result', () => {
   assert.equal(validateContext(null).valid, false);
   assert.equal(validateContext('x').errors[0].path, '/');
 });
+
+test('context requires string identifiers and valid goal records', () => {
+  const input = valid();
+  input.project.id = {};
+  input.goalLedger = [null];
+  input.current.nextStep = {};
+  assert.equal(validateContext(input).valid, false);
+});
