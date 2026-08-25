@@ -5,6 +5,7 @@
 - Version:
 - Publication mode: `private` | `public`
 - Clean staging directory:
+- Release recovery point:
 
 ## Allowlist
 
@@ -23,6 +24,18 @@
 - Documentation entry point check: `PASS` | `FAIL` | `NOT-RUN`
 - Whitespace / parser check: `PASS` | `FAIL` | `NOT-RUN`
 
+## Release State Machine
+
+| Phase | Status | Evidence/command | Timestamp | Result | Blocking issue |
+|---|---|---|---|---|---|
+| INVENTORY | | | | | |
+| CONTENT-SCAN | | | | | |
+| REFERENCE-CHECK | | | | | |
+| SCOPE-CHECK | | | | | |
+| PUBLICATION-CHECK | | | | | |
+| PUBLISH | | | | | |
+| REMOTE-VERIFY | | | | | |
+
 ## Publication
 
 - License present:
@@ -30,6 +43,9 @@
 - Remote target:
 - Remote creation/push result:
 - Remote public/default-branch/file-list verification:
+- Remote verification timestamp/freshness:
+- Reconciliation result:
+- Failure disposition: `STOP` | `PAUSE` | `NONE`
 
 ## Limits
 

@@ -44,7 +44,7 @@ tech-lead-skill          # 安装到 ~/.config/opencode/skills/tech-lead
 npx github:240xu/tech-lead-skill
 ```
 
-安装器幂等，重复执行会先把旧文件备份为 `*.bak-<时间戳>`；`--target <目录>` 可自定义目标；`--uninstall` 卸载。
+安装器幂等，重复执行会先把旧文件备份为 `*.bak-<时间戳>`；`--target <目录>` 可自定义目标；`--uninstall` 卸载。安装目标会由安装器写入标记；卸载时拒绝递归删除没有标记的目录。
 
 ### 手动方式
 
@@ -54,7 +54,7 @@ npx github:240xu/tech-lead-skill
 ~/.config/opencode/skills/tech-lead/
 ```
 
-该技能由"构建项目/搭系统/从零开发/重构规划"类任务触发，也可以显式加载。
+该技能由"构建项目/搭系统/制定执行计划/部署/迁移/发布/恢复/重构/运维"等实质性任务触发，即使用户没有明确说“项目”或“Tech Lead”也应加载；也可以显式加载。
 
 ## 工作模式
 
@@ -91,6 +91,8 @@ npx github:240xu/tech-lead-skill
 - `templates/plan.md`：L0/L1/L2 计划与当前焦点。
 - `templates/change-record.md`：单次 EXECUTE 变更及其对账。
 - `templates/round.md`：单轮规划迭代及其结果。
+- `templates/state.json`：可续跑的规范状态投影。
+- `templates/gate-review.md` 与 `templates/gate-verdict.md`：独立评审与裁决记录。
 - `templates/release-check.md`：发布清单、扫描、远程验证与限制记录。
 
 ## 范围
@@ -110,6 +112,6 @@ npx github:240xu/tech-lead-skill
 
 ## 版本
 
-当前版本：`v5.2`。
+当前版本：`v5.3.0`。
 
 完整运行模型见[技术指南](docs/TECHNICAL_GUIDE.zh-CN.md)，发布审计见 [docs/AUDIT_REPORT.md](docs/AUDIT_REPORT.md)。

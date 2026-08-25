@@ -1,0 +1,35 @@
+{
+  "skill_name": "tech-lead",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Plan and implement a staged PostgreSQL migration for a production service, including rollback, smoke checks, and a cutover decision.",
+      "expected_output": "A T2 plan with goal ledger, assumptions, migration gates, recovery point, classified retry policy, and explicit authorization before production cutover.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Prepare this package for public release. Scan the clean staging directory, verify the file inventory and README links, publish only after the target and visibility are confirmed, then independently verify the remote tree.",
+      "expected_output": "A release state-machine record covering all seven phases, with publication authorization and remote verification evidence.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Resume the unfinished worker project from its saved state, reconcile the live process and effective configuration, and decide whether to continue or pause.",
+      "expected_output": "A read-first resume card, real-state reconciliation, stale-evidence check, and one explicit outcome with next trigger.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Fix one failing unit test in this function and add a focused regression test. Do not change any other behavior.",
+      "expected_output": "Should not automatically require the full T2 planning and release workflow; a compact T0/T1 path is appropriate.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "Review this 20-line helper for style issues and explain your suggestions without editing files.",
+      "expected_output": "Should remain a read-only review and should not create project-state files merely to satisfy the skill.",
+      "files": []
+    }
+  ]
+}

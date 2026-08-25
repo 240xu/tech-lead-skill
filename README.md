@@ -44,7 +44,7 @@ One-shot without a global install:
 npx github:240xu/tech-lead-skill
 ```
 
-The installer is idempotent: repeated runs back up existing files as `*.bak-<timestamp>` first. Use `--target <dir>` to choose another destination and `--uninstall` to remove.
+The installer is idempotent: repeated runs back up existing files as `*.bak-<timestamp>` first. Use `--target <dir>` to choose another destination and `--uninstall` to remove. Installed targets are marked by the installer; uninstall refuses to recursively remove an unmarked directory.
 
 ### Manual
 
@@ -54,7 +54,7 @@ Copy `skill/SKILL.md` and the `skill/templates/` directory into the skills direc
 ~/.config/opencode/skills/tech-lead/
 ```
 
-The skill is triggered by project construction, system building, greenfield work, restructuring, and substantial planning requests. It can also be loaded explicitly.
+The skill is triggered by project construction, system building, implementation plans, deployment, migration, release, recovery, restructuring, operations work, and other substantial planning requests. It can also be loaded explicitly.
 
 ## Operating Modes
 
@@ -91,6 +91,8 @@ Use after the L2 scope is clear. Execute only the smallest approved mutation, re
 - `templates/plan.md`: L0/L1/L2 plan and current focus.
 - `templates/change-record.md`: one EXECUTE mutation and its reconciliation.
 - `templates/round.md`: one planning iteration and its outcome.
+- `templates/state.json`: canonical resumable state projection.
+- `templates/gate-review.md` and `templates/gate-verdict.md`: independent review and decision records.
 - `templates/release-check.md`: publication inventory, scans, remote verification, and limitations.
 
 ## Scope
@@ -110,6 +112,6 @@ The executable skill body (`SKILL.md`) is authored in Simplified Chinese; coding
 
 ## Version
 
-Current version: `v5.2`.
+Current version: `v5.3.0`.
 
 See [`docs/TECHNICAL_GUIDE.md`](docs/TECHNICAL_GUIDE.md) for the full operating model and [`docs/AUDIT_REPORT.md`](docs/AUDIT_REPORT.md) for the publication audit.

@@ -114,6 +114,20 @@ Projects that produce long-running services, scheduled jobs, batch pipelines, or
 
 1. **External dependency health**: register probes for critical upstreams. Placeholder data (such as all-`127.0.0.1` nodes), dead domains, and upstream end-of-life mean the dependency is dead — take the alternative path instead of retrying as a transient error.
 2. **Silent failure class**: HTTP 200 with an empty body or early EOF, placeholder content, and silent truncation are failure classes distinct from explicit errors; verify content validity rather than status codes, and count repeated silent failures in the re-planning tally.
-3. **Automation trio**: long-running loops carry a hard timeout, a consecutive-failure circuit breaker with full rebuild, and a concurrency cap; systems that live across days add scheduled health checks, and the monitor itself needs a liveness check.
+3. **Automation trio**: long-running loops carry a hard timeout, a consecutive-failure circuit breaker, and a concurrency cap. Recovery is staged as bounded retry, isolate a connection or instance, controlled restart, then controlled rebuild; rebuilding needs idempotency, a recovery point, rate limits, a maximum count, and a human escalation condition. Systems that live across days add scheduled health checks, and the monitor itself needs a liveness check.
 4. **Batch idempotency**: batch tasks are re-runnable with dry-run preview and incremental reconciliation; repeated runs never duplicate data.
 5. **Fallback ladder**: degradation chains are designed up front with per-level triggers; improvised fallbacks during incidents are treated as directional defects and re-planned.
+
+## 10. State and Review Artifacts
+
+The bundled templates are records, not decorative checklists:
+
+- `state.json` is the canonical resumable projection. If the project is read-only, record `state_persistence: unavailable` elsewhere instead of creating files.
+- `intake.md` establishes the goal chain and typed planning ledgers.
+- `plan.md` carries L0/L1/L2 lineage, milestone gates, completion levels, and evidence anchors.
+- `round.md` records delta counts, failure classification, rework level, stagnation checks, and outcome details.
+- `change-record.md` proves each step of the mutation protocol and records requirement changes separately from implementation changes.
+- `gate-review.md` and `gate-verdict.md` record independent review, anchored findings, and adopted or rejected decisions.
+- `release-check.md` records the seven release phases and stops publication when a prerequisite or remote verification is unresolved.
+
+Use the smallest applicable artifact set, but do not omit a required record merely because the work is inconvenient to document. A template entry without an evidence anchor is an open item, not proof of completion.

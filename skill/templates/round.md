@@ -2,14 +2,22 @@
 
 - Round ID:
 - Previous delta:
+- Delta counts (added/changed/frozen/reworked):
+- Plan snapshot / focus node:
 - Facts observed:
 - Evidence IDs / levels:
 - Assumptions added, confirmed, or invalidated:
 - Risks changed:
 - Critical path changed:
+- Affected plan nodes and upstream/downstream reassessment:
 - Work performed:
 - Plan diff: `+` / `-` / `~` / `reopen`
+- Failure class / impact / same-class count:
+- Rework target: `L2` | `L1` | `L0` | `none`
+- Required re-estimation:
+- Stagnation breaker checks:
 - Self-check: goal drift / blocker avoidance / cheapest falsifying experiment / stale evidence
 - Outcome: `CONTINUE` | `PAUSE` | `SCOPE-DOWN` | `PIVOT` | `STOP`
+- Outcome details (removed scope/new DoD, frozen evidence, resume condition, or stop basis):
 - Next review trigger:
 - Next smallest action:

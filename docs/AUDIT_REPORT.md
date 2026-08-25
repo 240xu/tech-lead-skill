@@ -1,7 +1,7 @@
 # Publication Audit Report
 
-Date: 2026-08-24
-Scope: public release of the `tech-lead` planning skill and its four templates.
+Date: 2026-08-25
+Scope: public release of the `tech-lead` planning skill and its seven templates.
 
 ## Result
 
@@ -14,6 +14,9 @@ The publication set contains only the following intended artifacts:
 - `skill/templates/change-record.md`
 - `skill/templates/round.md`
 - `skill/templates/release-check.md`
+- `skill/templates/state.json`
+- `skill/templates/gate-review.md`
+- `skill/templates/gate-verdict.md`
 - `README.md` (English) / `README.zh-CN.md` (简体中文)
 - `docs/TECHNICAL_GUIDE.md` (English) / `docs/TECHNICAL_GUIDE.zh-CN.md` (简体中文)
 - `docs/AUDIT_REPORT.md`
@@ -27,13 +30,14 @@ No unrelated home-directory files, project histories, server notes, credentials,
 
 ### Sensitive-content scan
 
-The source set was scanned for local absolute paths, passwords, API-key prefixes, SSH host details, private domains, and server IP patterns. No matching sensitive operational material was found in the publication set.
+The source set was scanned for local absolute paths, passwords, API-key prefixes, SSH host details, private domains, and server IP patterns. The only address-like match is the explicitly documented loopback placeholder `127.0.0.1`; no real operational endpoint or credential was found in the publication set.
 
 ### Structural scan
 
 - YAML frontmatter has `name: tech-lead` and a trigger description.
-- The skill version is `v5.2`.
-- The four templates referenced by the skill exist.
+- The skill version is `v5.3.0`.
+- The seven templates referenced by the skill exist.
+- The installer validates options, requires a marker before removing any target, and records the managed package/version after installation.
 - The release-check template covers allowlist inventory, sensitive-content scanning, reference checks, scope checks, publication results, and remote verification.
 - The plan includes PLAN/EXECUTE, L0/L1/L2, protected assets, mutation protocol, E0-E4 evidence, completion levels, stagnation control, state recovery, and real-state reconciliation.
 - No stale predecessor/version markers, unresolved placeholders, or broken section references remain in the publication set.
