@@ -52,10 +52,14 @@ export function gatePrecheck(input = {}) {
     }
   }
 
-  if (input.solo && (input.destructiveScope ?? []).length > 0) {
+  const destructiveScope = Array.isArray(input.destructiveScope) ? input.destructiveScope : [];
+  if (input.destructiveScope !== undefined && !Array.isArray(input.destructiveScope)) {
+    v.push({ type: 'BAD_DESTRUCTIVE_SCOPE', detail: 'destructiveScope must be an array of strings when provided' });
+  }
+  if (input.solo && destructiveScope.length > 0) {
     v.push({
       type: 'SOLO_FORBIDDEN',
-      detail: `solo:true cannot clear destructive scope (${input.destructiveScope.join(', ')})`,
+      detail: `solo:true cannot clear destructive scope (${destructiveScope.join(', ')})`,
     });
   }
 

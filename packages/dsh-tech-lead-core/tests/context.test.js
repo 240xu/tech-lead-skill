@@ -51,3 +51,11 @@ test('context requires string identifiers and valid goal records', () => {
   input.current.nextStep = {};
   assert.equal(validateContext(input).valid, false);
 });
+
+test('normalizeContext survives unserializable input without throwing', () => {
+  const circular = { a: 1 };
+  circular.self = circular;
+  const r = normalizeContext(circular);
+  assert.equal(r.value, circular);
+  assert.ok(r.warnings.some((w) => w.code === 'CLONE_FAILED'));
+});

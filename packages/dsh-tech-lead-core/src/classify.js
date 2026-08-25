@@ -25,7 +25,7 @@ export function classify(maybeInput) {
       )) ||
     input.publicInterfaceChange === true;
 
-  if (input.touchesMultipleModules) reasons.push('multi-module change → T2');
+  if (input.touchesMultipleModules === true) reasons.push('multi-module change → T2');
   if (Array.isArray(input.irreversibleOps) && input.irreversibleOps.length) {
     reasons.push(`irreversible ops (${input.irreversibleOps.join(', ')}) → T2`);
   }
@@ -36,7 +36,7 @@ export function classify(maybeInput) {
       }
     }
   }
-  if (input.publicInterfaceChange) reasons.push('public interface change → T2');
+  if (input.publicInterfaceChange === true) reasons.push('public interface change → T2');
 
   const days = Number(input.estimatedDays) || 0;
   if (t2) {
@@ -49,7 +49,7 @@ export function classify(maybeInput) {
   }
 
   let escalated = false;
-  if (input.uncertainRisk && tier !== 'T2') {
+  if (input.uncertainRisk === true && tier !== 'T2') {
     tier = tier === 'T0' ? 'T1' : 'T2';
     reasons.push('risk uncertain: escalated one tier');
     escalated = true;

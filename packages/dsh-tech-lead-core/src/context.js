@@ -55,7 +55,12 @@ export function validateContext(raw) {
 
 export function normalizeContext(raw) {
   if (!isObject(raw)) return { value: raw, warnings: [] };
-  const value = JSON.parse(JSON.stringify(raw));
+  let value;
+  try {
+    value = JSON.parse(JSON.stringify(raw));
+  } catch {
+    return { value: raw, warnings: [{ code: 'CLONE_FAILED', path: '/', message: 'input is not serializable; returning original reference without copy guarantees' }] };
+  }
   const warnings = Object.keys(raw)
     .filter((key) => !FIELDS.has(key))
     .map((key) => ({ path: `/${key}`, message: 'unknown field preserved' }));

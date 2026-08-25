@@ -38,3 +38,9 @@ test('reasons cite the triggering rule', () => {
   assert.equal(r.tier, 'T2');
   assert.ok(r.reasons.some((s) => s.includes('irreversible')));
 });
+
+test('truthy-but-not-true flags do not emit mismatched reasons', () => {
+  const r = classify({ touchesMultipleModules: 'yes', publicInterfaceChange: 'yes' });
+  assert.equal(r.tier, 'T0');
+  assert.equal(r.reasons.some((x) => x.includes('T2')), false);
+});

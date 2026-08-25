@@ -40,3 +40,9 @@ test('envelope contract metadata cannot be overridden by callers', () => {
   assert.equal(result.meta.deterministic, true);
   assert.equal(result.meta.sideEffects, false);
 });
+
+test('okEnvelope accepts extra meta while contract fields stay authoritative', () => {
+  const e = okEnvelope('op', { x: 1 }, [], { deterministic: false, tag: 't' });
+  assert.equal(e.meta.deterministic, true);
+  assert.equal(e.meta.tag, 't');
+});

@@ -11,7 +11,8 @@
  *   warnings: string[],
  * }}
  */
-export function resumeCard(maybeState, opts = {}) {
+export function resumeCard(maybeState, maybeOpts = {}) {
+  const opts = maybeOpts !== null && typeof maybeOpts === 'object' && !Array.isArray(maybeOpts) ? maybeOpts : {};
   const warnings = [];
   const state = maybeState !== null && typeof maybeState === 'object' ? maybeState : {};
   if (maybeState === null || typeof maybeState !== 'object') {
@@ -37,7 +38,7 @@ export function resumeCard(maybeState, opts = {}) {
   if (opts.now) {
     const parsed = Date.parse(opts.now);
     if (Number.isFinite(parsed)) nowMs = parsed;
-    else warnings.push('opts.nowIso is not a parseable time; using current clock');
+    else warnings.push('opts.now is not a parseable time; using current clock');
   }
   let maxAgeDays = 7;
   if (opts.maxAgeDays !== undefined) {

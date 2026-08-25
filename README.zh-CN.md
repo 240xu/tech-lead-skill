@@ -114,8 +114,8 @@ dsh --profile headless --dump-config   # 确认 tech-lead-tools 行已注入
 
 ## 局限
 
-- 目前规则是文本形式，不是机器强制的状态机。
-- 在专用工具出现之前，证据时效与状态对账依赖执行环境与操作者。
+- 文本判断层有意保持非机械化；只有源码安装的 DSH bundle 才提供上下文、证据、推进、Gate、发布/安装审计、恢复与变更预览的可机检只读运行时。
+- 在纯文本技能形态下（无 bundle），证据时效与状态对账仍依赖执行环境与操作者。
 - 本技能不提供沙箱；除非已有真实隔离执行环境，否则不得运行不可信代码。
 - MCP 工具化候选应在观察到真实项目中反复违例之后再筛选。
 
@@ -125,6 +125,6 @@ dsh --profile headless --dump-config   # 确认 tech-lead-tools 行已注入
 
 ## 版本
 
-当前版本：`v5.4.2`。
+当前版本：`v5.4.3`。
 
-完整运行模型见[技术指南](https://github.com/240xu/tech-lead-skill/blob/main/docs/TECHNICAL_GUIDE.zh-CN.md)，发布审计见 [docs/AUDIT_REPORT.md](docs/AUDIT_REPORT.md)。
+完整运行模型见[技术指南](./docs/TECHNICAL_GUIDE.zh-CN.md)，发布审计见 [docs/AUDIT_REPORT.md](docs/AUDIT_REPORT.md)。

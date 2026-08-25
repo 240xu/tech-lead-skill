@@ -121,6 +121,11 @@ resumeCard(state, opts{now?,maxAgeDays?=7}) -> { position, lastGate, nextStep, s
 入参格式约定（DSH schema 限制）：复合输入一律为 JSON 字符串、列表输入为 CSV——工具不做嵌套对象入参；
 该取舍与 §3「只接受内联 JSON」一致，§4.2 表格中任何「对象」字样以本句为准。
 
+**双契约说明**：前九个遗留工具保持其原始响应形状（裸校验结果/违规数组等，无 ResultEnvelope 包装），
+以兼容既有调用方；后十二个强化工具统一返回 ResultEnvelope v1。两类工具的入参解析层共享
+`src/protocol.js`（parseJsonString/parseJsonFields/renderEnvelope/runGuarded），BAD_INPUT 错误项
+形状一致（{code,path,message}）；意外异常经 runGuarded 转换为 INTERNAL envelope，不向模型泄漏堆栈或路径。
+
 导出形状：`export const name='tech-lead-tools'; export const inject=['tools']; export function apply(ctx)`，
 内部对每个工具 `ctx.tools.register(defineTool({...}))`。output.render 输出 `[{"type":"text","text":...}]`。
 
@@ -153,16 +158,18 @@ dsh.profile.bundles 并跑 pnpm）。顺序：先建隔离 profile `techtest` �
    marker.files==实际、--check 漂移检测、安全卸载保留外来文件与 .bak、--dry-run 无写入、
    validateState 合法/非法 fixture。全绿才进 B。
 2. **Phase B/C**：core 每函数 ≥3 用例（正常/违例/边界）node:test；plugin 组合测试经真实
-   Loader（`npm run test:composition`，经插件 workspace 的 cordis/cordis-plugin-loader/include
-   devDependencies 本地解析 bin.js，不依赖全局 DSH 安装路径）驱动 21 工具各一次，
-   断言关键字段，打印 `TLT-PASS n/21`。
+   Loader（根 devDependencies 解析 cordis/cordis-plugin-loader/include/dsh-system-prompt，
+   经 `npm run test:composition` 启动，不依赖全局 DSH 安装路径）驱动 21 个正例 +
+   12 个 BAD_INPUT 负例，打印 `TLT-PASS n/21` 与 `TLT-NEG n/12`。
 3. **Phase D**：techtest profile 启动加载成功（工具出现在注册日志/driver 断言），随后
    headless、web 同样验证；每次改 profile 前备份配置。
 4. 回滚点：每个 Phase 一个 commit；profile 改动有 .bak-techlead-<ts>。
 
 ## 7. 已知限制（记录不解决）
 
-- 组合测试 driver 是接线冒烟：无负向对照桩（恒错响应不会误过，但恒对桩可骗过）；CI 强化留待后续。
+- 组合测试 driver 是接线冒烟：21 正例 + 12 BAD_INPUT 负例；恒错响应不会误过，但恒对桩理论上可骗过。
+- context 校验只到字段级：goalLedger 等集合的元素级形状检查委托给 evidence_graph_lint / planLint 等专项 lint，不在 validateContext 内重复。
+- 前九个遗留工具无专属 plugin 单测（由组合正例 + 静态副作用扫描覆盖），补齐留待后续。
 - 离线测试套件需 Node ≥18（node:test CLI）；运行时包本身 engines ≥16 即可。
 
 - 工具第一阶段不读文件系统：模型需粘贴 state/文件清单内容（换取可证明零副作用）。

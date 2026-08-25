@@ -8,7 +8,7 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '..');
 const files = [];
-for (const dir of ['tests', 'packages/dsh-tech-lead-core/tests']) {
+for (const dir of ['tests', 'packages/dsh-tech-lead-core/tests', 'packages/dsh-tech-lead-plugin/test']) {
   const abs = path.join(root, dir);
   for (const f of fs.readdirSync(abs)) {
     if (f.endsWith('.test.js')) files.push(path.join(dir, f));

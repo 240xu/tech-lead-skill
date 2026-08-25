@@ -155,37 +155,59 @@ const cases: Case[] = [
   },
 ]
 
+const bad = (tool: string, args: Record<string, unknown>): Case => ({
+  tool,
+  args,
+  expect: (r) => r.ok === false && r.code === 'BAD_INPUT',
+})
+
+const negCases: Case[] = [
+  bad('tech_lead_context_validate', { contextJson: '{' }),
+  bad('tech_lead_evidence_graph_lint', { contextJson: '{' }),
+  bad('tech_lead_evidence_freshness', { contextJson: '{' }),
+  bad('tech_lead_assumption_register', { contextJson: '{' }),
+  bad('tech_lead_progress_decide', { contextJson: '{}', optionsJson: '{' }),
+  bad('tech_lead_critical_path', { tasksJson: '{', dependenciesJson: '[' }),
+  bad('tech_lead_change_impact', { changeJson: '{', contextJson: '{' }),
+  bad('tech_lead_resume_reconcile', { previousJson: '{', currentJson: '{' }),
+  bad('tech_lead_gate_plan', { impactJson: '{', contextJson: '}' }),
+  bad('tech_lead_gate_aggregate', { reportsJson: '{}', planJson: '{}' }),
+  bad('tech_lead_gate_reopen', { previousJson: '{', currentJson: '{' }),
+  bad('tech_lead_mutation_preview', { intentJson: '{' }),
+]
+
 export const name = 'tech-lead-composition-driver'
 export const inject = ['tools']
 
 export function apply(ctx: Context) {
   void (async () => {
     let pass = 0
+    let negPass = 0
     const failures: string[] = []
+    const execute = async (c: Case): Promise<any> => {
+      const result = await ctx.tools.execute({
+        callId: CallId(`drv-${c.tool}`),
+        name: c.tool,
+        arguments: c.args,
+        signal: new AbortController().signal,
+      })
+      const text = result.content.map((b: any) => (b.type === 'text' ? b.text : '')).join('')
+      try { return JSON.parse(text) } catch { return text }
+    }
     for (const c of cases) {
       try {
-        const result = await ctx.tools.execute({
-          callId: CallId(`drv-${c.tool}`),
-          name: c.tool,
-          arguments: c.args,
-          signal: new AbortController().signal,
-        })
-        const text = result.content.map((b: any) => (b.type === 'text' ? b.text : '')).join('')
-        let parsed: any = text
-        try { parsed = JSON.parse(text) } catch {}
-        if (c.expect(parsed)) {
-          pass++
-          console.log(`PASS ${c.tool}`)
-        } else {
-          failures.push(c.tool)
-          console.log(`FAIL ${c.tool}: ${text.slice(0, 300)}`)
-        }
-      } catch (err) {
-        failures.push(c.tool)
-        console.log(`FAIL ${c.tool}: threw ${(err as Error).message}`)
-      }
+        if (c.expect(await execute(c))) { pass++; console.log(`PASS ${c.tool}`) }
+        else { failures.push(`pos:${c.tool}`); console.log(`FAIL ${c.tool}`) }
+      } catch (err) { failures.push(`pos:${c.tool}`); console.log(`FAIL ${c.tool}: threw ${(err as Error).message}`) }
+    }
+    for (const c of negCases) {
+      try {
+        if (c.expect(await execute(c))) { negPass++; console.log(`NEG-PASS ${c.tool}`) }
+        else { failures.push(`neg:${c.tool}`); console.log(`NEG-FAIL ${c.tool}`) }
+      } catch (err) { failures.push(`neg:${c.tool}`); console.log(`NEG-FAIL ${c.tool}: threw ${(err as Error).message}`) }
     }
     console.log(`TLT-PASS ${pass}/${cases.length}`)
+    console.log(`TLT-NEG ${negPass}/${negCases.length}`)
     if (failures.length) console.log('TLT-FAILURES ' + failures.join(','))
     setTimeout(() => process.exit(failures.length ? 1 : 0), 50)
   })()

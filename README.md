@@ -46,6 +46,8 @@ npx github:240xu/tech-lead-skill
 
 The installer is idempotent: repeated runs back up existing files as `*.bak-<timestamp>` first. Use `--target <dir>` to choose another destination, `--check` to verify an installed copy against the package (hash + version drift), `--dry-run` to preview without writing, and `--uninstall` to remove. Uninstall removes only manifest-managed files — user files and `*.bak-*` backups are kept.
 
+`--check` exit codes: `0` clean, `1` drift detected, `2` usage/refusal error.
+
 ### DeepSeek Harness plugin (read-only tools)
 
 This source repository includes an opt-in DSH bundle exposing 21 read-only lifecycle tools. The original nine audit tools remain compatible, and the strengthened surface adds context validation, evidence graph/freshness analysis, progress decisions, critical-path and impact analysis, resume reconciliation, gate planning/aggregation/reopen checks, and mutation preview. The tools compute over caller-supplied JSON only — no filesystem writes, no subprocesses, no network access. The root npm package distributes the skill and installer only; clone this repository before installing the private workspace bundle.
@@ -112,8 +114,8 @@ This is an engineering planning skill. It focuses on correctness of planning, sa
 
 ## Limitations
 
-- The judgment layer remains prose by design; the optional DSH bundle provides a machine-checkable, composable read-only runtime for context, evidence, progress, gates, release/install audits, recovery, and mutation preview.
-- Evidence freshness and state reconciliation are operator/agent responsibilities until dedicated tooling exists.
+- The prose judgment layer stays non-mechanical by design; only the source-checkout DSH bundle adds a machine-checkable read-only runtime for context, evidence, progress, gates, release/install audits, recovery, and mutation preview.
+- Inside the prose skill itself (without the bundle), evidence freshness and state reconciliation remain operator/agent responsibilities.
 - The skill does not provide a sandbox; untrusted code must not be executed unless an actual isolated execution environment is already available.
 - MCP candidates should be selected only after observing repeated real-project violations.
 
@@ -123,6 +125,6 @@ The executable skill body (`SKILL.md`) is authored in Simplified Chinese; coding
 
 ## Version
 
-Current version: `v5.4.2`.
+Current version: `v5.4.3`.
 
 See [`docs/TECHNICAL_GUIDE.md`](docs/TECHNICAL_GUIDE.md) for the full operating model and [`docs/AUDIT_REPORT.md`](docs/AUDIT_REPORT.md) for the publication audit.

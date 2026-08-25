@@ -57,3 +57,28 @@ test('freshness rejects null options and invalid clocks without throwing', () =>
   assert.ok(result.warnings.some((item) => item.code === 'INVALID_NOW'));
   assert.equal(result.stale, true);
 });
+
+test('omitted maxAgeDays does not warn; invalid provided values warn with default', () => {
+  const omitted = evidenceFreshness({ evidence: [] }, { now: '2026-08-25T00:00:00Z' });
+  assert.equal(omitted.warnings.some((w) => w.code === 'INVALID_MAX_AGE'), false);
+  const coerced = evidenceFreshness({ evidence: [] }, { maxAgeDays: null });
+  assert.ok(coerced.warnings.some((w) => w.code === 'INVALID_MAX_AGE'));
+  const str = evidenceFreshness({
+    evidence: [{ id: 'e1', time: '2026-08-24T00:00:00Z' }],
+  }, { now: '2026-08-25T00:00:00Z', maxAgeDays: '3' });
+  assert.equal(str.stale, false);
+});
+
+test('deep support chains are traversed iteratively without stack overflow', () => {
+  const n = 20000;
+  const evidence = Array.from({ length: n }, (_, i) => ({ id: `a${i}`, supports: i + 1 < n ? [`a${i + 1}`] : ['g1'] }));
+  const result = evidenceGraphLint({ goalLedger: [{ id: 'g1' }], evidence });
+  assert.equal(result.valid, true);
+  assert.equal(result.graph.edges.length, n);
+});
+
+test('malformed ledger entries produce symmetric findings', () => {
+  const result = evidenceGraphLint(context({ goalLedger: [null, { id: '' }], evidence: [] }));
+  assert.equal(result.valid, false);
+  assert.ok(result.findings.filter((f) => f.code === 'INVALID_LEDGER_ENTRY').length >= 2);
+});

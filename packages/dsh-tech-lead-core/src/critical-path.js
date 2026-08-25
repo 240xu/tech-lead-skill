@@ -38,8 +38,13 @@ export function criticalPath(tasks, dependencies) {
       if (incoming.get(next) === 0) queue.push(next);
     }
   }
-  if (order.length !== nodes.size) findings.push({ code: 'CYCLE', message: 'dependency graph contains a cycle' });
-  const critical = order.filter((id) => nodes.get(id)?.status !== 'done' && (outgoing.get(id).length > 0 || originalIncoming.get(id) > 0));
-  const parallelWindows = order.filter((id) => nodes.get(id)?.status !== 'done' && originalIncoming.get(id) === 0 && outgoing.get(id).length === 0).map((id) => [id]);
-  return { blockers: order.filter((id) => nodes.get(id)?.blocker), criticalPath: critical, parallelWindows, findings };
+  if (order.length !== nodes.size) {
+    const orderedSet = new Set(order);
+    const cycleNodes = [...nodes.keys()].filter((id) => !orderedSet.has(id)).sort();
+    findings.push({ code: 'CYCLE', message: 'dependency graph contains a cycle', cycleNodes });
+  }
+  const active = (id) => nodes.get(id)?.status !== 'done';
+  const critical = order.filter((id) => active(id) && (outgoing.get(id).length > 0 || originalIncoming.get(id) > 0));
+  const parallelWindows = order.filter((id) => active(id) && originalIncoming.get(id) === 0 && outgoing.get(id).length === 0).map((id) => [id]);
+  return { blockers: order.filter((id) => nodes.get(id)?.blocker && active(id)), criticalPath: critical, parallelWindows, findings };
 }

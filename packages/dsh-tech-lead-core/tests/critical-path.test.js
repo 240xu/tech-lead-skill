@@ -22,3 +22,12 @@ test('critical path reports duplicate task ids instead of silently collapsing th
   const result = criticalPath([{ id: 'a' }, { id: 'a' }], []);
   assert.ok(result.findings.some((item) => item.code === 'DUPLICATE_TASK_ID'));
 });
+
+test('done tasks are excluded from blockers and cycle nodes are reported', () => {
+  const result = criticalPath([
+    { id: 'a' }, { id: 'b', blocker: true, status: 'done' }, { id: 'c' },
+  ], [{ from: 'c', to: 'a' }, { from: 'a', to: 'c' }]);
+  assert.equal(result.blockers.includes('b'), false);
+  assert.ok(result.findings.some((f) => f.code === 'CYCLE'));
+  assert.deepEqual([...result.findings.find((f) => f.code === 'CYCLE').cycleNodes].sort(), ['a', 'c']);
+});

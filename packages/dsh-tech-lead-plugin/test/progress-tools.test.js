@@ -25,3 +25,20 @@ test('progress decision rejects malformed optional options instead of throwing',
   assert.equal(result.ok, false);
   assert.equal(result.code, 'BAD_INPUT');
 });
+
+test('progress decide declares its optional options parameter', () => {
+  const tools = registerTools((d) => d, core);
+  const tool = tools.find((t) => t.name === 'tech_lead_progress_decide');
+  assert.ok(tool.parameters.optionsJson);
+});
+
+test('resume reconcile ignores key order when snapshots match semantically', async () => {
+  const tools = registerTools((d) => d, core);
+  const tool = tools.find((t) => t.name === 'tech_lead_resume_reconcile');
+  const result = JSON.parse(await tool.execute({
+    previousJson: '{"a":1,"b":2}',
+    currentJson: '{"b":2,"a":1}',
+  }));
+  assert.equal(result.ok, true);
+  assert.equal(result.data.drift, false);
+});

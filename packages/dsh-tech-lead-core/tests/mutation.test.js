@@ -42,3 +42,34 @@ test('mutation preview refuses executable target operations and returns defensiv
   preview.data.targets[0].path = 'changed';
   assert.notEqual(valid().target[0].path, 'changed');
 });
+
+test('executable markers are denied regardless of casing or nesting', () => {
+  for (const op of ['EXECUTE', 'Apply', ' deploy ']) {
+    const intent = valid();
+    intent.target = [{ path: 'x', operation: op }];
+    const r = previewMutation(intent);
+    assert.equal(r.ok, false);
+    assert.equal(r.code, 'CAPABILITY_DENIED');
+  }
+  const nested = valid();
+  nested.expectedDiff = [{ summary: 'apply --force to prod' }];
+  assert.equal(previewMutation(nested).code, 'CAPABILITY_DENIED');
+});
+
+test('unserializable payloads return SERIALIZATION_FAILED instead of throwing', () => {
+  const circular = valid();
+  circular.target = [];
+  const node = { path: 'x' };
+  node.self = node;
+  circular.target.push(node);
+  const r = previewMutation(circular);
+  assert.equal(r.ok, false);
+  assert.equal(r.code, 'SERIALIZATION_FAILED');
+});
+
+test('preview output is defensive against later input mutation', () => {
+  const input = valid();
+  const preview = previewMutation(input);
+  input.target[0].path = 'mutated-after-preview';
+  assert.equal(preview.data.targets[0].path, 'src/a.js');
+});

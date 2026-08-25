@@ -89,6 +89,7 @@ bundle 一行 patch 引用 plugin。全部离线测试先行，profile 实装最
 - [x] Step3 组合测试：cordis.yml = system-prompt + tools + plugin + driver.ts；driver 经
       `ctx.tools.execute` 依次调用 9 工具并断言关键字段；运行命令：
       `cd test/composition && node --import tsx <harness>/vendor/cordis/bin.js`
+      （已被 `npm run test:composition` 取代；本节为历史记录）
       断言 stdout 含 `TLT-PASS 9/9` 且进程 exit 0。
 - [x] Step4 commit `feat(plugin): register nine read-only tech-lead tools`
 

@@ -33,3 +33,9 @@ test('gate tools return BAD_INPUT for JSON null roots and malformed aggregate sc
   assert.equal(planResult.code, 'BAD_INPUT');
   assert.equal(aggregateResult.code, 'BAD_INPUT');
 });
+
+test('gate plan reports every failing argument at once', async () => {
+  const result = JSON.parse(await tool('tech_lead_gate_plan').execute({ impactJson: '{', contextJson: '}' }));
+  assert.equal(result.code, 'BAD_INPUT');
+  assert.equal(result.errors.length, 2);
+});

@@ -41,3 +41,9 @@ test('open gates surface as warnings', () => {
   const c = resumeCard(state({ open_gates: ['G3'] }));
   assert.ok(c.warnings.some((w) => w.includes('G3')));
 });
+
+test('null options object is tolerated and warning names opts.now', () => {
+  assert.doesNotThrow(() => resumeCard({ tier: 'T0', phase: 'M0', mode: 'PLAN', evidence: [] }, null));
+  const c = resumeCard({ tier: 'T0', phase: 'M0', mode: 'PLAN', evidence: [] }, { now: 'garbage' });
+  assert.ok(c.warnings.some((w) => /opts\.now\b/.test(w)));
+});

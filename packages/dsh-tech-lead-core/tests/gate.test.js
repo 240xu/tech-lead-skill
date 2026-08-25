@@ -63,3 +63,9 @@ test('blind gate requires >=3 distinct anchored reviewers', () => {
   });
   assert.equal(three.pass, true);
 });
+
+test('non-array destructiveScope is a structured violation, never a throw', () => {
+  const r = gatePrecheck({ solo: true, destructiveScope: 'rm -rf /', reviewerIds: [] });
+  assert.equal(r.pass, false);
+  assert.ok(r.violations.some((v) => v.type === 'BAD_DESTRUCTIVE_SCOPE'));
+});

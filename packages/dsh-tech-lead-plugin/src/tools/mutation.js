@@ -1,4 +1,5 @@
 import { errorEnvelope, previewMutation } from '@240xu/dsh-tech-lead-core';
+import { parseJsonString, renderEnvelope, runGuarded } from '../protocol.js';
 
 export function registerMutationTools(defineTool) {
   return [defineTool({
@@ -7,9 +8,11 @@ export function registerMutationTools(defineTool) {
     parameters: { intentJson: { type: 'string', required: true, description: 'mutation intent JSON text' } },
     output: { schema: { type: 'string' }, render: (_a, value) => [{ type: 'text', text: value }] },
     async execute(args) {
-      if (typeof args.intentJson !== 'string') return JSON.stringify(errorEnvelope('mutation_preview', 'BAD_INPUT', [{ path: 'intentJson', message: 'expected JSON text string' }]));
-      try { return JSON.stringify(previewMutation(JSON.parse(args.intentJson)), null, 2); }
-      catch (error) { return JSON.stringify(errorEnvelope('mutation_preview', 'BAD_INPUT', [{ path: 'intentJson', message: `invalid JSON: ${error.message}` }])); }
+      return runGuarded('mutation_preview', () => {
+        const parsed = parseJsonString(args?.intentJson, 'intentJson');
+        if (!parsed.ok) return renderEnvelope(errorEnvelope('mutation_preview', parsed.error.code, [parsed.error]));
+        return renderEnvelope(previewMutation(parsed.value));
+      });
     },
   })];
 }

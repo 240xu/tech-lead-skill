@@ -4,6 +4,18 @@ const list = (value) => Array.isArray(value) ? value : [];
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const EXECUTABLE_OPERATIONS = new Set(['apply', 'execute', 'deploy']);
+const MARKER_PATTERN = /\b(apply|execute|deploy)\b/i;
+const scanMarkers = (value, base, depth, errors) => {
+  if (depth > 6 || errors.length > 32) return;
+  if (typeof value === 'string') {
+    if (MARKER_PATTERN.test(value)) errors.push({ path: base, code: 'CAPABILITY_DENIED', message: 'executable marker inside intent payload' });
+    return;
+  }
+  if (Array.isArray(value)) { value.forEach((item, i) => scanMarkers(item, `${base}/${i}`, depth + 1, errors)); return; }
+  if (value !== null && typeof value === 'object') {
+    for (const key of Object.keys(value)) scanMarkers(value[key], `${base}/${key}`, depth + 1, errors);
+  }
+};
 
 export function validateMutationIntent(raw) {
   const errors = [];
@@ -23,12 +35,19 @@ export function previewMutation(raw) {
   if (!object(raw) || raw.mode !== 'read-only-preview') return errorEnvelope('mutation_preview', 'CAPABILITY_DENIED', [{ code: 'CAPABILITY_DENIED', message: 'mutation execution is not enabled' }]);
   const validation = validateMutationIntent(raw);
   if (!validation.valid) return errorEnvelope('mutation_preview', 'SCHEMA_INVALID', validation.errors, validation);
-  return okEnvelope('mutation_preview', {
-    execution: 'not performed',
-    mode: 'read-only-preview',
-    targets: clone(list(raw.target)),
-    expectedDiff: clone(list(raw.expectedDiff)),
-    verification: clone(list(raw.verification)),
-    authorization: clone(raw.authorization),
-  });
+  const markers = [];
+  for (const field of ['target', 'expectedDiff', 'verification', 'recoveryPoint', 'authorization']) scanMarkers(raw[field], `/${field}`, 0, markers);
+  if (markers.length) return errorEnvelope('mutation_preview', 'CAPABILITY_DENIED', markers);
+  try {
+    return okEnvelope('mutation_preview', {
+      execution: 'not performed',
+      mode: 'read-only-preview',
+      targets: clone(list(raw.target)),
+      expectedDiff: clone(list(raw.expectedDiff)),
+      verification: clone(list(raw.verification)),
+      authorization: clone(raw.authorization),
+    });
+  } catch {
+    return errorEnvelope('mutation_preview', 'SERIALIZATION_FAILED', [{ code: 'SERIALIZATION_FAILED', path: '/', message: 'intent payload is not serializable for preview' }]);
+  }
 }

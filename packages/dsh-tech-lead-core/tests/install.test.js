@@ -29,3 +29,7 @@ test('version mismatch flagged against package version', () => {
   const r = installAudit(manifest, manifest.files, manifest.files, '9.9.9');
   assert.equal(r.versionMismatch, true);
 });
+
+test('hostile primitive file lists degrade to empty sets instead of throwing', () => {
+  assert.doesNotThrow(() => installAudit({ files: ['a'], version: '1' }, 'nope', 42, '1'));
+});

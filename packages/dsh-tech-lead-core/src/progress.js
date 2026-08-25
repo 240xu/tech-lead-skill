@@ -1,7 +1,7 @@
 const list = (value) => Array.isArray(value) ? value : [];
 
 export function progressDecide(context, options = {}) {
-  if (!context || typeof context !== 'object') return {
+  if (!context || typeof context !== 'object' || Array.isArray(context)) return {
     outcome: 'PAUSE', allowed: false, reasons: [{ code: 'BAD_INPUT', message: 'context must be an object' }], blockers: [], requiredActions: ['provide context'], confidence: 1,
   };
   options = options && typeof options === 'object' && !Array.isArray(options) ? options : {};

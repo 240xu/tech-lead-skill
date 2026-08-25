@@ -34,3 +34,9 @@ test('invalid context input does not throw', () => {
 test('invalid options input does not throw', () => {
   assert.doesNotThrow(() => progressDecide({ dependencies: [], evidence: [], gates: [] }, null));
 });
+
+test('array context is rejected like other malformed shapes', () => {
+  const r = progressDecide([], {});
+  assert.equal(r.outcome, 'PAUSE');
+  assert.equal(r.allowed, false);
+});

@@ -51,3 +51,14 @@ test('gate aggregation rejects invalid report verdicts', () => {
   assert.equal(result.pass, false);
   assert.ok(result.findings.some((item) => item.code === 'INVALID_VERDICT'));
 });
+
+test('duplicate-role reject still propagates verdict and findings', () => {
+  const result = gateAggregate([
+    { role: 'eng', verdict: 'pass', anchors: ['a'] },
+    { role: 'eng', verdict: 'reject', anchors: ['b'], findings: [{ id: 'r1', message: 'x' }] },
+  ], { requiredRoles: ['eng'], quorum: 1 });
+  assert.equal(result.pass, false);
+  assert.equal(result.verdict, 'reject');
+  assert.ok(result.findings.some((item) => item.id === 'r1'));
+  assert.ok(result.findings.some((item) => item.code === 'DUPLICATE_ROLE'));
+});

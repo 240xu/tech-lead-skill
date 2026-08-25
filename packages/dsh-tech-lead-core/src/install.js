@@ -15,12 +15,12 @@
  */
 export function installAudit(manifest, actualFiles, pkgFiles, pkgVersion) {
   const managedSet = new Set(manifest?.files ?? []);
-  const actualSet = new Set(actualFiles ?? []);
+  const actualSet = new Set(Array.isArray(actualFiles) ? actualFiles : []);
   const isBackup = (rel) => /\.bak-\d+(?:-\d+)?$/.test(rel);
 
   const missingManaged = (manifest?.files ?? []).filter((f) => !actualSet.has(f));
-  const unmanaged = (actualFiles ?? []).filter((f) => !managedSet.has(f) && !isBackup(f)).sort();
-  const newInPackage = (pkgFiles ?? []).filter((f) => !managedSet.has(f));
+  const unmanaged = (Array.isArray(actualFiles) ? actualFiles : []).filter((f) => !managedSet.has(f) && !isBackup(f)).sort();
+  const newInPackage = (Array.isArray(pkgFiles) ? pkgFiles : []).filter((f) => !managedSet.has(f));
 
   return {
     missingManaged,

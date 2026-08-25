@@ -28,7 +28,7 @@
 - `ResultEnvelope v1`：统一 `ok/code/data/errors/warnings/meta`。
 - `ContextSnapshot v1`：统一任务上下文输入，不读文件、不持久化。
 - 工具能力目录：名称、版本、风险、输入限制、是否纯函数。
-- 旧工具输出兼容适配层，避免一次性破坏现有 DSH 调用方。
+- 旧工具输出兼容适配层（保留在 tools.js 内联注册，未拆分独立 basic.js 模块），避免一次性破坏现有 DSH 调用方。
 
 ### Phase 1：上下文与证据强化
 

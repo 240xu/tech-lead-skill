@@ -8,7 +8,10 @@ export function evidenceGraphLint(context) {
   const collections = ['goalLedger', 'risks', 'decisions', 'gates'];
   for (const collection of collections) {
     for (const [index, item] of asArray(context?.[collection]).entries()) {
-      if (!isObject(item) || !String(item.id ?? '').trim()) continue;
+      if (!isObject(item) || !String(item.id ?? '').trim()) {
+        findings.push(finding('INVALID_LEDGER_ENTRY', `/${collection}/${index}`, 'ledger entry must be an object with a non-empty id'));
+        continue;
+      }
       const id = String(item.id);
       if (nodes.has(id)) findings.push(finding('DUPLICATE_ID', `/${collection}/${index}/id`, `duplicate id: ${id}`));
       nodes.set(id, { type: collection, item });
@@ -41,18 +44,27 @@ export function evidenceGraphLint(context) {
       }
     }
   }
-  const visiting = new Set();
-  const visited = new Set();
-  const visit = (id) => {
-    if (visiting.has(id)) return true;
-    if (visited.has(id)) return false;
-    visiting.add(id);
-    const cycle = (evidenceEdges.get(id) ?? []).some(visit);
-    visiting.delete(id);
-    visited.add(id);
-    return cycle;
-  };
-  if ([...evidenceEdges.keys()].some(visit)) findings.push(finding('CYCLE', '/evidence', 'evidence graph contains a cycle'));
+  const color = new Map();
+  let hasCycle = false;
+  const stack = [];
+  for (const start of evidenceEdges.keys()) {
+    if (color.get(start)) continue;
+    stack.push([start, false]);
+    while (stack.length) {
+      const [id, processed] = stack.pop();
+      if (processed) { color.set(id, 2); continue; }
+      const state = color.get(id);
+      if (state === 1) { hasCycle = true; continue; }
+      if (state === 2) continue;
+      color.set(id, 1);
+      stack.push([id, true]);
+      for (const next of evidenceEdges.get(id) ?? []) {
+        if (!color.get(next)) stack.push([next, false]);
+        else if (color.get(next) === 1) hasCycle = true;
+      }
+    }
+  }
+  if (hasCycle) findings.push(finding('CYCLE', '/evidence', 'evidence graph contains a cycle'));
   return { valid: findings.length === 0, findings, graph: { nodes: [...nodes.keys()], edges } };
 }
 
@@ -60,9 +72,12 @@ export function evidenceFreshness(context, options = {}) {
   options = isObject(options) ? options : {};
   const warnings = [];
   const findings = [];
-  const maxAge = Number(options.maxAgeDays);
-  const ageDays = Number.isFinite(maxAge) && maxAge >= 0 ? maxAge : 7;
-  if (ageDays !== maxAge) warnings.push({ code: 'INVALID_MAX_AGE', message: 'using default maxAgeDays=7' });
+  let ageDays = 7;
+  if (options.maxAgeDays !== undefined) {
+    const n = Number(options.maxAgeDays);
+    if (typeof options.maxAgeDays === 'number' && Number.isFinite(n) && n >= 0) ageDays = n;
+    else warnings.push({ code: 'INVALID_MAX_AGE', message: 'maxAgeDays must be a finite number >= 0; using default 7' });
+  }
   let now = Date.parse(options.now ?? new Date().toISOString());
   if (!Number.isFinite(now)) {
     warnings.push({ code: 'INVALID_NOW', message: 'using current time because now is not parseable' });

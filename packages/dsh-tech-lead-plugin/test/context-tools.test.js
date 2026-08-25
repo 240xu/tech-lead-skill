@@ -33,3 +33,15 @@ test('evidence freshness tool returns stale evidence deterministically', async (
   assert.equal(result.code, 'STALE_EVIDENCE');
   assert.equal(result.data.stale, true);
 });
+
+test('freshness envelope marks determinism honestly based on injected clock', async () => {
+  const tools = registerTools(fakeDefineTool, core);
+  const tool = tools.find((t) => t.name === 'tech_lead_evidence_freshness');
+  const fresh = await tool.execute({ contextJson: '{"evidence":[]}' });
+  assert.equal(JSON.parse(fresh).meta.deterministic, false);
+  const pinned = await tool.execute({
+    contextJson: '{"evidence":[]}',
+    optionsJson: '{"now":"2026-08-25T00:00:00Z"}',
+  });
+  assert.equal(JSON.parse(pinned).meta.deterministic, true);
+});

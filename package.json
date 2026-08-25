@@ -1,6 +1,6 @@
 {
   "name": "tech-lead-skill",
-  "version": "5.4.2",
+  "version": "5.4.3",
   "description": "Evidence-driven planning and safe change-control skill for OpenCode-compatible agents",
   "license": "MIT",
   "repository": {
@@ -35,11 +35,9 @@
     "agent",
     "tech-lead"
   ],
-  "workspaces": [
-    "packages/*"
-  ],
   "devDependencies": {
-    "@deepseek-ai/dsh-tools": "0.1.0-rc.7",
-    "@deepseek-ai/dsh-llm": "0.1.0-rc.7"
+    "@deepseek-ai/dsh-llm": "0.1.0-rc.7",
+    "@deepseek-ai/dsh-system-prompt": "0.1.0-rc.8",
+    "@deepseek-ai/dsh-tools": "0.1.0-rc.7"
   }
 }

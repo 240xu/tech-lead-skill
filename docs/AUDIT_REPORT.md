@@ -1,7 +1,7 @@
 # Publication Audit Report
 
 Date: 2026-08-25
-Scope: public release of the `tech-lead` planning skill and its nine templates.
+Scope: public release of the `tech-lead` planning skill and its eight templates.
 
 ## Result
 
@@ -35,8 +35,8 @@ The source set was scanned for local absolute paths, passwords, API-key prefixes
 ### Structural scan
 
 - YAML frontmatter has `name: tech-lead` and a trigger description.
-- The skill version is `v5.4.2`.
-- The nine templates referenced by the skill exist.
+- The skill version is `v5.4.3`.
+- The eight templates referenced by the skill exist.
 - The installer validates options, requires a marker before removing any target, and records the managed package/version after installation.
 - The release-check template covers allowlist inventory, sensitive-content scanning, reference checks, scope checks, publication results, and remote verification.
 - The plan includes PLAN/EXECUTE, L0/L1/L2, protected assets, mutation protocol, E0-E4 evidence, completion levels, stagnation control, state recovery, and real-state reconciliation.
@@ -48,7 +48,7 @@ The skill defaults user data to read-only, requires a recovery path before write
 
 ## Known Limitations
 
-- Core judgment stays prose-first; the source-checkout-only DSH workspace provides 21 machine-checkable read-only tools for context, evidence, progress, gates, release/install audits, recovery, and mutation preview. The root npm tarball intentionally excludes the private workspace packages.
+- Core judgment stays prose-first; the source-checkout-only DSH workspace provides 21 machine-checkable read-only tools for context, evidence, progress, gates, release/install audits, recovery, and mutation preview. The root npm tarball intentionally excludes the private workspace packages. The original nine tools keep their pre-envelope response shapes for backward compatibility; the twelve strengthened tools return ResultEnvelope v1 (documented in docs/superpowers/specs/2026-08-25-dsh-tech-lead-system.md §4.2).
 - Freshness, reconciliation, and rollback verification depend on the executing environment.
 - No claim is made that the skill has completed a multi-project effectiveness trial; that is the next validation phase.
 - The audit validates publication content, not the security of the hosting platform or every consumer's local OpenCode installation.

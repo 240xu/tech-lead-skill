@@ -10,3 +10,13 @@ test('plugin exposes the tech-lead capability catalog without changing its entry
   assert.equal(capabilities.length, 21);
   assert.ok(capabilities.every((item) => item.sideEffects === false));
 });
+
+test('capability catalog stays in lockstep with registered tool names', async () => {
+  const [{ registerTools }, core] = await Promise.all([
+    import('../src/tools.js'),
+    import('@240xu/dsh-tech-lead-core'),
+  ]);
+  const registered = registerTools((definition) => definition, core).map((tool) => tool.name).sort();
+  const cataloged = core.getCapabilities().map((item) => item.name).sort();
+  assert.deepEqual(registered, cataloged);
+});

@@ -14,3 +14,9 @@ test('source-only reversible change is low impact', () => {
   assert.equal(result.tier, 'T0');
   assert.equal(result.reversible, true);
 });
+
+test('truthy irreversible keeps tier and reversibility consistent', () => {
+  const r = changeImpact({ modules: ['a'], assets: [], irreversible: 'yes' }, { gates: [] });
+  assert.equal(r.tier, 'T2');
+  assert.equal(r.reversible, false);
+});

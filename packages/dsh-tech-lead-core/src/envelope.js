@@ -30,8 +30,8 @@ export function makeEnvelope({
   };
 }
 
-export function okEnvelope(operation, data, warnings = []) {
-  return makeEnvelope({ ok: true, code: 'OK', data, warnings, operation });
+export function okEnvelope(operation, data, warnings = [], meta = {}) {
+  return makeEnvelope({ ok: true, code: 'OK', data, warnings, operation, meta });
 }
 
 export function errorEnvelope(operation, code, errors = [], data = null) {
