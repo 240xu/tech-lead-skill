@@ -7,15 +7,19 @@ Scope: public release of the `tech-lead` planning skill and its four templates.
 
 The publication set contains only the following intended artifacts:
 
-- `SKILL.md`
-- `templates/intake.md`
-- `templates/plan.md`
-- `templates/change-record.md`
-- `templates/round.md`
-- `templates/release-check.md`
-- `README.md`
-- `docs/TECHNICAL_GUIDE.md`
+- `package.json` / `bin/install.js` (npm installer)
+- `skill/SKILL.md`
+- `skill/templates/intake.md`
+- `skill/templates/plan.md`
+- `skill/templates/change-record.md`
+- `skill/templates/round.md`
+- `skill/templates/release-check.md`
+- `README.md` (English) / `README.zh-CN.md` (简体中文)
+- `docs/TECHNICAL_GUIDE.md` (English) / `docs/TECHNICAL_GUIDE.zh-CN.md` (简体中文)
 - `docs/AUDIT_REPORT.md`
+- `LICENSE`
+
+Documentation is bilingual (English + Simplified Chinese) by design; additional languages were intentionally excluded to limit maintenance surface. The skill body (`SKILL.md`) is authored in Simplified Chinese and is executed correctly by coding agents regardless of conversation language.
 
 No unrelated home-directory files, project histories, server notes, credentials, or private operational documents are included.
 

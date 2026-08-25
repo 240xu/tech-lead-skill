@@ -1,5 +1,7 @@
 # Technical Guide
 
+[English](TECHNICAL_GUIDE.md) | [简体中文](TECHNICAL_GUIDE.zh-CN.md)
+
 ## 1. Planning Model
 
 The skill treats a project as a controlled loop rather than a static checklist.
@@ -105,3 +107,13 @@ The content scan covers local paths, personal data, credentials, cookies, tokens
 After publication, independently check the remote visibility, default branch, commit, file inventory, and README access. A local commit is not evidence that a remote publication succeeded. If repository creation or push fails, stop the dependent verification steps and report the actual remote state.
 
 The release check must record limitations. A clean scan is evidence that the defined checks passed, not proof that unknown sensitive information does not exist.
+
+## 9. Runtime Discipline
+
+Projects that produce long-running services, scheduled jobs, batch pipelines, or third-party dependencies add five rules:
+
+1. **External dependency health**: register probes for critical upstreams. Placeholder data (such as all-`127.0.0.1` nodes), dead domains, and upstream end-of-life mean the dependency is dead — take the alternative path instead of retrying as a transient error.
+2. **Silent failure class**: HTTP 200 with an empty body or early EOF, placeholder content, and silent truncation are failure classes distinct from explicit errors; verify content validity rather than status codes, and count repeated silent failures in the re-planning tally.
+3. **Automation trio**: long-running loops carry a hard timeout, a consecutive-failure circuit breaker with full rebuild, and a concurrency cap; systems that live across days add scheduled health checks, and the monitor itself needs a liveness check.
+4. **Batch idempotency**: batch tasks are re-runnable with dry-run preview and incremental reconciliation; repeated runs never duplicate data.
+5. **Fallback ladder**: degradation chains are designed up front with per-level triggers; improvised fallbacks during incidents are treated as directional defects and re-planned.

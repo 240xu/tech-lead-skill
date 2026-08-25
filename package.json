@@ -1,0 +1,33 @@
+{
+  "name": "tech-lead-skill",
+  "version": "5.2.0",
+  "description": "Evidence-driven planning and safe change-control skill for OpenCode-compatible agents",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/240xu/tech-lead-skill.git"
+  },
+  "homepage": "https://github.com/240xu/tech-lead-skill#readme",
+  "bugs": "https://github.com/240xu/tech-lead-skill/issues",
+  "bin": {
+    "tech-lead-skill": "bin/install.js"
+  },
+  "files": [
+    "skill/",
+    "bin/",
+    "README.md",
+    "README.zh-CN.md",
+    "docs/",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=14"
+  },
+  "keywords": [
+    "opencode",
+    "skill",
+    "planning",
+    "agent",
+    "tech-lead"
+  ]
+}

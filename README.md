@@ -1,5 +1,7 @@
 # Tech Lead Skill
 
+English | [简体中文](README.zh-CN.md)
+
 An evidence-driven planning and delivery skill for software, infrastructure, research, reverse-engineering, and operations work.
 
 ## What It Solves
@@ -25,10 +27,28 @@ goal -> constraints/assumptions -> L0/L1/L2 plan -> execute -> observe evidence
 - Optional adversarial review for high-impact or irreversible changes.
 - Git-backed and non-Git project-state recovery.
 - Release-readiness checks for public documentation and skill publishing.
+- Runtime discipline rules for external dependency health, silent failure classes, automation guardrails, idempotent batch jobs, and fallback ladders.
 
 ## Install
 
-Copy `SKILL.md` and the `templates/` directory into the skills directory of your OpenCode-compatible environment:
+### npm (GitHub-hosted, no registry account needed)
+
+```bash
+npm i -g github:240xu/tech-lead-skill
+tech-lead-skill          # installs into ~/.config/opencode/skills/tech-lead
+```
+
+One-shot without a global install:
+
+```bash
+npx github:240xu/tech-lead-skill
+```
+
+The installer is idempotent: repeated runs back up existing files as `*.bak-<timestamp>` first. Use `--target <dir>` to choose another destination and `--uninstall` to remove.
+
+### Manual
+
+Copy `skill/SKILL.md` and the `skill/templates/` directory into the skills directory of your OpenCode-compatible environment:
 
 ```text
 ~/.config/opencode/skills/tech-lead/
@@ -83,6 +103,10 @@ This is an engineering planning skill. It focuses on correctness of planning, sa
 - Evidence freshness and state reconciliation are operator/agent responsibilities until dedicated tooling exists.
 - The skill does not provide a sandbox; untrusted code must not be executed unless an actual isolated execution environment is already available.
 - MCP candidates should be selected only after observing repeated real-project violations.
+
+## Notes
+
+The executable skill body (`SKILL.md`) is authored in Simplified Chinese; coding agents execute it correctly regardless of the conversation language. Templates are English and agent-facing. Documentation translations cover this README and the technical guide.
 
 ## Version
 
