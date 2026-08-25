@@ -48,7 +48,7 @@ The installer is idempotent: repeated runs back up existing files as `*.bak-<tim
 
 ### DeepSeek Harness plugin (read-only tools)
 
-The repository also ships an opt-in DSH bundle exposing nine read-only lifecycle tools (`tech_lead_classify`, `tech_lead_state_validate`, `tech_lead_transition_check`, `tech_lead_plan_lint`, `tech_lead_evidence_lint`, `tech_lead_gate_precheck`, `tech_lead_release_audit`, `tech_lead_install_audit`, `tech_lead_resume_card`). The tools compute over caller-supplied JSON only — no filesystem writes, no subprocesses, no network access.
+The repository also ships an opt-in DSH bundle exposing 21 read-only lifecycle tools. The original nine audit tools remain compatible, and the strengthened surface adds context validation, evidence graph/freshness analysis, progress decisions, critical-path and impact analysis, resume reconciliation, gate planning/aggregation/reopen checks, and mutation preview. The tools compute over caller-supplied JSON only — no filesystem writes, no subprocesses, no network access.
 
 ```bash
 dsh plugin --profile headless add /path/to/tech-lead-skill/packages/dsh-tech-lead-bundle
@@ -112,7 +112,7 @@ This is an engineering planning skill. It focuses on correctness of planning, sa
 
 ## Limitations
 
-- The judgment layer remains prose by design; a mechanical subset is machine-checkable via the optional DSH bundle (state/evidence/gate/release/install audits).
+- The judgment layer remains prose by design; the optional DSH bundle provides a machine-checkable, composable read-only runtime for context, evidence, progress, gates, release/install audits, recovery, and mutation preview.
 - Evidence freshness and state reconciliation are operator/agent responsibilities until dedicated tooling exists.
 - The skill does not provide a sandbox; untrusted code must not be executed unless an actual isolated execution environment is already available.
 - MCP candidates should be selected only after observing repeated real-project violations.

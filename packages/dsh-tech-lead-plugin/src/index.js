@@ -3,14 +3,19 @@ import {
   classify, validateState, transitionCheck,
   evidenceLint, planLint, gatePrecheck,
   releaseAudit, installAudit, resumeCard,
+  getCapabilities,
+  validateContext, evidenceGraphLint, evidenceFreshness,
+  progressDecide, criticalPath, changeImpact,
+  gatePlan, gateAggregate, gateReopen, previewMutation,
 } from '@240xu/dsh-tech-lead-core';
 import { registerTools } from './tools.js';
 
 export const name = 'tech-lead-tools';
 export const inject = ['tools'];
+export { getCapabilities };
 
 /**
- * Registers the nine read-only tech-lead tools. Every tool computes over
+ * Registers the read-only tech-lead tool surface. Every tool computes over
  * caller-supplied JSON — no filesystem writes, no subprocesses, no network.
  * @param {import('@deepseek-ai/cordis').Context} ctx
  */
@@ -19,6 +24,9 @@ export function apply(ctx) {
     classify, validateState, transitionCheck,
     evidenceLint, planLint, gatePrecheck,
     releaseAudit, installAudit, resumeCard,
+    validateContext, evidenceGraphLint, evidenceFreshness,
+    progressDecide, criticalPath, changeImpact,
+    gatePlan, gateAggregate, gateReopen, previewMutation,
   })) {
     ctx.tools.register(tool);
   }

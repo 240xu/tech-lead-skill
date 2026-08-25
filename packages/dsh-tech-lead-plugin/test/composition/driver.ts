@@ -83,6 +83,76 @@ const cases: Case[] = [
     args: { stateJson: JSON.stringify(validState), nowIso: '2026-08-25T01:00:00Z' },
     expect: (r) => r.position.includes('M1') && r.nextStep === 'composition test',
   },
+  {
+    tool: 'tech_lead_context_validate',
+    args: { contextJson: JSON.stringify({
+      schema: 'tech-lead.context.v1',
+      project: { id: 'p1', name: 'composition', repositoryMode: 'git' },
+      goalLedger: [{ id: 'g1', goal: 'green', metric: 'tests', target: 'pass' }],
+      nonGoals: [], constraints: [], assets: [], assumptions: [], decisions: [], risks: [], dependencies: [], evidence: [], gates: [],
+      current: { mode: 'EXECUTE', tier: 'T1', phase: 'M1', lastOutcome: '', nextStep: 'evidence' },
+      snapshot: { at: '2026-08-25T00:00:00Z', source: 'inline', fingerprint: 'p1' },
+    }) },
+    expect: (r) => r.ok === true && r.code === 'OK' && r.data.valid === true,
+  },
+  {
+    tool: 'tech_lead_evidence_graph_lint',
+    args: { contextJson: JSON.stringify({ goalLedger: [{ id: 'g1' }], evidence: [{ id: 'e1', supports: ['g1'] }] }) },
+    expect: (r) => r.ok === true && r.data.graph.edges.length === 1,
+  },
+  {
+    tool: 'tech_lead_evidence_freshness',
+    args: {
+      contextJson: JSON.stringify({ evidence: [{ id: 'e1', time: '2026-08-01T00:00:00Z' }] }),
+      optionsJson: JSON.stringify({ now: '2026-08-25T00:00:00Z', maxAgeDays: 7 }),
+    },
+    expect: (r) => r.ok === false && r.code === 'STALE_EVIDENCE',
+  },
+  {
+    tool: 'tech_lead_assumption_register',
+    args: { contextJson: JSON.stringify({ assumptions: [{ id: 'a1', verification: 'run test' }] }) },
+    expect: (r) => r.ok === true && r.data.items[0].status === 'verifiable',
+  },
+  {
+    tool: 'tech_lead_progress_decide',
+    args: { contextJson: JSON.stringify({ dependencies: [], evidence: [], gates: [] }) },
+    expect: (r) => r.ok === true && r.data.outcome === 'CONTINUE',
+  },
+  {
+    tool: 'tech_lead_critical_path',
+    args: { tasksJson: JSON.stringify([{ id: 'a' }, { id: 'b' }]), dependenciesJson: JSON.stringify([{ from: 'b', to: 'a' }]) },
+    expect: (r) => r.ok === true && r.data.criticalPath.includes('a'),
+  },
+  {
+    tool: 'tech_lead_change_impact',
+    args: { changeJson: JSON.stringify({ modules: ['a', 'b'], assets: ['CONFIG'], irreversible: true }), contextJson: JSON.stringify({ gates: [{ id: 'g1' }] }) },
+    expect: (r) => r.ok === true && r.data.tier === 'T2' && r.data.reopenGates.includes('g1'),
+  },
+  {
+    tool: 'tech_lead_resume_reconcile',
+    args: { previousJson: JSON.stringify({ fingerprint: 'old' }), currentJson: JSON.stringify({ fingerprint: 'new' }) },
+    expect: (r) => r.ok === false && r.code === 'DRIFT_DETECTED',
+  },
+  {
+    tool: 'tech_lead_gate_plan',
+    args: { impactJson: JSON.stringify({ tier: 'T2', destructive: true }), contextJson: JSON.stringify({}) },
+    expect: (r) => r.ok === true && r.data.quorum === 4,
+  },
+  {
+    tool: 'tech_lead_gate_aggregate',
+    args: { reportsJson: JSON.stringify([{ role: 'pm', verdict: 'pass', anchors: ['a'] }]), planJson: JSON.stringify({ requiredRoles: ['pm', 'arch'], quorum: 2 }) },
+    expect: (r) => r.ok === false && r.code === 'GATE_BLOCKED',
+  },
+  {
+    tool: 'tech_lead_gate_reopen',
+    args: { previousJson: JSON.stringify({ contextFingerprint: 'old' }), currentJson: JSON.stringify({ contextFingerprint: 'new' }) },
+    expect: (r) => r.ok === false && r.code === 'DRIFT_DETECTED',
+  },
+  {
+    tool: 'tech_lead_mutation_preview',
+    args: { intentJson: JSON.stringify({ mode: 'apply' }) },
+    expect: (r) => r.ok === false && r.code === 'CAPABILITY_DENIED',
+  },
 ]
 
 export const name = 'tech-lead-composition-driver'

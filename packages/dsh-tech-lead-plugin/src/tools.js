@@ -1,3 +1,8 @@
+import { registerContextTools } from './tools/context.js';
+import { registerProgressTools } from './tools/progress.js';
+import { registerGateTools } from './tools/gates.js';
+import { registerMutationTools } from './tools/mutation.js';
+
 /**
  * Tool definitions for the tech-lead read-only surface.
  *
@@ -193,5 +198,17 @@ export function registerTools(defineTool, core) {
     },
   }));
 
+  if (core.validateContext && core.evidenceGraphLint && core.evidenceFreshness) {
+    // Domain registration stays optional so the legacy nine-tool contract can
+    // be reused by callers that supply only the original core surface.
+    tools.push(...registerContextTools(defineTool, core));
+  }
+  if (core.progressDecide && core.criticalPath && core.changeImpact) {
+    tools.push(...registerProgressTools(defineTool, core));
+  }
+  if (core.gatePlan && core.gateAggregate && core.gateReopen) {
+    tools.push(...registerGateTools(defineTool, core));
+  }
+  if (core.previewMutation) tools.push(...registerMutationTools(defineTool));
   return tools;
 }

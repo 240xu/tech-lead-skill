@@ -91,7 +91,7 @@ On resume, reconcile saved state with the real environment. If they conflict, re
 
 ## 7. Future Toolization
 
-Core judgment stays prose-first; a mechanical subset is machine-checkable: `bin/install.js --check|--dry-run` for install drift, and the optional DSH bundle (`packages/`) exposing nine read-only audit tools (classify, state validate, transition check, plan/evidence lint, gate precheck, release/install audit, resume card).
+Core judgment stays prose-first; a mechanical subset is machine-checkable: `bin/install.js --check|--dry-run` for install drift, and the optional DSH bundle (`packages/`) exposing 21 composable read-only tools. The original nine audit tools remain compatible; the strengthened surface adds context, evidence graph/freshness, progress, critical path, impact, resume reconciliation, gate orchestration, and mutation preview.
 
 ## 8. Release Readiness
 

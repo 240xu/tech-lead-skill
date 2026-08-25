@@ -1,6 +1,6 @@
 {
   "name": "@240xu/dsh-tech-lead-bundle",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Opt-in dsh profile bundle exposing the read-only tech-lead tool surface",
   "license": "MIT",
   "type": "module",
