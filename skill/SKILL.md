@@ -3,7 +3,7 @@ name: tech-lead
 description: 用于软件、基础设施、研究和运维中的多步、跨边界或有状态工程交付：项目规划、架构选择、跨模块实现、部署、迁移、发布、恢复、重构、长期运行与跨会话续跑。涉及不可逆/生产变更、回滚验证、真实环境对账、发布安全或项目级交付治理时优先加载，即使用户没有说“项目”或“Tech Lead”。不要仅因一次性小修复、单文件编辑、普通解释、单次测试或只读代码审查而自动加载，除非用户明确要求项目级计划或本规范。
 ---
 
-# Tech Lead · 自主演进规划与交付规范 v5.3.0
+# Tech Lead · 自主演进规划与交付规范 v5.4.0
 
 > 双层架构声明：本文件是**判断层**（自由裁量域）。其中可机械判定的不变量（Gate 前置校验、
 > 证据锚点存在性、分级判定器、状态机转换有效性）为未来 **MCP 工具化候选**——
@@ -148,7 +148,7 @@ M0 前列 ≤5 个关键假设请用户确认；目标、Non-Goals 和不可逆�
 
 ## §7 状态落盘（.project-state/）
 `{state.json, plan.md, gates/*, templates/*}` 是可写项目的推荐状态集；Git 仓库可用 commit/tag 记录可追溯版本，非 Git 环境使用 `manifest.md` 记录路径、版本、备份位置、服务状态和验证命令。
-state.json 字段：{schema_version, mode, tier, phase, repository_mode, done[](各带锚点), open_gates[], goal_ledger[], constraints[], decisions[], risks[], dependencies[], evidence[], critical_path[], protected_assets[], hypotheses[], assumptions[], last_outcome, next_review_trigger, degraded_reason, tags[], next_step, updated_at}。无锚完成声明无效；恢复时保留未知字段，不得静默丢弃新状态。
+state.json 字段：{schema_version, mode, tier, phase, repository_mode, state_persistence, done[](各带锚点), open_gates[], goal_ledger[], constraints[], decisions[], risks[], dependencies[], evidence[], critical_path[], protected_assets[], hypotheses[], assumptions[], last_outcome, next_review_trigger, degraded_reason, tags[], next_step, updated_at}。无锚完成声明无效；恢复时保留未知字段，不得静默丢弃新状态。
 用户要求只读、仓库不可写或项目不允许状态文件时，状态落盘改为会话报告或用户指定位置，标 `state_persistence: unavailable`；不得为了遵循本规范创建、修改或提交项目文件。
 续跑卡：新会话首读 state.json（若可用）→ 回放三行（当前位置/最近 Gate 结果/下一步）→ 获确认续跑；
 离线超 15min 转保守模式（仅零副作用只读批次，完成后挂起，禁轮询轰炸）。

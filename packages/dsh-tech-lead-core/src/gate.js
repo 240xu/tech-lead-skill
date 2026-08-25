@@ -16,10 +16,20 @@ const VERDICTS = new Set(['pass', 'conditional', 'reject']);
  * @returns {{ pass: boolean, violations: Array<{type:string, detail:string}> }}
  */
 export function gatePrecheck(input = {}) {
-  const reviewerIds = input.reviewerIds ?? [];
-  const reports = input.reports ?? [];
+  if (input === null || typeof input !== 'object') {
+    return { pass: false, violations: [{ type: 'BAD_INPUT', detail: 'gate precheck input must be an object' }] };
+  }
+  const reviewerIds = Array.isArray(input.reviewerIds) ? input.reviewerIds : [];
+  const reports = Array.isArray(input.reports) ? input.reports : [];
+  if (input.reports !== undefined && !Array.isArray(input.reports)) {
+    // fall through with empty reports; violation recorded below for parity
+  }
   /** @type {Array<{type:string, detail:string}>} */
   const v = [];
+
+  if (input.proposalAuthorId && input.proposalAuthorId === input.executorId) {
+    v.push({ type: 'PROPOSER_IS_EXECUTOR', detail: 'referee separation requires proposalAuthorId != executorId' });
+  }
 
   for (const who of ['proposalAuthorId', 'executorId']) {
     const id = input[who];
@@ -29,6 +39,10 @@ export function gatePrecheck(input = {}) {
   }
 
   for (const [i, r] of reports.entries()) {
+    if (r === null || typeof r !== 'object') {
+      v.push({ type: 'BAD_REPORT', detail: `report[${i}] must be an object` });
+      continue;
+    }
     if (!VERDICTS.has(r.verdict)) {
       v.push({ type: 'BAD_VERDICT', detail: `report[${i}] verdict must be pass|conditional|reject` });
     }

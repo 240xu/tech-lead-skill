@@ -55,7 +55,7 @@ dsh plugin --profile headless add /path/to/tech-lead-skill/packages/dsh-tech-lea
 dsh --profile headless --dump-config   # verify the tech-lead-tools row is present
 ```
 
-See [`docs/superpowers/specs/2026-08-25-dsh-tech-lead-system.md`](docs/superpowers/specs/2026-08-25-dsh-tech-lead-system.md) for the architecture and permission matrix.
+See [`docs/superpowers/specs/2026-08-25-dsh-tech-lead-system.md`](https://github.com/240xu/tech-lead-skill/blob/main/docs/superpowers/specs/2026-08-25-dsh-tech-lead-system.md) for the architecture and permission matrix.
 
 ### Manual
 
@@ -112,7 +112,7 @@ This is an engineering planning skill. It focuses on correctness of planning, sa
 
 ## Limitations
 
-- The rules are currently prose, not a machine-enforced state machine.
+- The judgment layer remains prose by design; a mechanical subset is machine-checkable via the optional DSH bundle (state/evidence/gate/release/install audits).
 - Evidence freshness and state reconciliation are operator/agent responsibilities until dedicated tooling exists.
 - The skill does not provide a sandbox; untrusted code must not be executed unless an actual isolated execution environment is already available.
 - MCP candidates should be selected only after observing repeated real-project violations.

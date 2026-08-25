@@ -1,7 +1,7 @@
 # Publication Audit Report
 
 Date: 2026-08-25
-Scope: public release of the `tech-lead` planning skill and its seven templates.
+Scope: public release of the `tech-lead` planning skill and its eight templates.
 
 ## Result
 
@@ -18,7 +18,7 @@ The publication set contains only the following intended artifacts:
 - `skill/templates/gate-review.md`
 - `skill/templates/gate-verdict.md`
 - `README.md` (English) / `README.zh-CN.md` (简体中文)
-- `docs/TECHNICAL_GUIDE.md` (English) / `docs/TECHNICAL_GUIDE.zh-CN.md` (简体中文)
+- `docs/TECHNICAL_GUIDE.md` (English) / `docs/TECHNICAL_GUIDE.md (zh guide ships via GitHub only)
 - `docs/AUDIT_REPORT.md`
 - `LICENSE`
 
@@ -35,12 +35,12 @@ The source set was scanned for local absolute paths, passwords, API-key prefixes
 ### Structural scan
 
 - YAML frontmatter has `name: tech-lead` and a trigger description.
-- The skill version is `v5.3.0`.
+- The skill version is `v5.4.0`.
 - The seven templates referenced by the skill exist.
 - The installer validates options, requires a marker before removing any target, and records the managed package/version after installation.
 - The release-check template covers allowlist inventory, sensitive-content scanning, reference checks, scope checks, publication results, and remote verification.
 - The plan includes PLAN/EXECUTE, L0/L1/L2, protected assets, mutation protocol, E0-E4 evidence, completion levels, stagnation control, state recovery, and real-state reconciliation.
-- No stale predecessor/version markers, unresolved placeholders, or broken section references remain in the publication set.
+- Version markers verified against package.json at audit time (see CHANGELOG history for prior releases)
 
 ### Safety review
 
@@ -48,7 +48,7 @@ The skill defaults user data to read-only, requires a recovery path before write
 
 ## Known Limitations
 
-- This is a prose skill; the state schema and evidence fields are not machine-enforced.
+- Core judgment stays prose-first; a mechanical subset (state schema, evidence provenance, gate prechecks, release/install audits) is machine-checkable via @240xu/dsh-tech-lead-core and the optional DSH bundle tools.
 - Freshness, reconciliation, and rollback verification depend on the executing environment.
 - No claim is made that the skill has completed a multi-project effectiveness trial; that is the next validation phase.
 - The audit validates publication content, not the security of the hosting platform or every consumer's local OpenCode installation.

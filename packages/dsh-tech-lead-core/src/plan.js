@@ -20,20 +20,20 @@ export function planLint(plan) {
     if (!reqStr(plan, 'target')) f.push({ severity: 'error', path: 'target', message: 'goal needs a target value' });
   }
 
-  for (const [i, item] of objectItems(plan.assumptions)) {
+  for (const [i, item] of objectItemsOrGap(plan.assumptions, 'assumptions', f)) {
     if (!reqStr(item, 'verification')) {
       f.push({ severity: 'error', path: `assumptions[${i}].verification`, message: 'assumption needs a verification method' });
     }
   }
-  for (const [i, item] of objectItems(plan.decisions)) {
+  for (const [i, item] of objectItemsOrGap(plan.decisions, 'decisions', f)) {
     if (!hasAlternatives(item)) f.push({ severity: 'error', path: `decisions[${i}].alternatives`, message: 'decision must record rejected alternatives' });
     if (!reqStr(item, 'reason')) f.push({ severity: 'error', path: `decisions[${i}].reason`, message: 'decision must record its reason' });
   }
-  for (const [i, item] of objectItems(plan.risks)) {
+  for (const [i, item] of objectItemsOrGap(plan.risks, 'risks', f)) {
     if (!reqStr(item, 'impact')) f.push({ severity: 'error', path: `risks[${i}].impact`, message: 'risk needs impact' });
     if (!reqStr(item, 'mitigation')) f.push({ severity: 'error', path: `risks[${i}].mitigation`, message: 'risk needs mitigation' });
   }
-  for (const [i, item] of objectItems(plan.dependencies)) {
+  for (const [i, item] of objectItemsOrGap(plan.dependencies, 'dependencies', f)) {
     if (!reqStr(item, 'blocker')) f.push({ severity: 'error', path: `dependencies[${i}].blocker`, message: 'dependency needs its blocking relation / alternative path' });
   }
 
@@ -45,13 +45,13 @@ export function planLint(plan) {
   return f;
 }
 
-function objectItems(arr) {
+function objectItemsOrGap(arr, name, findings) {
   const out = [];
-  if (Array.isArray(arr)) {
-    arr.forEach((item, i) => {
-      if (item && typeof item === 'object' && !Array.isArray(item)) out.push([i, item]);
-    });
-  }
+  if (!Array.isArray(arr)) return out;
+  arr.forEach((item, i) => {
+    if (item !== null && typeof item === 'object' && !Array.isArray(item)) out.push([i, item]);
+    else findings.push({ severity: 'error', path: `${name}[${i}]`, message: 'must be an object ({claim,...}, {choice,...}, {description,...}, {what,...})' });
+  });
   return out;
 }
 

@@ -11,7 +11,8 @@
  * }} [input]
  * @returns {{ tier: 'T0'|'T1'|'T2', reasons: string[], escalated: boolean }}
  */
-export function classify(input = {}) {
+export function classify(maybeInput) {
+  const input = maybeInput !== null && typeof maybeInput === 'object' ? maybeInput : {};
   const reasons = [];
   let tier = 'T0';
 

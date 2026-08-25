@@ -54,9 +54,12 @@ classify(input) -> { tier:'T0'|'T1'|'T2', reasons:string[], escalated:boolean }
 //          protectedAssetTypes?:('SOURCE'|'USER_DATA'|'CONFIG'|'SECRET'|'RUNTIME'|'GENERATED')[],
 //          publicInterfaceChange?, uncertainRisk? }
 // 规则=SKILL §1.4：命中 USER_DATA/SECRET/RUNTIME/删除覆盖迁移/公共接口/不可逆 → T2；
-// 多模块或 ≥1 天且非平凡 → T1 起；uncertainRisk 升一档。
+// 多模块 → T2（同 SKILL §1.3）；≥1 天单模块 → T1；uncertainRisk 升一档。
 
 validateState(raw) -> { valid, errors:[{path,message}], warnings, unknownFields }
+// 枚举词表：mode∈{PLAN,EXECUTE}; tier∈{T0,T1,T2}; repository_mode∈{git,non-git,read-only};
+// state_persistence∈{available,unavailable}(可选); last_outcome∈{CONTINUE,PAUSE,SCOPE-DOWN,PIVOT,STOP,''};
+// phase 必填非空；schema_version 兼容数字 1 或字符串 "1"。
 // schema v1：mode∈{PLAN,EXECUTE}; tier∈{T0,T1,T2}; last_outcome∈{CONTINUE,PAUSE,
 // SCOPE-DOWN,PIVOT,STOP,''}; done[].anchor 必填; evidence[] 需 id/level(E0-E4)/source/
 // time/scope/repro; updated_at 非空; unknown 字段→warning 不报错（保留语义）。
@@ -76,17 +79,17 @@ gatePrecheck(input) -> { pass, violations }
 // input:{proposalAuthorId, executorId, reviewerIds[], solo?, blindRequired?,
 //         destructiveScope?:string[], reports:[{reviewerId, verdict, anchors[]}]}
 // 三分离：提案人/执行人不得任评审；每报告 ≥1 锚点；verdict∈{pass,conditional,reject}；
-// solo 且 destructiveScope 非空 → 违例；blindRequired 需 ≥3 份独立报告。
+// solo 且 destructiveScope 非空 → 违例；blindRequired 需 ≥3 份独立锚点报告——注意：SKILL §6 要求四份（pm/arch/eng/ops），本实现机械下限取 3，属已声明偏差。
 
 releaseAudit({allowlist, files, contentScan?}) -> violations
 // EXTRA_FILE（白名单外）；contentScan 时正则扫泄漏疑似：
 // 绝对家目录路径、sk-/ghp_/AKIA 前缀 token、bearer/password/token 赋值行 → LEAK_SUSPECT(带行号)。
 
 installAudit(manifest{files,version}, actualFiles, pkgFiles, pkgVersion)
-// -> { missingManaged, unmanaged, versionMismatch?, hashDrift? }（hashDrift 由 --check 在
-// install.js 内比对内容实现；core 只做集合差）
+// -> { missingManaged, unmanaged, versionMismatch?, newInPackage[] }（newInPackage=当前包有而 marker 没有的文件；hashDrift 由 --check 在 install.js 内比对内容实现，core 只做集合差）
 
-resumeCard(state) -> { position, lastGate, nextStep, staleEvidenceIds, warnings }
+resumeCard(state, opts{now?,maxAgeDays?=7}) -> { position, lastGate, nextStep, staleEvidenceIds, warnings }
+// maxAgeDays 默认 7 为本实现的证据过期策略（SKILL §7 未定义天数级阈值），非法值钳回默认并告警
 ```
 
 ### 4.2 plugin 工具表（只读）
@@ -94,14 +97,17 @@ resumeCard(state) -> { position, lastGate, nextStep, staleEvidenceIds, warnings 
 | 工具名 | 入参要点 | 出参 |
 |---|---|---|
 | tech_lead_classify | classify 输入 | tier+reasons |
-| tech_lead_state_validate | rawState(JSON 文本或对象) | validateState 结果 |
+| tech_lead_state_validate | rawState（仅 JSON 字符串，非对象） | validateState 结果 |
 | tech_lead_transition_check | state + proposed | transitionCheck |
-| tech_lead_plan_lint | plan 对象 | findings |
-| tech_lead_evidence_lint | evidence[] + highRiskChange | findings |
+| tech_lead_plan_lint | plan 对象的 JSON 字符串 | findings |
+| tech_lead_evidence_lint | evidence[] 的 JSON 字符串 + highRiskChange | findings |
 | tech_lead_gate_precheck | gatePrecheck 输入 | pass/violations |
 | tech_lead_release_audit | allowlist+files[]+contentScan | violations |
 | tech_lead_install_audit | manifest/actual/pkg | audit 结果 |
 | tech_lead_resume_card | state | resumeCard |
+
+入参格式约定（DSH schema 限制）：复合输入一律为 JSON 字符串、列表输入为 CSV——工具不做嵌套对象入参；
+该取舍与 §3「只接受内联 JSON」一致，§4.2 表格中任何「对象」字样以本句为准。
 
 导出形状：`export const name='tech-lead-tools'; export const inject=['tools']; export function apply(ctx)`，
 内部对每个工具 `ctx.tools.register(defineTool({...}))`。output.render 输出 `[{"type":"text","text":...}]`。
@@ -141,6 +147,9 @@ dsh.profile.bundles 并跑 pnpm）。顺序：先建隔离 profile `techtest` �
 4. 回滚点：每个 Phase 一个 commit；profile 改动有 .bak-techlead-<ts>。
 
 ## 7. 已知限制（记录不解决）
+
+- 组合测试 driver 是接线冒烟：无负向对照桩（恒错响应不会误过，但恒对桩可骗过）；CI 强化留待后续。
+- 离线测试套件需 Node ≥18（node:test CLI）；运行时包本身 engines ≥16 即可。
 
 - 工具第一阶段不读文件系统：模型需粘贴 state/文件清单内容（换取可证明零副作用）。
 - transition/gate 规则是 §4.8/§5/§6 的机械子集，不是完整语义。

@@ -11,8 +11,12 @@
  *   warnings: string[],
  * }}
  */
-export function resumeCard(state, opts = {}) {
+export function resumeCard(maybeState, opts = {}) {
   const warnings = [];
+  const state = maybeState !== null && typeof maybeState === 'object' ? maybeState : {};
+  if (maybeState === null || typeof maybeState !== 'object') {
+    warnings.push('state is missing or not an object; card rendered from defaults');
+  }
   const tier = String(state.tier ?? '?');
   const phase = String(state.phase ?? '?');
   const mode = String(state.mode ?? '?');
@@ -29,13 +33,27 @@ export function resumeCard(state, opts = {}) {
   }
 
   const staleEvidenceIds = [];
-  const nowMs = opts.now ? Date.parse(opts.now) : Date.now();
-  const maxAgeDays = opts.maxAgeDays ?? 7;
+  let nowMs = Date.now();
+  if (opts.now) {
+    const parsed = Date.parse(opts.now);
+    if (Number.isFinite(parsed)) nowMs = parsed;
+    else warnings.push('opts.nowIso is not a parseable time; using current clock');
+  }
+  let maxAgeDays = 7;
+  if (opts.maxAgeDays !== undefined) {
+    const n = Number(opts.maxAgeDays);
+    if (Number.isFinite(n) && n >= 0) maxAgeDays = n;
+    else warnings.push(`maxAgeDays ${opts.maxAgeDays} invalid (need finite >= 0); using default 7`);
+  }
   if (Number.isFinite(nowMs) && Array.isArray(state.evidence)) {
     for (const e of state.evidence) {
       if (!e || typeof e !== 'object') continue;
       const t = Date.parse(String(e.time ?? ''));
-      if (Number.isFinite(t) && nowMs - t > maxAgeDays * 86400_000) {
+      if (!Number.isFinite(t)) {
+        warnings.push(`evidence ${String(e.id ?? '?')} has unparseable time; excluded from staleness check`);
+        continue;
+      }
+      if (nowMs - t > maxAgeDays * 86400_000) {
         staleEvidenceIds.push(String(e.id));
       }
     }

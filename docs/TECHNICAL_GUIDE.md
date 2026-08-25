@@ -1,6 +1,6 @@
 # Technical Guide
 
-[English](TECHNICAL_GUIDE.md) | [简体中文](TECHNICAL_GUIDE.zh-CN.md)
+[English](TECHNICAL_GUIDE.md) | [简体中文](https://github.com/240xu/tech-lead-skill/blob/main/docs/TECHNICAL_GUIDE.zh-CN.md)
 
 ## 1. Planning Model
 
@@ -91,7 +91,7 @@ On resume, reconcile saved state with the real environment. If they conflict, re
 
 ## 7. Future Toolization
 
-The skill deliberately remains prose-first. After at least three real projects, record repeated violations and near misses. Tool candidates should be chosen using both severity and frequency: a rare catastrophic invariant is not ignored merely because it is rare, while common low-risk checks are good efficiency candidates.
+Core judgment stays prose-first; a mechanical subset is machine-checkable: `bin/install.js --check|--dry-run` for install drift, and the optional DSH bundle (`packages/`) exposing nine read-only audit tools (classify, state validate, transition check, plan/evidence lint, gate precheck, release/install audit, resume card).
 
 ## 8. Release Readiness
 

@@ -4,7 +4,7 @@
  * Every tool computes over caller-supplied primitives/JSON strings:
  * - composite inputs arrive as JSON strings (parsed defensively),
  * - list inputs arrive as comma-separated values,
- * - outputs are pretty-printed JSON strings (uniform string schema).
+ * - outputs are pretty-printed JSON strings (uniform string schema); malformed inputs yield structured BAD_INPUT/invalid results instead of throws.
  *
  * No tool touches the filesystem, spawns processes, or performs network I/O.
  *
@@ -54,9 +54,9 @@ export function registerTools(defineTool, core) {
   tools.push(defineTool({
     name: 'tech_lead_state_validate',
     description:
-      'Validate a tech-lead project state.json (schema v1): enum fields, non-empty anchors on done items, full evidence provenance (id/level E0-E4/source/time/scope/repro). Unknown fields preserved as warnings.',
+      'Validate a tech-lead project state.json (schema v1): enum fields, non-empty anchors on done items, full evidence provenance (id/level E0-E4/source/time/scope/repro). Unknown fields preserved as warnings. Returns pretty-printed JSON string.',
     parameters: {
-      stateJson: { type: 'string', required: true, description: 'state.json content as a JSON string' },
+      stateJson: { type: 'string', required: true, description: 'state.json SERIALIZED AS A STRING — pass the JSON text itself, never a nested object' },
     },
     output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
     async execute(args) {
@@ -69,9 +69,9 @@ export function registerTools(defineTool, core) {
   tools.push(defineTool({
     name: 'tech_lead_transition_check',
     description:
-      'Check whether a proposed outcome transition (CONTINUE/PAUSE/SCOPE-DOWN/PIVOT/STOP) is mechanically justified by the given state. PIVOT needs recorded decisions; SCOPE-DOWN needs goal ledger + risks; STOP needs anchored done items or degraded_reason.',
+      'Check whether a proposed outcome transition (CONTINUE/PAUSE/SCOPE-DOWN/PIVOT/STOP) is mechanically justified by the given state. PIVOT needs recorded decisions; SCOPE-DOWN needs goal ledger + risks; STOP needs anchored done items or degraded_reason. Returns pretty-printed JSON string.',
     parameters: {
-      stateJson: { type: 'string', required: true, description: 'current state object as JSON string' },
+      stateJson: { type: 'string', required: true, description: 'current state object SERIALIZED AS A STRING (JSON text, not an object)' },
       proposed: { type: 'string', required: true, description: 'one of CONTINUE,PAUSE,SCOPE-DOWN,PIVOT,STOP' },
     },
     output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
@@ -85,9 +85,9 @@ export function registerTools(defineTool, core) {
   tools.push(defineTool({
     name: 'tech_lead_plan_lint',
     description:
-      'Lint a plan for the tech-lead minimum contracts: goal+metric+target ledger, assumption verification methods, decision alternatives+reasons, risk impacts+mitigations, dependency blockers, rollback for irreversible ops.',
+      'Lint a plan for the tech-lead minimum contracts: goal+metric+target ledger, assumption verification methods, decision alternatives+reasons, risk impacts+mitigations, dependency blockers, rollback for irreversible ops. Returns pretty-printed JSON array of findings.',
     parameters: {
-      planJson: { type: 'string', required: true, description: 'plan object as JSON string' },
+      planJson: { type: 'string', required: true, description: 'plan object SERIALIZED AS A STRING (JSON text, not an object)' },
     },
     output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
     async execute(args) {
@@ -100,9 +100,9 @@ export function registerTools(defineTool, core) {
   tools.push(defineTool({
     name: 'tech_lead_evidence_lint',
     description:
-      'Lint evidence entries for complete provenance (id/level E0-E4/source/time/scope/repro). With highRiskChange=true, requires at least one E3+ evidence item.',
+      'Lint evidence entries for complete provenance (id/level E0-E4/source/time/scope/repro). With highRiskChange=true, requires at least one E3+ evidence item. Returns pretty-printed JSON findings array.',
     parameters: {
-      evidenceJson: { type: 'string', required: true, description: 'evidence array as JSON string' },
+      evidenceJson: { type: 'string', required: true, description: 'evidence array SERIALIZED AS A STRING (JSON text, not an object)' },
       highRiskChange: { type: 'boolean', description: 'set true for high-risk changes' },
     },
     output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
@@ -116,7 +116,7 @@ export function registerTools(defineTool, core) {
   tools.push(defineTool({
     name: 'tech_lead_gate_precheck',
     description:
-      'Precheck a gate review: referee identity separation (proposer/executor must not review), per-report anchors, verdict vocabulary (pass|conditional|reject), solo-review prohibition on destructive scope, blind-gate quorum of ≥3 distinct anchored reviewers.',
+      'Precheck a gate review: referee identity separation (proposer/executor must not review), per-report anchors, verdict vocabulary (pass|conditional|reject), solo-review prohibition on destructive scope, blind-gate quorum of ≥3 distinct anchored reviewers. Returns {pass, violations[]}.',
     parameters: {
       inputJson: { type: 'string', required: true, description: '{proposalAuthorId?,executorId?,reviewerIds[],solo?,blindRequired?,destructiveScope[],reports[{reviewerId,verdict,anchors[]}]}' },
     },
@@ -131,7 +131,7 @@ export function registerTools(defineTool, core) {
   tools.push(defineTool({
     name: 'tech_lead_release_audit',
     description:
-      'Audit a release set: files outside the allowlist are EXTRA_FILE; when contents are provided, scans lines for absolute home paths, token-like literals (sk-/ghp_/AKIA/xox), credential assignments — each with line numbers. Read-only; never uploads anything.',
+      'Audit a release set: files outside the allowlist are EXTRA_FILE; when contents are provided, scans lines for absolute home paths, token-like literals (sk-/ghp_/AKIA/xox), credential assignments — each with line numbers. Read-only; never uploads anything. Returns pretty-printed JSON findings array.',
     parameters: {
       allowlistCsv: { type: 'string', required: true, description: 'comma-separated allowed relative paths' },
       filesJson: { type: 'string', required: true, description: '[{path, content?}] as JSON string' },
@@ -152,9 +152,9 @@ export function registerTools(defineTool, core) {
   tools.push(defineTool({
     name: 'tech_lead_install_audit',
     description:
-      'Detect install drift between an installed marker manifest and reality: missing managed files, unmanaged extras (backups ignored), version mismatch against the package.',
+      'Detect install drift between an installed marker manifest and reality: missing managed files, unmanaged extras (backups ignored), version mismatch against the package. Returns {missingManaged[], unmanaged[], versionMismatch, newInPackage[]}.',
     parameters: {
-      manifestJson: { type: 'string', required: true, description: 'marker {version, files[]} as JSON string' },
+      manifestJson: { type: 'string', required: true, description: 'marker {version, files[]} SERIALIZED AS A STRING (JSON text, not an object)' },
       actualFilesCsv: { type: 'string', required: true, description: 'comma-separated relative paths present under target' },
       pkgFilesCsv: { type: 'string', required: true, description: 'comma-separated managed paths in current package' },
       pkgVersion: { type: 'string', required: true, description: 'package version string' },
@@ -177,9 +177,9 @@ export function registerTools(defineTool, core) {
   tools.push(defineTool({
     name: 'tech_lead_resume_card',
     description:
-      'Render a three-line resume card from a tech-lead state: position (tier/phase/mode), last outcome, next step — plus stale-evidence detection (>maxAgeDays old) and warnings for empty next_step or open gates.',
+      'Render a three-line resume card from a tech-lead state: position (tier/phase/mode), last outcome, next step — plus stale-evidence detection (>maxAgeDays old) and warnings for empty next_step or open gates. Returns pretty-printed JSON card.',
     parameters: {
-      stateJson: { type: 'string', required: true, description: 'state object as JSON string' },
+      stateJson: { type: 'string', required: true, description: 'state object SERIALIZED AS A STRING (JSON text, not an object)' },
       nowIso: { type: 'string', description: 'reference time ISO string (defaults to real now)' },
       maxAgeDays: { type: 'number', description: 'stale threshold in days, default 7' },
     },

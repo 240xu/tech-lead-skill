@@ -44,7 +44,9 @@ if (args.includes('--help') || args.includes('-h')) {
     '  --dry-run         print planned actions without writing anything\n' +
     '  --uninstall       remove only manifest-managed files (keeps user files)\n' +
     '  --version         print version\n' +
-    '  --help            show this help'
+    '  --help            show this help\n' +
+    '\n' +
+    'Exit codes: 0 ok, 1 drift detected (--check), 2 usage/refusal error'
   );
   process.exit(0);
 }
@@ -58,7 +60,10 @@ function walkFiles(root) {
   const out = [];
   (function walk(rel) {
     const abs = path.join(root, rel);
-    for (const entry of fs.readdirSync(abs, { withFileTypes: true })) {
+    let entries;
+    try { entries = fs.readdirSync(abs, { withFileTypes: true }); }
+    catch (err) { console.warn('warn: cannot read ' + abs + ' (' + err.code + '), skipping'); return; }
+    for (const entry of entries) {
       const relPath = rel ? rel + '/' + entry.name : entry.name;
       if (entry.isDirectory()) walk(relPath);
       else out.push(relPath.split(path.sep).join('/'));
@@ -68,7 +73,7 @@ function walkFiles(root) {
 }
 
 function isBackup(rel) {
-  return /\.bak-\d+$/.test(rel);
+  return /\.bak-\d+(?:-\d+)?$/.test(rel);
 }
 
 function readMarker(target) {
@@ -79,17 +84,38 @@ function readMarker(target) {
   }
 }
 
+// A manifest entry may only address paths INSIDE target: blocks traversal via
+// tampered marker.files ("../x", absolute paths resolve under target anyway).
+function containedRel(target, rel) {
+  if (typeof rel !== 'string' || !rel || rel.includes('\\0')) return null;
+  const abs = path.resolve(target, rel);
+  const base = path.resolve(target);
+  const relCheck = path.relative(base, abs);
+  if (relCheck.startsWith('..') || path.isAbsolute(relCheck)) return null;
+  return relCheck.split(path.sep).join('/');
+}
+
 function sha256File(file) {
   return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 }
 
 function copyWithBackup(src, dest) {
+  if (fs.existsSync(dest) && fs.statSync(dest).isDirectory()) {
+    console.error('refusing: destination exists as a directory: ' + dest);
+    console.error('remove or rename it, then re-run the installer');
+    process.exit(2);
+  }
   if (fs.existsSync(dest)) {
-    const bak = dest + '.bak-' + Date.now();
+    const bak = dest + '.bak-' + Date.now() + '-' + process.pid;
     fs.copyFileSync(dest, bak);
     console.log('backup : ' + bak);
   }
   fs.copyFileSync(src, dest);
+}
+
+function isHomeDir(dir) {
+  try { return fs.realpathSync(dir) === fs.realpathSync(os.homedir()); }
+  catch (_) { return false; }
 }
 
 let target = argValue('--target') || defaultTarget;
@@ -107,10 +133,17 @@ if (args.includes('--uninstall')) {
   }
   let removed = 0;
   const dirsTouched = new Set();
-  for (const rel of marker.files) {
+  let wouldRemove = 0;
+  for (const raw of marker.files) {
+    const rel = containedRel(target, raw);
+    if (!rel) { console.warn('skipped unsafe manifest entry: ' + JSON.stringify(raw)); continue; }
     const abs = path.join(target, rel);
+    if (fs.existsSync(abs) && fs.statSync(abs).isDirectory()) {
+      console.warn('skipped directory entry (not managed): ' + rel);
+      continue;
+    }
     dirsTouched.add(path.dirname(abs));
-    if (dryRun) { console.log('would remove: ' + abs); continue; }
+    if (dryRun) { console.log('would remove: ' + abs); wouldRemove++; continue; }
     if (fs.existsSync(abs)) {
       fs.unlinkSync(abs);
       removed++;
@@ -139,12 +172,13 @@ if (args.includes('--uninstall')) {
     }
   })('');
   if (leftovers.length) {
-    console.log('kept (not managed):');
+    console.log(dryRun ? 'still present (dry-run; includes managed files):' : 'kept (not managed):');
     for (const rel of leftovers) console.log('  kept   : ' + rel);
-  } else if (!dryRun && target !== os.homedir()) {
+  } else if (!dryRun && !isHomeDir(target)) {
     try { fs.rmdirSync(target); console.log('removed empty target directory'); } catch (_) { /* keep */ }
   }
-  console.log((dryRun ? '[dry-run] would remove ' : 'removed ') + removed + ' managed entr' + (removed === 1 ? 'y' : 'ies'));
+  const count = dryRun ? wouldRemove : removed;
+  console.log((dryRun ? '[dry-run] would remove ' : 'removed ') + count + ' managed entr' + (count === 1 ? 'y' : 'ies'));
   process.exit(0);
 }
 
@@ -162,7 +196,9 @@ if (args.includes('--check')) {
   }
   const missing = [];
   const drifted = [];
-  for (const rel of marker.files) {
+  for (const raw of marker.files) {
+    const rel = containedRel(target, raw);
+    if (!rel) { console.warn('skipped unsafe manifest entry: ' + JSON.stringify(raw)); continue; }
     const abs = path.join(target, rel);
     const src = path.join(srcSkill, rel);
     if (!fs.existsSync(abs)) { missing.push(rel); continue; }

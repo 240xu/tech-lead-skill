@@ -16,7 +16,7 @@
 export function installAudit(manifest, actualFiles, pkgFiles, pkgVersion) {
   const managedSet = new Set(manifest?.files ?? []);
   const actualSet = new Set(actualFiles ?? []);
-  const isBackup = (rel) => /\.bak-\d+$/.test(rel);
+  const isBackup = (rel) => /\.bak-\d+(?:-\d+)?$/.test(rel);
 
   const missingManaged = (manifest?.files ?? []).filter((f) => !actualSet.has(f));
   const unmanaged = (actualFiles ?? []).filter((f) => !managedSet.has(f) && !isBackup(f)).sort();

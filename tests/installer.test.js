@@ -76,11 +76,11 @@ test('reinstall backs up existing managed files and keeps manifest accurate', ()
   const target = tmpDir();
   run(['--target', target]);
   run(['--target', target]);
-  const baks = fs.readdirSync(target).filter((f) => /^SKILL\.md\.bak-\d+$/.test(f));
+  const baks = fs.readdirSync(target).filter((f) => /^SKILL\.md\.bak-\d+(?:-\d+)?$/.test(f));
   assert.ok(baks.length >= 1, 'expected SKILL.md backup on reinstall');
   const tplBaks = fs
     .readdirSync(path.join(target, 'templates'))
-    .filter((f) => /state\.json\.bak-\d+$/.test(f));
+    .filter((f) => /state\.json\.bak-\d+(?:-\d+)?$/.test(f));
   assert.ok(tplBaks.length >= 1, 'expected state.json backup on reinstall');
 });
 
@@ -106,7 +106,7 @@ test('uninstall removes only managed files, preserves foreign files and backups'
   );
   const bakSurvived = fs
     .readdirSync(target)
-    .some((f) => /^SKILL\.md\.bak-\d+$/.test(f));
+    .some((f) => /^SKILL\.md\.bak-\d+(?:-\d+)?$/.test(f));
   assert.ok(bakSurvived, '.bak-* backups must survive uninstall');
 });
 
