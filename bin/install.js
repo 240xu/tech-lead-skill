@@ -208,7 +208,7 @@ if (args.includes('--check')) {
   if (drifted.length) hasError = true;
 
   const managedSet = new Set(marker.files);
-  const unmanaged = walkFiles(target).filter((rel) => !managedSet.has(rel) && !isBackup(rel));
+  const unmanaged = walkFiles(target).filter((rel) => !managedSet.has(rel) && !isBackup(rel) && rel !== markerName);
   if (missing.length) console.log('MISSING managed files:');
   for (const rel of missing) console.log('  missing: ' + rel);
   if (drifted.length) console.log('MODIFIED since install:');
