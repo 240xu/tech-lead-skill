@@ -29,5 +29,8 @@
     "planning",
     "agent",
     "tech-lead"
+  ],
+  "workspaces": [
+    "packages/*"
   ]
 }
