@@ -155,6 +155,7 @@ state.json 字段：{schema_version, mode, tier, phase, repository_mode, done[](
 损坏重建：最近 git tag ∩ gates/ 现存文件交叉重建，标 recovered_from:"<tag>@<commit>"。
 续跑前还要检查目标是否仍有效、证据是否过期、决策是否命中复查触发器、关键路径是否改变，并对账真实环境：文件版本/hash、服务状态、配置生效值、端口/健康检查、数据库迁移版本和当前部署版本。真实状态与计划冲突时，以真实状态为准，相关条目降为 [待重估]。废弃污染扫描：续跑前扫 deprecated 假设，下游仍引用者强制降回待办重做。
 仅在项目已采用 Git 标签、用户授权且恢复价值高于仓库噪声时打里程碑 tag；否则在 manifest/change record 记录恢复点。变更前建立 `pre-<变更>-<ts>` 或等效恢复点。
+state.json 是可机检格式（schema v1，`schema_version: 1`）：枚举字段（mode/tier/repository_mode/last_outcome）、done 的非空锚点、evidence 的完整溯源（id/level E0-E4/source/time/scope/repro）均可由工具校验（如 `@240xu/dsh-tech-lead-core` 的 validateState 或 DSH 工具 tech_lead_state_validate）；未知字段必须保留并降级为 warning，不得判无效。模板中的空 `updated_at` 在首次落盘时必须补齐。
 
 ## §8 变更管理
 用户中途改需求 ≠ 演进触发器：冻结当前里程碑 → 打恢复点 tag → Diff 新旧 → 受影响 Gate 重开 →
