@@ -7,8 +7,9 @@ test('plugin exposes the tech-lead capability catalog without changing its entry
   assert.deepEqual(inject, ['tools']);
   assert.equal(typeof apply, 'function');
   const capabilities = getCapabilities();
-  assert.equal(capabilities.length, 21);
+  assert.equal(capabilities.length, 22);
   assert.ok(capabilities.every((item) => item.sideEffects === false));
+  assert.ok(capabilities.every((item) => typeof item.recipe === 'string'));
 });
 
 test('capability catalog stays in lockstep with registered tool names', async () => {

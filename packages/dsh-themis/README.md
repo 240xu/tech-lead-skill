@@ -1,6 +1,6 @@
 # dsh-themis
 
-Themis — tech-lead lifecycle governance for DeepSeek Harness: **21 read-only tools**
+Themis — tech-lead lifecycle governance for DeepSeek Harness: **21 governance tools + discovery**
 (task tiering, state/plan/evidence validation, gate precheck/aggregation/reopen,
 release/install audits, context & progress analysis, critical path,
 resume reconciliation, mutation preview that always denies execution).

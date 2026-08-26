@@ -8,7 +8,7 @@ export { releaseAudit } from './release.js';
 export { installAudit } from './install.js';
 export { resumeCard } from './resume.js';
 export { makeEnvelope, okEnvelope, errorEnvelope } from './envelope.js';
-export { getCapabilities } from './capabilities.js';
+export { getCapabilities, capabilityFilterValues } from './capabilities.js';
 export { validateContext, normalizeContext } from './context.js';
 export { evidenceGraphLint, evidenceFreshness } from './evidence-graph.js';
 export { progressDecide } from './progress.js';

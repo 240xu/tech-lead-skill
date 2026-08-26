@@ -2,6 +2,7 @@ import { registerContextTools } from './tools/context.js';
 import { registerProgressTools } from './tools/progress.js';
 import { registerGateTools } from './tools/gates.js';
 import { registerMutationTools } from './tools/mutation.js';
+import { registerDiscoveryTools } from './tools/discovery.js';
 import { errorEnvelope, okEnvelope } from '@240xu/dsh-tech-lead-core';
 import { parseBoundedJson, renderEnvelope } from './protocol.js';
 
@@ -21,6 +22,8 @@ import { parseBoundedJson, renderEnvelope } from './protocol.js';
  * @param {Record<string, Function>} core pure validators (inlined under src/core in the published artifact)
  */
 export function registerTools(defineTool, core) {
+  // Registered tool names feed capability discovery so nextTools never
+  // advertises an entry point this bundle does not actually carry.
   // Legacy bare-shape helper: same {ok,error:string} contract, now bounded.
   // Budget failures surface their message inside the existing domain-invalid shapes.
   const json = (field, str, profile = 'default') => {
@@ -237,5 +240,8 @@ export function registerTools(defineTool, core) {
     tools.push(...registerGateTools(defineTool, core));
   }
   if (core.previewMutation) tools.push(...registerMutationTools(defineTool));
+  if (core.getCapabilities && typeof core.getCapabilities === 'function') {
+    tools.push(...registerDiscoveryTools(defineTool, core, tools.map((tool) => tool.name)));
+  }
   return tools;
 }

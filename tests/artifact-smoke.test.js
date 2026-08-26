@@ -7,13 +7,13 @@ import assert from 'node:assert/strict';
 
 const A = '../packages/dsh-themis/src/';
 
-test('artifact registers exactly 21 tools with a live core surface', async () => {
+test('artifact registers exactly 22 tools (governance + discovery) with a live core surface', async () => {
   const [{ registerTools }, core] = await Promise.all([
     import(A + 'tools.js'),
     import(A + 'core/index.js'),
   ]);
   const tools = registerTools((d) => d, core);
-  assert.equal(tools.length, 21);
+  assert.equal(tools.length, 22);
 });
 
 test('artifact envelope keeps contract meta authoritative; honest determinism allowed', async () => {

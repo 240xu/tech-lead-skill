@@ -54,7 +54,7 @@ if (!ymlText.includes("name: 'dsh-themis'")) {
 writeFileSync(join(out, 'README.md'), [
   '# dsh-themis',
   '',
-  'Themis — tech-lead lifecycle governance for DeepSeek Harness: **21 read-only tools**',
+  'Themis — tech-lead lifecycle governance for DeepSeek Harness: **21 governance tools + discovery**',
   '(task tiering, state/plan/evidence validation, gate precheck/aggregation/reopen,',
   'release/install audits, context & progress analysis, critical path,',
   'resume reconciliation, mutation preview that always denies execution).',
@@ -72,7 +72,7 @@ writeFileSync(join(out, 'README.md'), [
 const pkg = {
   name: 'dsh-themis',
   version: '1.1.0',
-  description: 'Themis — tech-lead lifecycle governance for DeepSeek Harness: 21 read-only tools (classify/state/plan/evidence/gates/release/install audits, context/evidence/progress analysis, mutation preview). No writes, no subprocesses, no network.',
+  description: 'Themis — tech-lead lifecycle governance for DeepSeek Harness: 21 governance tools plus capability discovery (classify/state/plan/evidence/gates/release/install audits, context/evidence/progress analysis, mutation preview). No writes, no subprocesses, no network.',
   license: 'MIT',
   type: 'module',
   main: 'src/index.js',

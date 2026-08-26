@@ -153,6 +153,11 @@ const cases: Case[] = [
     args: { intentJson: JSON.stringify({ mode: 'apply' }) },
     expect: (r) => r.ok === false && r.code === 'CAPABILITY_DENIED',
   },
+  {
+    tool: 'tech_lead_capabilities',
+    args: {},
+    expect: (r) => r.ok === true && r.data.capabilities.length === 22,
+  },
 ]
 
 const bad = (tool: string, args: Record<string, unknown>): Case => ({
@@ -175,6 +180,10 @@ const negCases: Case[] = [
   bad('tech_lead_gate_reopen', { previousJson: '{', currentJson: '{' }),
   bad('tech_lead_mutation_preview', { intentJson: '{' }),
 ]
+// Discovery filter rejection is a structured BAD_INPUT at the exact path.
+const negCasesExtra: Case[] = [
+  { tool: 'tech_lead_capabilities', args: { recipe: 'nope' }, expect: (r) => r.ok === false && r.errors[0].path === '/recipe' },
+];
 
 export const name = 'tech-lead-composition-driver'
 export const inject = ['tools']
@@ -200,14 +209,15 @@ export function apply(ctx: Context) {
         else { failures.push(`pos:${c.tool}`); console.log(`FAIL ${c.tool}`) }
       } catch (err) { failures.push(`pos:${c.tool}`); console.log(`FAIL ${c.tool}: threw ${(err as Error).message}`) }
     }
-    for (const c of negCases) {
+    const allNeg = [...negCases, ...negCasesExtra];
+    for (const c of allNeg) {
       try {
         if (c.expect(await execute(c))) { negPass++; console.log(`NEG-PASS ${c.tool}`) }
         else { failures.push(`neg:${c.tool}`); console.log(`NEG-FAIL ${c.tool}`) }
       } catch (err) { failures.push(`neg:${c.tool}`); console.log(`NEG-FAIL ${c.tool}: threw ${(err as Error).message}`) }
     }
     console.log(`TLT-PASS ${pass}/${cases.length}`)
-    console.log(`TLT-NEG ${negPass}/${negCases.length}`)
+    console.log(`TLT-NEG ${negPass}/${allNeg.length}`)
     if (failures.length) console.log('TLT-FAILURES ' + failures.join(','))
     setTimeout(() => process.exit(failures.length ? 1 : 0), 50)
   })()
