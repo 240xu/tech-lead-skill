@@ -135,3 +135,7 @@ Use the smallest applicable artifact set, but do not omit a required record mere
 ## Lifecycle results (R6)
 
 PAUSE/PIVOT/SCOPE-DOWN/STOP and gate non-pass states are valid `ok:true` analyses; `ok:false` is reserved for malformed input, budget overruns and incomplete scans (`SCAN_INCOMPLETE`). Guidance actions always carry `doneWhen` predicates.
+
+## Result protocol negotiation (R8)
+
+Every tool accepts `protocolJson`: `{"outputProtocol":"legacy|tech-lead.result.v1|tech-lead.result.v2","inputCompatibility":"strict|compat"}`. Strengthened tools default to the v2 envelope; the legacy audits stay bare by default and opt into envelopes explicitly. Unsupported selections return `UNSUPPORTED_SCHEMA_VERSION`. Canonical context: `projectStateToContextV2` performs a one-way v1→v2 projection; identity/fingerprint options are mandatory (`NON_CONVERTIBLE_STATE` otherwise); reverse conversion is deferred (see docs/superpowers/evidence/2026-08-26-r8-projection.md).

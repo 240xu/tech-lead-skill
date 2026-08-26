@@ -148,6 +148,6 @@ The executable skill body (`SKILL.md`) is authored in Simplified Chinese; coding
 
 ## Version
 
-Current version: `v5.5.1`.
+Current version: `v5.5.2`.
 
 See [`docs/TECHNICAL_GUIDE.md`](docs/TECHNICAL_GUIDE.md) for the full operating model and [`docs/AUDIT_REPORT.md`](docs/AUDIT_REPORT.md) for the publication audit.

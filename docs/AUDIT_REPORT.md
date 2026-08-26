@@ -35,7 +35,7 @@ The source set was scanned for local absolute paths, passwords, API-key prefixes
 ### Structural scan
 
 - YAML frontmatter has `name: tech-lead` and a trigger description.
-- The skill version is `v5.5.1`.
+- The skill version is `v5.5.2`. R8 adds one-way state→context-v2 projection (identity options mandatory), result-protocol negotiation on every tool, and the v2 wire label for strengthened envelopes; reverse projection is deferred as non-lossless (evidence/2026-08-26-r8-projection.md).
 - The eight templates referenced by the skill exist.
 - The installer validates options, requires a marker before removing any target, and records the managed package/version after installation.
 - The release-check template covers allowlist inventory, sensitive-content scanning, reference checks, scope checks, publication results, and remote verification.

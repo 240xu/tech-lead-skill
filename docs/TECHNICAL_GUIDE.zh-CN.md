@@ -135,3 +135,7 @@ Git 仓库用 commit/tag 记录源码与配置的版本谱系；非 Git 环境�
 ## Lifecycle results (R6)
 
 PAUSE/PIVOT/SCOPE-DOWN/STOP and gate non-pass states are valid `ok:true` analyses; `ok:false` is reserved for malformed input, budget overruns and incomplete scans (`SCAN_INCOMPLETE`). Guidance actions always carry `doneWhen` predicates.
+
+## 结果协议协商（R8）
+
+所有工具接受 `protocolJson`：`{"outputProtocol":"legacy|tech-lead.result.v1|tech-lead.result.v2","inputCompatibility":"strict|compat"}`。强化工具默认输出 v2 信封；五个 legacy 审计默认保持裸形态，可显式升级为信封。不支持的取值返回 `UNSUPPORTED_SCHEMA_VERSION`。规范上下文：`projectStateToContextV2` 提供单向 v1→v2 投影；身份/指纹选项必填（缺失返回 `NON_CONVERTIBLE_STATE`）；反向转换暂缓（见 docs/superpowers/evidence/2026-08-26-r8-projection.md）。
