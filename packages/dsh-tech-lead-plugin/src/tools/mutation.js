@@ -9,7 +9,7 @@ export function registerMutationTools(defineTool) {
     output: { schema: { type: 'string' }, render: (_a, value) => [{ type: 'text', text: value }] },
     async execute(args) {
       return runGuarded('mutation_preview', () => {
-        const parsed = parseJsonString(args?.intentJson, 'intentJson');
+        const parsed = parseJsonString(args?.intentJson, 'intentJson', 'mutation');
         if (!parsed.ok) return renderEnvelope(errorEnvelope('mutation_preview', parsed.error.code, [parsed.error]));
         return renderEnvelope(previewMutation(parsed.value));
       });

@@ -37,7 +37,8 @@ test('gatePrecheck guards null reports entries and non-array reports', () => {
   assert.equal(a.pass, false);
   assert.ok(a.violations.some((v) => v.type === 'BAD_REPORT'));
   const b = gatePrecheck({ reviewerIds: [], reports: 'nope' });
-  assert.equal(b.pass, true, 'non-array reports treated as absent');
+  assert.equal(b.pass, false, 'supplied malformed reports must fail closed');
+  assert.ok(b.violations.some((v) => v.type === 'BAD_REPORTS'));
 });
 
 test('gatePrecheck flags proposer identical to executor (referee separation)', () => {

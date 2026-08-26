@@ -5,8 +5,12 @@ import assert from 'node:assert/strict';
 // plugin adapters use, so both workspace runs and artifact runs stay honest.
 
 import {
-  inspectBounded, parseBoundedJson,
+  inspectBounded, parseBoundedJson, gatePrecheck,
 } from '../packages/dsh-tech-lead-core/src/index.js';
+import { registerTools } from '../packages/dsh-tech-lead-plugin/src/tools.js';
+import * as core from '../packages/dsh-tech-lead-core/src/index.js';
+
+const makeTools = () => registerTools((d) => d, core);
 
 test('parseBoundedJson accepts small valid JSON and reports complete inspection', () => {
   const r = parseBoundedJson('input', '{"a":1}', 'default');
@@ -86,4 +90,52 @@ test('inspectBounded is directly usable and never throws on hostile shapes', () 
   const hostile = JSON.parse('{"a":[{"b":null},{"c":[[],{}]}]}');
   const r = inspectBounded(hostile, { bytes: 9, items: 10, keys: 10, nodes: 10, depth: 4 });
   assert.equal(typeof r.complete, 'boolean');
+});
+
+test('core gatePrecheck rejects supplied malformed reports instead of passing them (C1)', () => {
+  const r = gatePrecheck({ reviewerIds: [], reports: 'nope' });
+  assert.equal(r.pass, false);
+  assert.ok(r.violations.some((v) => v.type === 'BAD_REPORTS'));
+});
+
+test('per-profile byte budgets surface INPUT_TOO_LARGE through adapters', async () => {
+  const tools = makeTools();
+  const tight = await tools.find((t) => t.name === 'tech_lead_mutation_preview').execute({
+    intentJson: '{"mode":"read-only-preview","pad":"' + 'x'.repeat(300000) + '"}',
+  });
+  assert.equal(JSON.parse(tight).code, 'INPUT_TOO_LARGE');
+  const wide = await tools.find((t) => t.name === 'tech_lead_context_validate').execute({
+    contextJson: '{"evidence":["' + 'x'.repeat(1200000) + '"]}',
+  });
+  assert.equal(JSON.parse(wide).code, 'INPUT_TOO_LARGE');
+});
+
+test('budget codes are promoted to the envelope top level for multi-field adapters', async () => {
+  const tools = makeTools();
+  const bigTasks = '[' + '{"id":"x"},'.repeat(40000) + '{"id":"y"}]';
+  const out = JSON.parse(await tools.find((t) => t.name === 'tech_lead_critical_path').execute({
+    tasksJson: bigTasks, dependenciesJson: '[]',
+  }));
+  assert.equal(out.ok, false);
+  assert.equal(out.code, 'INPUT_TOO_LARGE');
+  assert.equal(out.errors[0].path, 'tasksJson');
+});
+
+test('progress options budget failures fail closed without executing the decision', async () => {
+  const tools = makeTools();
+  const out = JSON.parse(await tools.find((t) => t.name === 'tech_lead_progress_decide').execute({
+    contextJson: '{}',
+    optionsJson: '{"forcePivot":' + '['.repeat(300000) + ']}',
+  }));
+  assert.equal(out.ok, false);
+  assert.ok(['INPUT_TOO_LARGE', 'BAD_INPUT'].includes(out.code));
+});
+
+test('legacy state_validate keeps its bare shape even for budget failures', async () => {
+  const tools = makeTools();
+  const out = JSON.parse(await tools.find((t) => t.name === 'tech_lead_state_validate').execute({
+    stateJson: '"' + 'a'.repeat(600000) + '"',
+  }));
+  assert.equal(out.valid, false);
+  assert.match(out.errors[0].message, /byte budget/);
 });

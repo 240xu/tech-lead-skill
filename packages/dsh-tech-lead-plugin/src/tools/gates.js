@@ -16,7 +16,7 @@ export function registerGateTools(defineTool, core) {
     async execute(args) {
       return runGuarded('gate_plan', () => {
         const input = parseJsonFields(args ?? {}, ['impactJson', 'contextJson']);
-        if (!input.ok) return renderEnvelope(errorEnvelope('gate_plan', 'BAD_INPUT', input.errors));
+        if (!input.ok) return renderEnvelope(errorEnvelope('gate_plan', input.code ?? 'BAD_INPUT', input.errors));
         const errors = [];
         for (const key of ['impactJson', 'contextJson']) {
           const value = input.values[key];
@@ -37,7 +37,7 @@ export function registerGateTools(defineTool, core) {
     async execute(args) {
       return runGuarded('gate_aggregate', () => {
         const input = parseJsonFields(args ?? {}, ['reportsJson', 'planJson']);
-        if (!input.ok) return renderEnvelope(errorEnvelope('gate_aggregate', 'BAD_INPUT', input.errors));
+        if (!input.ok) return renderEnvelope(errorEnvelope('gate_aggregate', input.code ?? 'BAD_INPUT', input.errors));
         const errors = [];
         if (!Array.isArray(input.values.reportsJson)) errors.push({ code: 'BAD_INPUT', path: 'reportsJson', message: 'expected JSON array' });
         const plan = input.values.planJson;
@@ -75,7 +75,7 @@ export function registerGateTools(defineTool, core) {
     async execute(args) {
       return runGuarded('gate_reopen', () => {
         const input = parseJsonFields(args ?? {}, ['previousJson', 'currentJson']);
-        if (!input.ok) return renderEnvelope(errorEnvelope('gate_reopen', 'BAD_INPUT', input.errors));
+        if (!input.ok) return renderEnvelope(errorEnvelope('gate_reopen', input.code ?? 'BAD_INPUT', input.errors));
         const errors = [];
         for (const key of ['previousJson', 'currentJson']) {
           const value = input.values[key];
