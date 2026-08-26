@@ -2,15 +2,18 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { makeEnvelope, okEnvelope, errorEnvelope } from '../src/envelope.js';
 
-test('success envelope has the stable result v1 shape', () => {
+test('success envelope has the stable result v2 shape', () => {
   const result = okEnvelope('state_validate', { valid: true });
   assert.deepEqual(result, {
     ok: true,
     code: 'OK',
     data: { valid: true },
+    findings: [],
+    guidance: null,
     errors: [],
     warnings: [],
     meta: {
+      complete: true,
       schema: 'tech-lead.result.v2',
       operation: 'state_validate',
       deterministic: true,

@@ -15,7 +15,9 @@ const nonEmpty = (v) => typeof v === 'string' && v.trim().length > 0;
 /**
  * Validate a tech-lead.context v2 payload.
  * strict: unknown top-level keys (outside `extensions`) are errors.
- * compat: unknown keys must live under `extensions` to pass opaquely.
+ * compat: unknown top-level keys are migrated into namespaced `extensions`
+ *   (key "migrated:<name>") and surface as EXTENSION_MIGRATED warnings, so
+ *   opaque data is never silently dropped by a forward-compatible consumer.
  */
 export function validateContextV2(raw, { mode = 'strict' } = {}) {
   const fail = (code, path, message) => ({ valid: false, code, errors: [{ path, message }] });
@@ -48,14 +50,20 @@ export function validateContextV2(raw, { mode = 'strict' } = {}) {
   if (unknown.length) {
     if (mode === 'strict') {
       for (const k of unknown) errors.push({ path: `/${k}`, message: 'unknown field; move it under /extensions or drop it (strict mode)' });
-    } else {
-      errors.push({ path: `/${unknown[0]}`, message: `compat mode keeps unknown fields only under extensions (${unknown.join(',')} found at top level)` });
     }
   }
   if (errors.length) return { valid: false, code: 'SCHEMA_INVALID', errors };
-  return { valid: true, code: 'OK', warnings: mode === 'compat'
-    ? Object.keys(raw.extensions ?? {}).map((k) => ({ code: 'EXTENSION_PASSTHROUGH', message: `opaque extension preserved: ${k}` }))
-    : [] };
+  const migrated = mode === 'compat' ? unknown : [];
+  const warnings = migrated.map((k) => ({
+    code: 'EXTENSION_MIGRATED',
+    message: `compat: top-level "${k}" preserved under extensions["migrated:${k}"]`,
+  }));
+  if (mode === 'compat' && isObj(raw.extensions)) {
+    for (const k of Object.keys(raw.extensions)) {
+      warnings.push({ code: 'EXTENSION_PASSTHROUGH', message: `opaque extension preserved: ${k}` });
+    }
+  }
+  return { valid: true, code: 'OK', warnings, migratedKeys: migrated };
 }
 
 /**
@@ -67,10 +75,9 @@ export function validateContextV2(raw, { mode = 'strict' } = {}) {
 export function projectStateToContextV2(state, options = {}) {
   const src = isObj(state) ? state : {};
   const opts = isObj(options) ? options : {};
-  const need = (key) => {
-    const v = opts[key];
-    return nonEmpty(String(v ?? '')) ? String(v) : null;
-  };
+  // Identity and provenance are never coerced: numbers, objects, or arrays
+  // must fail conversion instead of becoming '[object Object]' fingerprints.
+  const need = (key) => (typeof opts[key] === 'string' && nonEmpty(opts[key]) ? opts[key] : null);
   const projectId = need('projectId');
   const snapshotFingerprint = need('snapshotFingerprint');
   const missing = [];

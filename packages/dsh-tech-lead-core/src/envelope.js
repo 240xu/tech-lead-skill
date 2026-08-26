@@ -11,6 +11,8 @@ export function makeEnvelope({
   data = null,
   errors = [],
   warnings = [],
+  findings = [],
+  guidance = null,
   operation = 'unknown',
   meta = {},
 } = {}) {
@@ -18,10 +20,13 @@ export function makeEnvelope({
     ok: Boolean(ok),
     code,
     data,
+    findings: asArray(findings),
+    guidance,
     errors: asArray(errors),
     warnings: asArray(warnings),
     meta: {
       ...meta,
+      complete: meta.complete ?? true,
       schema: SCHEMA,
       operation,
       deterministic: meta.deterministic === false ? false : true,

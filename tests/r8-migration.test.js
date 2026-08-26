@@ -83,8 +83,12 @@ test('extensions survive both modes; unknown TOP-LEVEL fields are rejected (stri
   const strictRogue = validateContextV2(rogue, { mode: 'strict' });
   assert.equal(strictRogue.valid, false);
   assert.ok(strictRogue.errors.some((e) => e.path === '/rogue_top'));
+  // compat preserves unknown top-level keys by migrating them into
+  // namespaced extensions instead of rejecting the document outright.
   const compatRogue = validateContextV2(rogue, { mode: 'compat' });
-  assert.equal(compatRogue.valid, false);
+  assert.equal(compatRogue.valid, true);
+  assert.deepEqual(compatRogue.migratedKeys, ['rogue_top']);
+  assert.ok(compatRogue.warnings.some((w) => w.code === 'EXTENSION_MIGRATED'));
 });
 
 test('v1 string schema normalizes internally; wrong schema id is rejected', () => {

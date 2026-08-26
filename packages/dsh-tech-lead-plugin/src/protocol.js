@@ -19,9 +19,10 @@ export function applyProtocol(payload, args, operation, { defaultSelection = 'te
     envelope = okEnvelope(operation, payload ?? null);
   }
   if (selection === 'tech-lead.result.v1') {
-    return { ...envelope, meta: { ...envelope.meta, schema: 'tech-lead.result.v1' } };
+    return { ...envelope, meta: { ...envelope.meta, outputProtocol: selection, schema: 'tech-lead.result.v1' } };
   }
-  return envelopeToV2(envelope);
+  const v2 = envelopeToV2(envelope);
+  return { ...v2, meta: { ...v2.meta, outputProtocol: 'tech-lead.result.v2' } };
 }
 
 const BUDGET_CODES = new Set(['INPUT_TOO_LARGE', 'ITEM_LIMIT_EXCEEDED', 'SCAN_INCOMPLETE']);

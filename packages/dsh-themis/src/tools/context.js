@@ -1,4 +1,4 @@
-import { errorEnvelope, makeAction, normalizeGuidance, okEnvelope } from '../core/index.js';
+import { errorEnvelope, makeAction, normalizeGuidance, okEnvelope, parseProtocolOptions } from '../core/index.js';
 import { applyProtocol, parseJsonFields, parseJsonString, renderEnvelope, runGuarded } from '../protocol.js';
 
 export function registerContextTools(defineTool, core) {
@@ -12,7 +12,13 @@ export function registerContextTools(defineTool, core) {
       return runGuarded('context_validate', () => {
         const parsed = parseJsonString(args?.contextJson, 'contextJson', 'graph');
         if (!parsed.ok) return renderEnvelope(applyProtocol(errorEnvelope('context_validate', parsed.error.code, [parsed.error]), args, 'context_validate'));
-        const result = core.validateContext(parsed.value);
+        const proto = parseProtocolOptions(args?.protocolJson);
+        if (!proto.ok) return renderEnvelope(errorEnvelope('context_validate', proto.code, proto.errors));
+        const doc = parsed.value;
+        const isV2 = doc && typeof doc === 'object' && doc.schema === 'tech-lead.context' && Number(doc.version) === 2;
+        const result = isV2
+          ? core.validateContextV2(doc, { mode: proto.inputCompatibility === 'compat' ? 'compat' : 'strict' })
+          : core.validateContext(doc);
         if (!result.valid) {
           const errors = result.errors.map((item) => ({ code: 'SCHEMA_INVALID', path: item.path, message: item.message }));
           return renderEnvelope(applyProtocol(errorEnvelope('context_validate', 'SCHEMA_INVALID', errors, result), args, 'context_validate'));

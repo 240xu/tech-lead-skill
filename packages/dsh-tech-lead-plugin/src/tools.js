@@ -47,10 +47,27 @@ export function registerTools(defineTool, core) {
     }], { legacy: findings.slice(0, AUDIT_WINDOW) });
   };
 
+  // Every tool advertises protocolJson so schema-driven harnesses can discover
+  // result negotiation; the wire default stays per-tool-class (see applyProtocol).
+  const PROTOCOL_PARAM = {
+    type: 'string',
+    description: 'Result wire protocol: legacy | tech-lead.result.v1 | tech-lead.result.v2 (default per tool class)',
+  };
+  const def = (spec) => defineTool({
+    ...spec,
+    parameters: { ...(spec.parameters || {}), protocolJson: PROTOCOL_PARAM },
+  });
+  // Fail-closed envelopes (auditWindow SCAN_INCOMPLETE) pass through untouched;
+  // domain payloads negotiate per protocolJson with a bare legacy default.
+  const legacyOut = (payload, args, op) =>
+    payload && typeof payload === 'object' && payload.meta && payload.ok === false
+      ? payload
+      : applyProtocol(payload, args, op, { defaultSelection: 'legacy' });
+
   /** @type {ReturnType<defineTool>[]} */
   const tools = [];
 
-  tools.push(defineTool({
+  tools.push(def({
     name: 'tech_lead_classify',
     description:
       'Classify a task into tech-lead tiers T0/T1/T2 with reasons. T2 involves multi-module work, irreversible ops, protected assets (user data/secrets/runtime), or public interfaces. Use before planning.',
@@ -75,11 +92,11 @@ export function registerTools(defineTool, core) {
             publicInterfaceChange: args.publicInterfaceChange,
             uncertainRisk: args.uncertainRisk,
           };
-      return out(core.classify(input));
+      return out(legacyOut(core.classify(input), args, 'classify'));
     },
   }));
 
-  tools.push(defineTool({
+  tools.push(def({
     name: 'tech_lead_state_validate',
     description:
       'Validate a tech-lead project state.json (schema v1): enum fields, non-empty anchors on done items, full evidence provenance (id/level E0-E4/source/time/scope/repro). Unknown fields preserved as warnings. Returns pretty-printed JSON string.',
@@ -94,7 +111,7 @@ export function registerTools(defineTool, core) {
     },
   }));
 
-  tools.push(defineTool({
+  tools.push(def({
     name: 'tech_lead_transition_check',
     description:
       'Check whether a proposed outcome transition (CONTINUE/PAUSE/SCOPE-DOWN/PIVOT/STOP) is mechanically justified by the given state. PIVOT needs recorded decisions; SCOPE-DOWN needs goal ledger + risks; STOP needs anchored done items or degraded_reason. Returns pretty-printed JSON string.',
@@ -105,12 +122,12 @@ export function registerTools(defineTool, core) {
     output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
     async execute(args) {
       const parsed = json('stateJson', args.stateJson, 'state');
-      if (!parsed.ok) return out({ allowed: false, reason: parsed.error });
-      return out(core.transitionCheck(parsed.value, args.proposed));
+      if (!parsed.ok) return out(legacyOut({ allowed: false, reason: parsed.error }, args, 'transition_check'));
+      return out(legacyOut(core.transitionCheck(parsed.value, args.proposed), args, 'transition_check'));
     },
   }));
 
-  tools.push(defineTool({
+  tools.push(def({
     name: 'tech_lead_plan_lint',
     description:
       'Lint a plan for the tech-lead minimum contracts: goal+metric+target ledger, assumption verification methods, decision alternatives+reasons, risk impacts+mitigations, dependency blockers, rollback for irreversible ops. Returns pretty-printed JSON array of findings.',
@@ -120,12 +137,12 @@ export function registerTools(defineTool, core) {
     output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
     async execute(args) {
       const parsed = json('planJson', args.planJson);
-      if (!parsed.ok) return out([{ severity: 'error', path: 'planJson', message: parsed.error }]);
-      return out(auditWindow(core.planLint(parsed.value), 'plan_lint'));
+      if (!parsed.ok) return out(legacyOut([{ severity: 'error', path: 'planJson', message: parsed.error }], args, 'plan_lint'));
+      return out(legacyOut(auditWindow(core.planLint(parsed.value), 'plan_lint'), args, 'plan_lint'));
     },
   }));
 
-  tools.push(defineTool({
+  tools.push(def({
     name: 'tech_lead_evidence_lint',
     description:
       'Lint evidence entries for complete provenance (id/level E0-E4/source/time/scope/repro). With highRiskChange=true, requires at least one E3+ evidence item. Returns pretty-printed JSON findings array.',
@@ -136,12 +153,12 @@ export function registerTools(defineTool, core) {
     output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
     async execute(args) {
       const parsed = json('evidenceJson', args.evidenceJson, 'release');
-      if (!parsed.ok) return out([{ severity: 'error', path: 'evidenceJson', message: parsed.error }]);
-      return out(auditWindow(core.evidenceLint(parsed.value, { highRiskChange: args.highRiskChange }), 'evidence_lint'));
+      if (!parsed.ok) return out(legacyOut([{ severity: 'error', path: 'evidenceJson', message: parsed.error }], args, 'evidence_lint'));
+      return out(legacyOut(auditWindow(core.evidenceLint(parsed.value, { highRiskChange: args.highRiskChange }), 'evidence_lint'), args, 'evidence_lint'));
     },
   }));
 
-  tools.push(defineTool({
+  tools.push(def({
     name: 'tech_lead_gate_precheck',
     description:
       'Precheck a gate review: referee identity separation (proposer/executor must not review), per-report anchors, verdict vocabulary (pass|conditional|reject), solo-review prohibition on destructive scope, blind-gate quorum of ≥3 distinct anchored reviewers. Returns a tech-lead.result.v1 envelope whose data carries {pass, violations[]}; supplied-but-malformed reports fail closed as BAD_REPORTS.',
@@ -159,7 +176,7 @@ export function registerTools(defineTool, core) {
     },
   }));
 
-  tools.push(defineTool({
+  tools.push(def({
     name: 'tech_lead_release_audit',
     description:
       'Audit a release set: files outside the allowlist are EXTRA_FILE; when contents are provided, scans lines for absolute home paths, token-like literals (sk-/ghp_/AKIA/xox), credential assignments — each with line numbers. Read-only; never uploads anything. Returns pretty-printed JSON findings array.',
@@ -171,16 +188,16 @@ export function registerTools(defineTool, core) {
     output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
     async execute(args) {
       const parsed = json('filesJson', args.filesJson, 'release');
-      if (!parsed.ok) return out([{ type: 'BAD_INPUT', path: 'filesJson', line: 0, detail: parsed.error }]);
-      return out(auditWindow(core.releaseAudit({
+      if (!parsed.ok) return out(legacyOut([{ type: 'BAD_INPUT', path: 'filesJson', line: 0, detail: parsed.error }], args, 'release_audit'));
+      return out(legacyOut(auditWindow(core.releaseAudit({
         allowlist: csv(args.allowlistCsv),
         files: parsed.value,
         contentScan: args.contentScan,
-      }), 'release_audit'));
+      }), 'release_audit'), args, 'release_audit'));
     },
   }));
 
-  tools.push(defineTool({
+  tools.push(def({
     name: 'tech_lead_install_audit',
     description:
       'Detect install drift between an installed marker manifest and reality: missing managed files, unmanaged extras (backups ignored), version mismatch against the package. Returns {missingManaged[], unmanaged[], versionMismatch, newInPackage[]}.',
@@ -194,18 +211,18 @@ export function registerTools(defineTool, core) {
     async execute(args) {
       const parsed = json('manifestJson', args.manifestJson, 'state');
       if (!parsed.ok || !parsed.value || !Array.isArray(parsed.value.files)) {
-        return out({ missingManaged: [], unmanaged: [], versionMismatch: false, newInPackage: [], error: 'manifestJson must be {version, files[]}' });
+        return out(legacyOut({ missingManaged: [], unmanaged: [], versionMismatch: false, newInPackage: [], error: 'manifestJson must be {version, files[]}' }, args, 'install_audit'));
       }
-      return out(core.installAudit(
+      return out(legacyOut(core.installAudit(
         parsed.value,
         csv(args.actualFilesCsv),
         csv(args.pkgFilesCsv),
         args.pkgVersion
-      ));
+      ), args, 'install_audit'));
     },
   }));
 
-  tools.push(defineTool({
+  tools.push(def({
     name: 'tech_lead_resume_card',
     description:
       'Render a three-line resume card from a tech-lead state: position (tier/phase/mode), last outcome, next step — plus stale-evidence detection (>maxAgeDays old) and warnings for empty next_step or open gates. Returns pretty-printed JSON card.',
@@ -218,30 +235,31 @@ export function registerTools(defineTool, core) {
     async execute(args) {
       const parsed = json('stateJson', args.stateJson, 'state');
       if (!parsed.ok) {
-        return out({ position: '?', lastGate: '?', nextStep: '(invalid state)', staleEvidenceIds: [], warnings: [parsed.error] });
+        return out(legacyOut({ position: '?', lastGate: '?', nextStep: '(invalid state)', staleEvidenceIds: [], warnings: [parsed.error] }, args, 'resume_card'));
       }
       const card = core.resumeCard(parsed.value, { now: args.nowIso, maxAgeDays: args.maxAgeDays });
       const runtimeClock = !args.nowIso || Number.isNaN(Date.parse(args.nowIso));
-      return out(runtimeClock
+      const cardOut = runtimeClock
         ? { ...card, warnings: [...card.warnings, 'clockSource: runtime clock — pass nowIso for deterministic output'] }
-        : card);
+        : card;
+      return out(legacyOut(cardOut, args, 'resume_card'));
     },
   }));
 
   if (core.validateContext && core.evidenceGraphLint && core.evidenceFreshness) {
     // Domain registration stays optional so the legacy nine-tool contract can
     // be reused by callers that supply only the original core surface.
-    tools.push(...registerContextTools(defineTool, core));
+    tools.push(...registerContextTools(def, core));
   }
   if (core.progressDecide && core.criticalPath && core.changeImpact) {
-    tools.push(...registerProgressTools(defineTool, core));
+    tools.push(...registerProgressTools(def, core));
   }
   if (core.gatePlan && core.gateAggregate && core.gateReopen) {
-    tools.push(...registerGateTools(defineTool, core));
+    tools.push(...registerGateTools(def, core));
   }
-  if (core.previewMutation) tools.push(...registerMutationTools(defineTool));
+  if (core.previewMutation) tools.push(...registerMutationTools(def));
   if (core.getCapabilities && typeof core.getCapabilities === 'function') {
-    tools.push(...registerDiscoveryTools(defineTool, core, tools.map((tool) => tool.name)));
+    tools.push(...registerDiscoveryTools(def, core, tools.map((tool) => tool.name)));
   }
   return tools;
 }

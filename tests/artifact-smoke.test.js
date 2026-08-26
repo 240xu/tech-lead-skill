@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 // These probes execute the SHIPPED artifact (packages/dsh-themis) — the same
 // tree that goes to npm — not the workspace sources. Guards against assembly
@@ -112,4 +113,27 @@ test('resume_reconcile reports scalar-root drift keys via plugin protocol', asyn
   assert.equal(typeof proto.canonicalStringify, 'function');
   const changed = JSON.stringify(proto.canonicalStringify('old')) !== JSON.stringify(proto.canonicalStringify('new'));
   assert.equal(changed, true);
+});
+
+test('artifact R8.1: protocolJson declared everywhere + legacy opt-in + v2 metadata', async () => {
+  const [{ registerTools }, core] = await Promise.all([
+    import(A + 'tools.js'),
+    import(A + 'core/index.js'),
+  ]);
+  const tools = registerTools((d) => d, core);
+  assert.equal(tools.length, 22);
+  assert.deepEqual(tools.filter((t) => !t.parameters?.protocolJson).map((t) => t.name), []);
+
+  const state = readFileSync(new URL('./fixtures/state-v1/normal.json', import.meta.url), 'utf8');
+  const sv = tools.find((t) => t.name === 'tech_lead_state_validate');
+  const bare = JSON.parse(await sv.execute({ stateJson: state }));
+  assert.equal(bare.meta, undefined);
+  const v1 = JSON.parse(await sv.execute({ stateJson: state, protocolJson: '{"outputProtocol":"tech-lead.result.v1"}' }));
+  assert.equal(v1.meta.schema, 'tech-lead.result.v1');
+
+  const pd = tools.find((t) => t.name === 'tech_lead_progress_decide');
+  const env = JSON.parse(await pd.execute({ contextJson: '{}' }));
+  assert.equal(env.meta.outputProtocol, 'tech-lead.result.v2');
+  assert.equal(env.meta.complete, true);
+  assert.ok(Array.isArray(env.findings));
 });

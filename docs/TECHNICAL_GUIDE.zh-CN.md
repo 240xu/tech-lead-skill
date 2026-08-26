@@ -138,4 +138,4 @@ PAUSE/PIVOT/SCOPE-DOWN/STOP and gate non-pass states are valid `ok:true` analyse
 
 ## 结果协议协商（R8）
 
-所有工具接受 `protocolJson`：`{"outputProtocol":"legacy|tech-lead.result.v1|tech-lead.result.v2","inputCompatibility":"strict|compat"}`。强化工具默认输出 v2 信封；五个 legacy 审计默认保持裸形态，可显式升级为信封。不支持的取值返回 `UNSUPPORTED_SCHEMA_VERSION`。规范上下文：`projectStateToContextV2` 提供单向 v1→v2 投影；身份/指纹选项必填（缺失返回 `NON_CONVERTIBLE_STATE`）；反向转换暂缓（见 docs/superpowers/evidence/2026-08-26-r8-projection.md）。
+所有工具接受 `protocolJson`：`{"outputProtocol":"legacy|tech-lead.result.v1|tech-lead.result.v2","inputCompatibility":"strict|compat"}`。强化工具默认输出 v2 信封；全部九个裸形态 legacy 工具默认保持原样，显式请求时协商升级；SCAN_INCOMPLETE 失闭信封恒直通不剥壳。`inputCompatibility:"compat"` 会把上下文顶层未知键迁移进 namespaced extensions（EXTENSION_MIGRATED 警告）而非拒绝；strict 则拒绝。该参数已声明于全部工具 schema。不支持的取值返回 `UNSUPPORTED_SCHEMA_VERSION`。 规范 v2 文档由 tech_lead_context_validate 路由到 validateContextV2；gate_precheck 自 R6 起恒信封输出。规范上下文：`projectStateToContextV2` 提供单向 v1→v2 投影；身份/指纹选项必填（缺失返回 `NON_CONVERTIBLE_STATE`）；反向转换暂缓（见 docs/superpowers/evidence/2026-08-26-r8-projection.md）。
