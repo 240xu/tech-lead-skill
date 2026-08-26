@@ -31,6 +31,11 @@
 
 ## 安装
 
+先选版本：
+
+- **纯文本规范，任意 agent 环境**（opencode / Claude Code / Codex）→ `tech-lead-skill`
+- **带机器可校验只读工具的 DSH 插件** → `dsh-themis`
+
 ### npm 方式（GitHub 源，无需注册账号）
 
 ```bash
@@ -50,7 +55,7 @@ npx github:240xu/tech-lead-skill
 
 ### DeepSeek Harness 插件（只读工具）
 
-已上架 DSH 插件市场（npm）——**单一自包含包**，任意 profile 一键安装：
+**DSH 用户看这里：** 已上架 DSH 插件市场（npm）——**单一自包含包**，任意 profile 一键安装：
 
 ```
 dsh plugin --profile headless add dsh-themis
@@ -150,6 +155,6 @@ dsh --profile headless --dump-config   # 确认 tech-lead-tools 行已注入
 
 ## 版本
 
-当前版本：`v5.5.4`.
+当前版本：`v5.5.5`.
 
 完整运行模型见[技术指南](./docs/TECHNICAL_GUIDE.zh-CN.md)，发布审计见 [docs/AUDIT_REPORT.md](docs/AUDIT_REPORT.md)。

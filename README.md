@@ -31,6 +31,11 @@ goal -> constraints/assumptions -> L0/L1/L2 plan -> execute -> observe evidence
 
 ## Install
 
+Pick your edition:
+
+- **Prose skill for any agent environment** (opencode / Claude Code / Codex) → `tech-lead-skill`
+- **DSH plugin with machine-checked read-only tools** → `dsh-themis`
+
 ### npm (GitHub-hosted, no registry account needed)
 
 ```bash
@@ -50,9 +55,9 @@ The installer is idempotent: repeated runs back up existing files as `*.bak-<tim
 
 ### DeepSeek Harness plugin (read-only tools)
 
-Ships on the DSH plugin market (npm) as ONE self-contained package, **`dsh-themis`** — named after the goddess of divine order: gates as verdicts, evidence weighed, releases audited. Install into any profile:
+**For DSH users:** ships on the DSH plugin market (npm) as ONE self-contained package, **`dsh-themis`** — named after the goddess of divine order: gates as verdicts, evidence weighed, releases audited. Install into any profile:
 
-```
+```bash
 dsh plugin --profile headless add dsh-themis
 ```
 
@@ -150,6 +155,6 @@ The executable skill body (`SKILL.md`) is authored in Simplified Chinese; coding
 
 ## Version
 
-Current version: `v5.5.4`.
+Current version: `v5.5.5`.
 
 See [`docs/TECHNICAL_GUIDE.md`](docs/TECHNICAL_GUIDE.md) for the full operating model and [`docs/AUDIT_REPORT.md`](docs/AUDIT_REPORT.md) for the publication audit.
