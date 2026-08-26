@@ -1,5 +1,5 @@
 import { errorEnvelope, makeAction, normalizeGuidance, okEnvelope } from '@240xu/dsh-tech-lead-core';
-import { parseJsonFields, parseJsonString, renderEnvelope, runGuarded } from '../protocol.js';
+import { applyProtocol, parseJsonFields, parseJsonString, renderEnvelope, runGuarded } from '../protocol.js';
 
 export function registerContextTools(defineTool, core) {
   const output = [];
@@ -11,13 +11,13 @@ export function registerContextTools(defineTool, core) {
     async execute(args) {
       return runGuarded('context_validate', () => {
         const parsed = parseJsonString(args?.contextJson, 'contextJson', 'graph');
-        if (!parsed.ok) return renderEnvelope(errorEnvelope('context_validate', parsed.error.code, [parsed.error]));
+        if (!parsed.ok) return renderEnvelope(applyProtocol(errorEnvelope('context_validate', parsed.error.code, [parsed.error]), args, 'context_validate'));
         const result = core.validateContext(parsed.value);
         if (!result.valid) {
           const errors = result.errors.map((item) => ({ code: 'SCHEMA_INVALID', path: item.path, message: item.message }));
-          return renderEnvelope(errorEnvelope('context_validate', 'SCHEMA_INVALID', errors, result));
+          return renderEnvelope(applyProtocol(errorEnvelope('context_validate', 'SCHEMA_INVALID', errors, result), args, 'context_validate'));
         }
-        return renderEnvelope(okEnvelope('context_validate', result));
+        return renderEnvelope(applyProtocol(okEnvelope('context_validate', result), args, 'context_validate'));
       });
     },
   }));
@@ -29,11 +29,12 @@ export function registerContextTools(defineTool, core) {
     async execute(args) {
       return runGuarded('evidence_graph_lint', () => {
         const parsed = parseJsonString(args?.contextJson, 'contextJson', 'graph');
-        if (!parsed.ok) return renderEnvelope(errorEnvelope('evidence_graph_lint', parsed.error.code, [parsed.error]));
+        if (!parsed.ok) return renderEnvelope(applyProtocol(errorEnvelope('evidence_graph_lint', parsed.error.code, [parsed.error]), args, 'evidence_graph_lint'));
         const result = core.evidenceGraphLint(parsed.value);
-        return renderEnvelope(result.valid
+        return renderEnvelope(applyProtocol(result.valid
           ? okEnvelope('evidence_graph_lint', result)
-          : errorEnvelope('evidence_graph_lint', 'SCHEMA_INVALID', result.findings, result));
+          : errorEnvelope('evidence_graph_lint', 'SCHEMA_INVALID', result.findings, result), args, 'evidence_graph_lint'));
+
       });
     },
   }));
@@ -48,11 +49,11 @@ export function registerContextTools(defineTool, core) {
     async execute(args) {
       return runGuarded('evidence_freshness', () => {
         const input = parseJsonFields(args ?? {}, ['contextJson']);
-        if (!input.ok) return renderEnvelope(errorEnvelope('evidence_freshness', input.code ?? 'BAD_INPUT', input.errors));
+        if (!input.ok) return renderEnvelope(applyProtocol(errorEnvelope('evidence_freshness', input.code ?? 'BAD_INPUT', input.errors), args, 'evidence_freshness'));
         let options = {};
         if (args.optionsJson != null && args.optionsJson !== '') {
           const parsedOptions = parseJsonString(args.optionsJson, 'optionsJson');
-          if (!parsedOptions.ok) return renderEnvelope(errorEnvelope('evidence_freshness', parsedOptions.error.code, [parsedOptions.error]));
+          if (!parsedOptions.ok) return renderEnvelope(applyProtocol(errorEnvelope('evidence_freshness', parsedOptions.error.code, [parsedOptions.error]), args, 'evidence_freshness'));
           options = parsedOptions.value && typeof parsedOptions.value === 'object' && !Array.isArray(parsedOptions.value) ? parsedOptions.value : {};
         }
         const clockPinned = typeof options.now === 'string' && Number.isFinite(Date.parse(options.now));
@@ -74,7 +75,7 @@ export function registerContextTools(defineTool, core) {
         const envelope = okEnvelope('evidence_freshness', data, result.warnings);
         envelope.meta.deterministic = clockPinned;
         if (!clockPinned) envelope.meta.clockSource = 'runtime';
-        return renderEnvelope(envelope);
+        return renderEnvelope(applyProtocol(envelope, args, 'evidence_freshness'));
       });
     },
   }));
@@ -86,7 +87,7 @@ export function registerContextTools(defineTool, core) {
     async execute(args) {
       return runGuarded('assumption_register', () => {
         const parsed = parseJsonString(args?.contextJson, 'contextJson', 'graph');
-        if (!parsed.ok) return renderEnvelope(errorEnvelope('assumption_register', parsed.error.code, [parsed.error]));
+        if (!parsed.ok) return renderEnvelope(applyProtocol(errorEnvelope('assumption_register', parsed.error.code, [parsed.error]), args, 'assumption_register'));
         const assumptions = Array.isArray(parsed.value?.assumptions) ? parsed.value.assumptions : [];
         const items = assumptions.map((item, index) => ({
           id: item?.id ?? `assumption-${index + 1}`,
@@ -110,7 +111,7 @@ export function registerContextTools(defineTool, core) {
           path: `/assumptions/${item.id}`,
           message: 'assumption lacks a verification method',
         }));
-        return renderEnvelope(okEnvelope('assumption_register', { items: enriched }, warnings));
+        return renderEnvelope(applyProtocol(okEnvelope('assumption_register', { items: enriched }, warnings), args, 'assumption_register'));
       });
     },
   }));

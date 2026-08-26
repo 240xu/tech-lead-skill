@@ -19,7 +19,7 @@ test('artifact registers exactly 22 tools (governance + discovery) with a live c
 test('artifact envelope keeps contract meta authoritative; honest determinism allowed', async () => {
   const { makeEnvelope } = await import(A + 'core/envelope.js');
   const e = makeEnvelope({ meta: { schema: 'evil', deterministic: false, sideEffects: true } });
-  assert.equal(e.meta.schema, 'tech-lead.result.v1');
+  assert.equal(e.meta.schema, 'tech-lead.result.v2');
   assert.equal(e.meta.deterministic, false);
   assert.equal(e.meta.sideEffects, false);
 });

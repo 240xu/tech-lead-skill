@@ -1,4 +1,4 @@
-const SCHEMA = 'tech-lead.result.v1';
+const SCHEMA = 'tech-lead.result.v2';
 
 const asArray = (value) => {
   if (value == null) return [];

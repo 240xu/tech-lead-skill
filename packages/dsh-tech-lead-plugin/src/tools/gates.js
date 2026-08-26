@@ -1,5 +1,5 @@
 import { errorEnvelope, makeAction, normalizeGuidance, okEnvelope } from '@240xu/dsh-tech-lead-core';
-import { parseJsonFields, renderEnvelope, runGuarded } from '../protocol.js';
+import { applyProtocol, parseJsonFields, renderEnvelope, runGuarded } from '../protocol.js';
 
 const FINGERPRINT_KEYS = ['contextFingerprint', 'evidenceFingerprint', 'dependencyFingerprint', 'impactFingerprint'];
 
@@ -16,14 +16,14 @@ export function registerGateTools(defineTool, core) {
     async execute(args) {
       return runGuarded('gate_plan', () => {
         const input = parseJsonFields(args ?? {}, ['impactJson', 'contextJson']);
-        if (!input.ok) return renderEnvelope(errorEnvelope('gate_plan', input.code ?? 'BAD_INPUT', input.errors));
+        if (!input.ok) return renderEnvelope(applyProtocol(errorEnvelope('gate_plan', input.code ?? 'BAD_INPUT', input.errors), args, 'gate_plan'));
         const errors = [];
         for (const key of ['impactJson', 'contextJson']) {
           const value = input.values[key];
           if (value === null || typeof value !== 'object' || Array.isArray(value)) errors.push({ code: 'BAD_INPUT', path: key, message: 'expected JSON object' });
         }
-        if (errors.length) return renderEnvelope(errorEnvelope('gate_plan', 'BAD_INPUT', errors));
-        return renderEnvelope(okEnvelope('gate_plan', core.gatePlan(input.values.impactJson, input.values.contextJson)));
+        if (errors.length) return renderEnvelope(applyProtocol(errorEnvelope('gate_plan', 'BAD_INPUT', errors), args, 'gate_plan'));
+        return renderEnvelope(applyProtocol(okEnvelope('gate_plan', core.gatePlan(input.values.impactJson, input.values.contextJson)), args, 'gate_plan'));
       });
     },
   });
@@ -37,7 +37,7 @@ export function registerGateTools(defineTool, core) {
     async execute(args) {
       return runGuarded('gate_aggregate', () => {
         const input = parseJsonFields(args ?? {}, ['reportsJson', 'planJson']);
-        if (!input.ok) return renderEnvelope(errorEnvelope('gate_aggregate', input.code ?? 'BAD_INPUT', input.errors));
+        if (!input.ok) return renderEnvelope(applyProtocol(errorEnvelope('gate_aggregate', input.code ?? 'BAD_INPUT', input.errors), args, 'gate_aggregate'));
         const errors = [];
         if (!Array.isArray(input.values.reportsJson)) errors.push({ code: 'BAD_INPUT', path: 'reportsJson', message: 'expected JSON array' });
         const plan = input.values.planJson;
@@ -46,7 +46,7 @@ export function registerGateTools(defineTool, core) {
         } else if (!Array.isArray(plan.requiredRoles) || plan.requiredRoles.length === 0 || !Number.isInteger(plan.quorum) || plan.quorum <= 0) {
           errors.push({ code: 'BAD_INPUT', path: 'planJson', message: 'plan needs non-empty requiredRoles and a positive integer quorum' });
         }
-        if (errors.length) return renderEnvelope(errorEnvelope('gate_aggregate', 'BAD_INPUT', errors));
+        if (errors.length) return renderEnvelope(applyProtocol(errorEnvelope('gate_aggregate', 'BAD_INPUT', errors), args, 'gate_aggregate'));
         const result = core.gateAggregate(input.values.reportsJson, plan);
         const reports = Array.isArray(input.values.reportsJson) ? input.values.reportsJson : [];
         const conditionalCount = reports.filter((report) => report && report.verdict === 'conditional').length;
@@ -104,7 +104,7 @@ export function registerGateTools(defineTool, core) {
         }
         const guidance = normalizeGuidance({ mode: 'strict', outcome: result.pass ? 'CONTINUE' : 'PAUSE', meaning: result.pass ? undefined : 'Gate is not passed yet.', actions });
         const enriched = { ...result, findings: [...result.findings, ...derived], guidance };
-        return renderEnvelope(okEnvelope('gate_aggregate', enriched));
+        return renderEnvelope(applyProtocol(okEnvelope('gate_aggregate', enriched), args, 'gate_aggregate'));
       });
     },
   });
@@ -118,17 +118,17 @@ export function registerGateTools(defineTool, core) {
     async execute(args) {
       return runGuarded('gate_reopen', () => {
         const input = parseJsonFields(args ?? {}, ['previousJson', 'currentJson']);
-        if (!input.ok) return renderEnvelope(errorEnvelope('gate_reopen', input.code ?? 'BAD_INPUT', input.errors));
+        if (!input.ok) return renderEnvelope(applyProtocol(errorEnvelope('gate_reopen', input.code ?? 'BAD_INPUT', input.errors), args, 'gate_reopen'));
         const errors = [];
         for (const key of ['previousJson', 'currentJson']) {
           const value = input.values[key];
           const usable = value !== null && typeof value === 'object' && !Array.isArray(value) && FINGERPRINT_KEYS.some((k) => value[k] !== undefined);
           if (!usable) errors.push({ code: 'BAD_INPUT', path: key, message: `expected an object containing at least one of: ${FINGERPRINT_KEYS.join(', ')}` });
         }
-        if (errors.length) return renderEnvelope(errorEnvelope('gate_reopen', 'BAD_INPUT', errors));
+        if (errors.length) return renderEnvelope(applyProtocol(errorEnvelope('gate_reopen', 'BAD_INPUT', errors), args, 'gate_reopen'));
         const result = core.gateReopen(input.values.previousJson, input.values.currentJson);
         const reasons = result.changedInputs.map((item) => ({ code: `${item.toUpperCase()}_DRIFT`, path: `/${item}Fingerprint`, message: `${item} changed` }));
-        return renderEnvelope(okEnvelope('gate_reopen', result, result.reopen ? reasons : []));
+        return renderEnvelope(applyProtocol(okEnvelope('gate_reopen', result, result.reopen ? reasons : []), args, 'gate_reopen'));
       });
     },
   });

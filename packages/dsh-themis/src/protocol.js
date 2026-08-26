@@ -1,6 +1,28 @@
-import { errorEnvelope, parseBoundedJson } from './core/index.js';
+import { envelopeToV2, errorEnvelope, okEnvelope, parseBoundedJson, parseProtocolOptions } from './core/index.js';
 
 export { inspectBounded, parseBoundedJson, getBudgetProfile } from './core/index.js';
+
+/**
+ * R8 negotiation: every strengthened adapter funnels its finished envelope
+ * through here. Selections: default/v2 (label upgrade + complete flag),
+ * tech-lead.result.v1 (label downgrade), legacy (bare domain payload).
+ */
+export function applyProtocol(payload, args, operation, { defaultSelection = 'tech-lead.result.v2' } = {}) {
+  const n = parseProtocolOptions(args?.protocolJson);
+  if (!n.ok) return errorEnvelope(operation, n.code, n.errors);
+  const selection = n.outputProtocol === 'default' ? defaultSelection : n.outputProtocol;
+  // Legacy selection always yields the untouched domain payload.
+  if (selection === 'legacy') return payload && payload.meta ? payload.data : payload;
+  // Bare domain payloads get wrapped when an envelope protocol is selected.
+  let envelope = payload;
+  if (!payload || typeof payload !== 'object' || !payload.meta) {
+    envelope = okEnvelope(operation, payload ?? null);
+  }
+  if (selection === 'tech-lead.result.v1') {
+    return { ...envelope, meta: { ...envelope.meta, schema: 'tech-lead.result.v1' } };
+  }
+  return envelopeToV2(envelope);
+}
 
 const BUDGET_CODES = new Set(['INPUT_TOO_LARGE', 'ITEM_LIMIT_EXCEEDED', 'SCAN_INCOMPLETE']);
 

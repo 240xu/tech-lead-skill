@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "mode": "EXECUTE",
+  "tier": "T1",
+  "phase": "M2",
+  "repository_mode": "git",
+  "state_persistence": "available",
+  "done": [
+    {
+      "item": "bootstrap",
+      "anchor": "commit:abc1234"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "E-1",
+      "level": "E2",
+      "source": "node --test",
+      "time": "2026-08-26T00:00:00Z",
+      "scope": "unit",
+      "repro": "npm test"
+    }
+  ],
+  "open_gates": [],
+  "goal_ledger": [
+    {
+      "id": "g1",
+      "goal": "deliver R8 projection",
+      "metric": "suite pass",
+      "target": "green"
+    }
+  ],
+  "non_goals": [],
+  "constraints": [],
+  "decisions": [],
+  "risks": [],
+  "dependencies": [],
+  "critical_path": [],
+  "protected_assets": [],
+  "hypotheses": [],
+  "assumptions": [],
+  "tags": [
+    "r8"
+  ],
+  "last_outcome": "CONTINUE",
+  "next_step": "project fixtures",
+  "next_review_trigger": "",
+  "degraded_reason": "",
+  "updated_at": "2026-08-26T00:00:00Z"
+}

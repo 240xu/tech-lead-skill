@@ -4,7 +4,7 @@ import { registerGateTools } from './tools/gates.js';
 import { registerMutationTools } from './tools/mutation.js';
 import { registerDiscoveryTools } from './tools/discovery.js';
 import { errorEnvelope, okEnvelope } from '@240xu/dsh-tech-lead-core';
-import { parseBoundedJson, renderEnvelope } from './protocol.js';
+import { applyProtocol, parseBoundedJson, renderEnvelope } from './protocol.js';
 
 /**
  * Tool definitions for the tech-lead read-only surface.
@@ -89,8 +89,8 @@ export function registerTools(defineTool, core) {
     output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
     async execute(args) {
       const parsed = json('stateJson', args.stateJson, 'state');
-      if (!parsed.ok) return out({ valid: false, errors: [{ path: 'stateJson', message: parsed.error }], warnings: [], unknownFields: [] });
-      return out(core.validateState(parsed.value));
+      if (!parsed.ok) return out(applyProtocol({ valid: false, errors: [{ path: 'stateJson', message: parsed.error }], warnings: [], unknownFields: [] }, args, 'state_validate', { defaultSelection: 'legacy' }));
+      return out(applyProtocol(core.validateState(parsed.value), args, 'state_validate', { defaultSelection: 'legacy' }));
     },
   }));
 

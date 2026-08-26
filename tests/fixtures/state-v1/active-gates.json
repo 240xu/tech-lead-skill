@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "mode": "EXECUTE",
+  "tier": "T1",
+  "phase": "M2",
+  "repository_mode": "git",
+  "state_persistence": "available",
+  "done": [],
+  "evidence": [],
+  "open_gates": [
+    "release-gate",
+    "security-gate"
+  ],
+  "goal_ledger": [
+    {
+      "id": "g1",
+      "goal": "deliver R8 projection",
+      "metric": "suite pass",
+      "target": "green"
+    }
+  ],
+  "non_goals": [],
+  "constraints": [],
+  "decisions": [],
+  "risks": [],
+  "dependencies": [],
+  "critical_path": [],
+  "protected_assets": [],
+  "hypotheses": [],
+  "assumptions": [],
+  "tags": [
+    "r8"
+  ],
+  "last_outcome": "PAUSE",
+  "next_step": "project fixtures",
+  "next_review_trigger": "",
+  "degraded_reason": "",
+  "updated_at": "2026-08-26T00:00:00Z",
+  "gates": [
+    {
+      "id": "release-gate",
+      "destructive": true,
+      "status": "open"
+    }
+  ]
+}

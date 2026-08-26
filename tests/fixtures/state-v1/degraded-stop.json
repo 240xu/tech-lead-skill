@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "mode": "PLAN",
+  "tier": "T1",
+  "phase": "M2",
+  "repository_mode": "git",
+  "state_persistence": "available",
+  "done": [],
+  "evidence": [],
+  "open_gates": [],
+  "goal_ledger": [
+    {
+      "id": "g1",
+      "goal": "deliver R8 projection",
+      "metric": "suite pass",
+      "target": "green"
+    }
+  ],
+  "non_goals": [],
+  "constraints": [],
+  "decisions": [],
+  "risks": [],
+  "dependencies": [],
+  "critical_path": [],
+  "protected_assets": [],
+  "hypotheses": [],
+  "assumptions": [],
+  "tags": [
+    "r8"
+  ],
+  "last_outcome": "STOP",
+  "next_step": "project fixtures",
+  "next_review_trigger": "",
+  "degraded_reason": "upstream quota exhausted; paused pending reset",
+  "updated_at": "2026-08-26T00:00:00Z"
+}

@@ -11,7 +11,7 @@ test('success envelope has the stable result v1 shape', () => {
     errors: [],
     warnings: [],
     meta: {
-      schema: 'tech-lead.result.v1',
+      schema: 'tech-lead.result.v2',
       operation: 'state_validate',
       deterministic: true,
       sideEffects: false,
@@ -36,7 +36,7 @@ test('makeEnvelope does not mutate caller arrays', () => {
 
 test('contract fields stay authoritative except an explicit deterministic:false is honored', () => {
   const result = makeEnvelope({ meta: { schema: 'other', deterministic: false, sideEffects: true } });
-  assert.equal(result.meta.schema, 'tech-lead.result.v1');
+  assert.equal(result.meta.schema, 'tech-lead.result.v2');
   assert.equal(result.meta.deterministic, false);
   assert.equal(result.meta.sideEffects, false);
 });
