@@ -1,0 +1,221 @@
+import { registerContextTools } from './tools/context.js';
+import { registerProgressTools } from './tools/progress.js';
+import { registerGateTools } from './tools/gates.js';
+import { registerMutationTools } from './tools/mutation.js';
+import { renderEnvelope } from './protocol.js';
+
+/**
+ * Tool definitions for the tech-lead read-only surface.
+ *
+ * Every tool computes over caller-supplied primitives/JSON strings:
+ * - composite inputs arrive as JSON strings (parsed defensively),
+ * - list inputs arrive as comma-separated values,
+ * - outputs are pretty-printed JSON strings (uniform string schema); malformed inputs yield structured BAD_INPUT/invalid results instead of throws.
+ * - Legacy nine tools return BARE domain shapes (not wrapped in a tech-lead.result.v1 envelope); consumers can discriminate via the absence of meta.schema. Bare top-level finding arrays slice silently at 500 entries (shape preserved, no warning field exists).
+ * - All rendered output is clamped: finding/error arrays are capped at 500 entries (FINDINGS_TRUNCATED warning appended), oversized caller-echo arrays collapse into {truncated,total}, and payloads above 256KB switch to compact serialization.
+ *
+ * No tool touches the filesystem, spawns processes, or performs network I/O.
+ *
+ * @param {Function} defineTool harness tool factory
+ * @param {Record<string, Function>} core pure validators from @240xu/dsh-tech-lead-core
+ */
+export function registerTools(defineTool, core) {
+  const json = (str) => {
+    try {
+      return { ok: true, value: JSON.parse(str) };
+    } catch (err) {
+      return { ok: false, error: 'invalid JSON: ' + err.message };
+    }
+  };
+  const csv = (str) =>
+    String(str ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+  const out = (value) => renderEnvelope(value);
+
+  /** @type {ReturnType<defineTool>[]} */
+  const tools = [];
+
+  tools.push(defineTool({
+    name: 'tech_lead_classify',
+    description:
+      'Classify a task into tech-lead tiers T0/T1/T2 with reasons. T2 involves multi-module work, irreversible ops, protected assets (user data/secrets/runtime), or public interfaces. Use before planning.',
+    parameters: {
+      touchesMultipleModules: { type: 'boolean', description: 'change spans ≥2 modules' },
+      estimatedDays: { type: 'number', description: 'rough duration in days' },
+      irreversibleOps: { type: 'string', description: 'comma-separated irreversible operations' },
+      protectedAssetTypes: { type: 'string', description: 'comma-separated among SOURCE,USER_DATA,CONFIG,SECRET,RUNTIME,GENERATED' },
+      publicInterfaceChange: { type: 'boolean', description: 'changes public API/contract' },
+      uncertainRisk: { type: 'boolean', description: 'risk level cannot be determined yet' },
+    },
+    output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
+    async execute(args) {
+      const provided = [args.touchesMultipleModules, args.estimatedDays, args.irreversibleOps, args.protectedAssetTypes, args.publicInterfaceChange, args.uncertainRisk];
+      const input = provided.every((v) => v === undefined || v === '')
+        ? {}
+        : {
+            touchesMultipleModules: args.touchesMultipleModules,
+            estimatedDays: args.estimatedDays,
+            irreversibleOps: csv(args.irreversibleOps),
+            protectedAssetTypes: csv(args.protectedAssetTypes),
+            publicInterfaceChange: args.publicInterfaceChange,
+            uncertainRisk: args.uncertainRisk,
+          };
+      return out(core.classify(input));
+    },
+  }));
+
+  tools.push(defineTool({
+    name: 'tech_lead_state_validate',
+    description:
+      'Validate a tech-lead project state.json (schema v1): enum fields, non-empty anchors on done items, full evidence provenance (id/level E0-E4/source/time/scope/repro). Unknown fields preserved as warnings. Returns pretty-printed JSON string.',
+    parameters: {
+      stateJson: { type: 'string', required: true, description: 'state.json SERIALIZED AS A STRING — pass the JSON text itself, never a nested object' },
+    },
+    output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
+    async execute(args) {
+      const parsed = json(args.stateJson);
+      if (!parsed.ok) return out({ valid: false, errors: [{ path: 'stateJson', message: parsed.error }], warnings: [], unknownFields: [] });
+      return out(core.validateState(parsed.value));
+    },
+  }));
+
+  tools.push(defineTool({
+    name: 'tech_lead_transition_check',
+    description:
+      'Check whether a proposed outcome transition (CONTINUE/PAUSE/SCOPE-DOWN/PIVOT/STOP) is mechanically justified by the given state. PIVOT needs recorded decisions; SCOPE-DOWN needs goal ledger + risks; STOP needs anchored done items or degraded_reason. Returns pretty-printed JSON string.',
+    parameters: {
+      stateJson: { type: 'string', required: true, description: 'current state object SERIALIZED AS A STRING (JSON text, not an object)' },
+      proposed: { type: 'string', required: true, description: 'one of CONTINUE,PAUSE,SCOPE-DOWN,PIVOT,STOP' },
+    },
+    output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
+    async execute(args) {
+      const parsed = json(args.stateJson);
+      if (!parsed.ok) return out({ allowed: false, reason: parsed.error });
+      return out(core.transitionCheck(parsed.value, args.proposed));
+    },
+  }));
+
+  tools.push(defineTool({
+    name: 'tech_lead_plan_lint',
+    description:
+      'Lint a plan for the tech-lead minimum contracts: goal+metric+target ledger, assumption verification methods, decision alternatives+reasons, risk impacts+mitigations, dependency blockers, rollback for irreversible ops. Returns pretty-printed JSON array of findings.',
+    parameters: {
+      planJson: { type: 'string', required: true, description: 'plan object SERIALIZED AS A STRING (JSON text, not an object)' },
+    },
+    output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
+    async execute(args) {
+      const parsed = json(args.planJson);
+      if (!parsed.ok) return out([{ severity: 'error', path: 'planJson', message: parsed.error }]);
+      return out(core.planLint(parsed.value));
+    },
+  }));
+
+  tools.push(defineTool({
+    name: 'tech_lead_evidence_lint',
+    description:
+      'Lint evidence entries for complete provenance (id/level E0-E4/source/time/scope/repro). With highRiskChange=true, requires at least one E3+ evidence item. Returns pretty-printed JSON findings array.',
+    parameters: {
+      evidenceJson: { type: 'string', required: true, description: 'evidence array SERIALIZED AS A STRING (JSON text, not an object)' },
+      highRiskChange: { type: 'boolean', description: 'set true for high-risk changes' },
+    },
+    output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
+    async execute(args) {
+      const parsed = json(args.evidenceJson);
+      if (!parsed.ok) return out([{ severity: 'error', path: 'evidenceJson', message: parsed.error }]);
+      return out(core.evidenceLint(parsed.value, { highRiskChange: args.highRiskChange }));
+    },
+  }));
+
+  tools.push(defineTool({
+    name: 'tech_lead_gate_precheck',
+    description:
+      'Precheck a gate review: referee identity separation (proposer/executor must not review), per-report anchors, verdict vocabulary (pass|conditional|reject), solo-review prohibition on destructive scope, blind-gate quorum of ≥3 distinct anchored reviewers. Returns {pass, violations[]}.',
+    parameters: {
+      inputJson: { type: 'string', required: true, description: '{proposalAuthorId?,executorId?,reviewerIds[],solo?,blindRequired?,destructiveScope[],reports[{reviewerId,verdict,anchors[]}]}' },
+    },
+    output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
+    async execute(args) {
+      const parsed = json(args.inputJson);
+      if (!parsed.ok) return out({ pass: false, violations: [{ type: 'BAD_INPUT', detail: parsed.error }] });
+      return out(core.gatePrecheck(parsed.value));
+    },
+  }));
+
+  tools.push(defineTool({
+    name: 'tech_lead_release_audit',
+    description:
+      'Audit a release set: files outside the allowlist are EXTRA_FILE; when contents are provided, scans lines for absolute home paths, token-like literals (sk-/ghp_/AKIA/xox), credential assignments — each with line numbers. Read-only; never uploads anything. Returns pretty-printed JSON findings array.',
+    parameters: {
+      allowlistCsv: { type: 'string', required: true, description: 'comma-separated allowed relative paths' },
+      filesJson: { type: 'string', required: true, description: '[{path, content?}] as JSON string' },
+      contentScan: { type: 'boolean', description: 'default true' },
+    },
+    output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
+    async execute(args) {
+      const parsed = json(args.filesJson);
+      if (!parsed.ok) return out([{ type: 'BAD_INPUT', path: 'filesJson', line: 0, detail: parsed.error }]);
+      return out(core.releaseAudit({
+        allowlist: csv(args.allowlistCsv),
+        files: parsed.value,
+        contentScan: args.contentScan,
+      }));
+    },
+  }));
+
+  tools.push(defineTool({
+    name: 'tech_lead_install_audit',
+    description:
+      'Detect install drift between an installed marker manifest and reality: missing managed files, unmanaged extras (backups ignored), version mismatch against the package. Returns {missingManaged[], unmanaged[], versionMismatch, newInPackage[]}.',
+    parameters: {
+      manifestJson: { type: 'string', required: true, description: 'marker {version, files[]} SERIALIZED AS A STRING (JSON text, not an object)' },
+      actualFilesCsv: { type: 'string', required: true, description: 'comma-separated relative paths present under target' },
+      pkgFilesCsv: { type: 'string', required: true, description: 'comma-separated managed paths in current package' },
+      pkgVersion: { type: 'string', required: true, description: 'package version string' },
+    },
+    output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
+    async execute(args) {
+      const parsed = json(args.manifestJson);
+      if (!parsed.ok || !parsed.value || !Array.isArray(parsed.value.files)) {
+        return out({ missingManaged: [], unmanaged: [], versionMismatch: false, newInPackage: [], error: 'manifestJson must be {version, files[]}' });
+      }
+      return out(core.installAudit(
+        parsed.value,
+        csv(args.actualFilesCsv),
+        csv(args.pkgFilesCsv),
+        args.pkgVersion
+      ));
+    },
+  }));
+
+  tools.push(defineTool({
+    name: 'tech_lead_resume_card',
+    description:
+      'Render a three-line resume card from a tech-lead state: position (tier/phase/mode), last outcome, next step — plus stale-evidence detection (>maxAgeDays old) and warnings for empty next_step or open gates. Returns pretty-printed JSON card.',
+    parameters: {
+      stateJson: { type: 'string', required: true, description: 'state object SERIALIZED AS A STRING (JSON text, not an object)' },
+      nowIso: { type: 'string', description: 'reference time ISO string (defaults to real now)' },
+      maxAgeDays: { type: 'number', description: 'stale threshold in days, default 7' },
+    },
+    output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
+    async execute(args) {
+      const parsed = json(args.stateJson);
+      if (!parsed.ok) {
+        return out({ position: '?', lastGate: '?', nextStep: '(invalid state)', staleEvidenceIds: [], warnings: [parsed.error] });
+      }
+      return out(core.resumeCard(parsed.value, { now: args.nowIso, maxAgeDays: args.maxAgeDays }));
+    },
+  }));
+
+  if (core.validateContext && core.evidenceGraphLint && core.evidenceFreshness) {
+    // Domain registration stays optional so the legacy nine-tool contract can
+    // be reused by callers that supply only the original core surface.
+    tools.push(...registerContextTools(defineTool, core));
+  }
+  if (core.progressDecide && core.criticalPath && core.changeImpact) {
+    tools.push(...registerProgressTools(defineTool, core));
+  }
+  if (core.gatePlan && core.gateAggregate && core.gateReopen) {
+    tools.push(...registerGateTools(defineTool, core));
+  }
+  if (core.previewMutation) tools.push(...registerMutationTools(defineTool));
+  return tools;
+}

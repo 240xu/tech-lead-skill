@@ -53,7 +53,7 @@ npx github:240xu/tech-lead-skill
 已上架 DSH 插件市场（npm）——**单一自包含包**，任意 profile 一键安装：
 
 ```
-dsh plugin --profile headless add @240xu/dsh-tech-lead
+dsh plugin --profile headless add dsh-themis
 ```
 
 单包内含全部 21 个只读生命周期工具：原九项审计＋上下文校验、证据图/新鲜度分析、推进决策、关键路径/影响分析、续跑对账、Gate 计划/聚合/重开、变更预览。仅对调用方传入的 JSON 做计算——无文件写入、无子进程、无网络访问。旧拆分包（`dsh-tech-lead-{core,plugin,bundle}`）已弃用并指向本包。源码安装：`node scripts/build-market-package.mjs` 装配后 `dsh plugin add packages/dsh-tech-lead`。根 npm 包只发布技能与安装器。

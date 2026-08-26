@@ -50,10 +50,10 @@ The installer is idempotent: repeated runs back up existing files as `*.bak-<tim
 
 ### DeepSeek Harness plugin (read-only tools)
 
-Ships on the DSH plugin market (npm) as ONE self-contained package. Install into any profile:
+Ships on the DSH plugin market (npm) as ONE self-contained package, **`dsh-themis`** — named after the goddess of divine order: gates as verdicts, evidence weighed, releases audited. Install into any profile:
 
 ```
-dsh plugin --profile headless add @240xu/dsh-tech-lead
+dsh plugin --profile headless add dsh-themis
 ```
 
 21 read-only lifecycle tools in a single artifact (the original nine audits plus context validation, evidence graph/freshness analysis, progress decisions, critical-path/impact analysis, resume reconciliation, gate planning/aggregation/reopen checks, and mutation preview). Tools compute over caller-supplied JSON only — no filesystem writes, no subprocesses, no network access. The earlier split packages (`dsh-tech-lead-{core,plugin,bundle}`) are deprecated in favor of this one. Source checkouts remain supported: build via `node scripts/build-market-package.mjs` then `dsh plugin add packages/dsh-tech-lead`. The root npm package distributes the skill and installer only.
