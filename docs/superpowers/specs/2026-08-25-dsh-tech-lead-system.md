@@ -169,7 +169,7 @@ dsh.profile.bundles 并跑 pnpm）。顺序：先建隔离 profile `techtest` �
 
 - 组合测试 driver 是接线冒烟：21 正例 + 12 BAD_INPUT 负例；恒错响应不会误过，但恒对桩理论上可骗过。
 - context 校验只到字段级：goalLedger 等集合的元素级形状检查委托给 evidence_graph_lint / planLint 等专项 lint，不在 validateContext 内重复。
-- 前九个遗留工具无专属 plugin 单测（由组合正例 + 静态副作用扫描覆盖），补齐留待后续。
+- ~~前九个遗留工具无专属 plugin 单测~~ 已闭合：test/legacy-tools.test.js 以 9 个特征化回归钉覆盖正例与各自 JSON 解析降级形状。
 - mutation 标记扫描按 Unicode 语义匹配 `apply|execute|deploy`；同形字/ZWSP/全角混淆可绕过字符串扫描，但 preview 模式无任何执行汇（capability 完整性不受影响），仅决策支持层需知悉。
 - envelope 对超大规模调用方数据存在与输入成正比的回显放大（无输出上限），由输入体积自然约束；如需硬上限待后续版本引入。
 - 前九个遗留工具假定入参为对象（DSH harness 保证 args 为对象）；绕过 harness 直接以 undefined 调用属库级误用。
