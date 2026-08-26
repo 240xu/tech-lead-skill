@@ -82,5 +82,22 @@ test('marker scanning respects its bounded depth window', () => {
     return previewMutation(intent).code;
   };
   assert.equal(attempt(20), 'CAPABILITY_DENIED');
-  assert.equal(attempt(23), 'OK');
+  assert.equal(attempt(23), 'SCAN_INCOMPLETE', 'beyond-budget payloads fail closed, never silent-pass');
+})
+
+test('sibling traversal continues after a deep barren branch', () => {
+  const deep = (() => { let v = { leaf: '' }; for (let i = 0; i < 26; i += 1) v = { n: v }; return v; })();
+  const intent = valid();
+  intent.target = [{ path: 'x', operation: 'read', payload: deep }, { path: 'y', note: 'deploy now' }];
+  assert.equal(previewMutation(intent).code, 'CAPABILITY_DENIED');
+});
+
+test('marker-free over-budget payload reports SCAN_INCOMPLETE', () => {
+  const deep = (() => { let v = 1; for (let i = 0; i < 30; i += 1) v = { n: v }; return v; })();
+  const intent = valid();
+  intent.target = [{ path: 'x', operation: 'read', payload: deep }];
+  const r = previewMutation(intent);
+  assert.equal(r.ok, false);
+  assert.equal(r.code, 'SCAN_INCOMPLETE');
+  assert.ok(r.errors[0].details.kind);
 });

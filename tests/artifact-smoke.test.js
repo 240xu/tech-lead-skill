@@ -58,7 +58,8 @@ test('artifact mutation preview denies casing variants and honors scan depth win
   const within = valid(); within.target = [{ path: 'x', operation: 'read', payload: nest(20) }];
   const beyond = valid(); beyond.target = [{ path: 'x', operation: 'read', payload: nest(23) }];
   assert.equal(previewMutation(within).code, 'CAPABILITY_DENIED');
-  assert.equal(previewMutation(beyond).ok, true);
+  assert.equal(previewMutation(beyond).ok, false);
+  assert.equal(previewMutation(beyond).code, 'SCAN_INCOMPLETE');
 });
 
 test('artifact resume_reconcile reports scalar-root drift keys via plugin protocol', async () => {
