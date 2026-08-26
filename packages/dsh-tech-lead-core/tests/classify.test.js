@@ -49,3 +49,9 @@ test('input-free classification states its defaulting instead of asserting trivi
   const r = classify({});
   assert.ok(r.reasons.some((x) => /no .*inputs/i.test(x)));
 });
+
+test('cross-week single-module estimates force T2 per SKILL §1', () => {
+  assert.equal(classify({ estimatedDays: 30 }).tier, 'T2');
+  assert.ok(classify({ estimatedDays: 30 }).reasons.some((x) => x.includes('week')));
+  assert.equal(classify({ estimatedDays: 6 }).tier, 'T1');
+});

@@ -6,7 +6,7 @@ const clone = (value) => JSON.parse(JSON.stringify(value));
 const EXECUTABLE_OPERATIONS = new Set(['apply', 'execute', 'deploy']);
 const MARKER_PATTERN = /\b(apply|execute|deploy)\b/i;
 const scanMarkers = (value, base, depth, errors) => {
-  if (depth > 6 || errors.length > 32) return;
+  if (depth > 24 || errors.length > 32) return;
   if (typeof value === 'string') {
     if (MARKER_PATTERN.test(value)) errors.push({ path: base, code: 'CAPABILITY_DENIED', message: 'executable marker inside intent payload' });
     return;

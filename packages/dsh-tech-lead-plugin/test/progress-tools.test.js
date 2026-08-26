@@ -62,3 +62,10 @@ test('resume reconcile names the differing top-level keys', async () => {
   }));
   assert.equal(result.data.changedKeys.includes('a'), true);
 });
+
+test('scalar-root drift reports an explicit root key', async () => {
+  const r = JSON.parse(await registerTools((d) => d, core).find((t) => t.name === 'tech_lead_resume_reconcile').execute({
+    previousJson: '"old"', currentJson: '"new"',
+  }));
+  assert.deepEqual(r.data.changedKeys, ['<root>']);
+});

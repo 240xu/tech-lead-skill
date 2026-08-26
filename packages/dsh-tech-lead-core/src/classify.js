@@ -31,7 +31,7 @@ export function classify(maybeInput) {
 
   if (input.touchesMultipleModules === true) reasons.push('multi-module change → T2');
   if (Array.isArray(input.irreversibleOps) && input.irreversibleOps.length) {
-    reasons.push(`irreversible ops (${input.irreversibleOps.join(', ')}) → T2`);
+    reasons.push(`irreversible ops (${input.irreversibleOps.slice(0, 10).join(', ')}${input.irreversibleOps.length > 10 ? ' …' : ''}) → T2`);
   }
   if (Array.isArray(input.protectedAssetTypes)) {
     for (const t of input.protectedAssetTypes) {
@@ -45,6 +45,9 @@ export function classify(maybeInput) {
   const days = Number(input.estimatedDays) || 0;
   if (t2) {
     tier = 'T2';
+  } else if (days >= 7) {
+    tier = 'T2';
+    reasons.push(`estimated ${days}d crosses a week boundary → T2`);
   } else if (days >= 1) {
     tier = 'T1';
     reasons.push(`estimated ${days}d single-module work → T1`);

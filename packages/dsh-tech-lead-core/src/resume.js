@@ -30,7 +30,7 @@ export function resumeCard(maybeState, maybeOpts = {}) {
   }
 
   if (Array.isArray(state.open_gates) && state.open_gates.length) {
-    warnings.push(`open gates pending: ${state.open_gates.join(', ')}`);
+    warnings.push(`open gates pending: ${state.open_gates.slice(0, 20).join(', ')}${state.open_gates.length > 20 ? ` …+${state.open_gates.length - 20} more` : ''}`);
   }
 
   const staleEvidenceIds = [];
@@ -54,13 +54,13 @@ export function resumeCard(maybeState, maybeOpts = {}) {
         warnings.push(`evidence ${String(e.id ?? '?')} has unparseable time; excluded from staleness check`);
         continue;
       }
-      if (nowMs - t > maxAgeDays * 86400_000) {
+      if (t > nowMs || nowMs - t > maxAgeDays * 86400_000) {
         staleEvidenceIds.push(String(e.id));
       }
     }
   }
   if (staleEvidenceIds.length) {
-    warnings.push(`stale evidence (> ${maxAgeDays}d): ${staleEvidenceIds.join(', ')}`);
+    warnings.push(`stale evidence (> ${maxAgeDays}d): ${staleEvidenceIds.slice(0, 20).join(', ')}${staleEvidenceIds.length > 20 ? ` …+${staleEvidenceIds.length - 20} more` : ''}`);
   }
 
   return {

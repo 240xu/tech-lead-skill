@@ -75,12 +75,12 @@ test('preview output is defensive against later input mutation', () => {
 });
 
 test('marker scanning respects its bounded depth window', () => {
-  // marker string reachable at scan-depth <=6 is denied; beyond the cap it is
-  // skipped by design (bounded scanner), so only shallower smuggling is caught.
-  const within = valid();
-  within.target = [{ path: 'x', operation: 'read', payload: { a: { b: { c: { d: 'deploy now' } } } } }];
-  assert.equal(previewMutation(within).code, 'CAPABILITY_DENIED');
-  const beyond = valid();
-  beyond.target = [{ path: 'x', operation: 'read', payload: { a: { b: { c: { d: { e: 'deploy now' } } } } } }];
-  assert.equal(previewMutation(beyond).ok, true);
+  const nest = (levels) => { let v = 'deploy now'; for (let i = 0; i < levels; i += 1) v = { n: v }; return v; };
+  const attempt = (levels) => {
+    const intent = valid();
+    intent.target = [{ path: 'x', operation: 'read', payload: nest(levels) }];
+    return previewMutation(intent).code;
+  };
+  assert.equal(attempt(20), 'CAPABILITY_DENIED');
+  assert.equal(attempt(23), 'OK');
 });

@@ -77,7 +77,7 @@ export function registerContextTools(defineTool, core) {
         const assumptions = Array.isArray(parsed.value?.assumptions) ? parsed.value.assumptions : [];
         const items = assumptions.map((item, index) => ({
           id: item?.id ?? `assumption-${index + 1}`,
-          status: item?.verification ? 'verifiable' : 'missing_verification',
+          status: typeof item?.verification === 'string' && item.verification.trim() ? 'verifiable' : 'missing_verification',
           verification: item?.verification ?? null,
           affects: Array.isArray(item?.affects) ? item.affects.slice() : [],
         }));

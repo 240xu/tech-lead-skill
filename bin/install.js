@@ -87,7 +87,7 @@ function readMarker(target) {
 // A manifest entry may only address paths INSIDE target: blocks traversal via
 // tampered marker.files ("../x", absolute paths resolve under target anyway).
 function containedRel(target, rel) {
-  if (typeof rel !== 'string' || !rel || rel.includes('\\0')) return null;
+  if (typeof rel !== 'string' || !rel || rel.includes('\0')) return null;
   const abs = path.resolve(target, rel);
   const base = path.resolve(target);
   const relCheck = path.relative(base, abs);
@@ -196,21 +196,26 @@ if (args.includes('--check')) {
   }
   const missing = [];
   const drifted = [];
+  const orphaned = [];
   for (const raw of marker.files) {
     const rel = containedRel(target, raw);
     if (!rel) { console.warn('skipped unsafe manifest entry: ' + JSON.stringify(raw)); continue; }
     const abs = path.join(target, rel);
     const src = path.join(srcSkill, rel);
     if (!fs.existsSync(abs)) { missing.push(rel); continue; }
-    if (fs.existsSync(src) && sha256File(abs) !== sha256File(src)) drifted.push(rel);
+    if (!fs.existsSync(src)) { orphaned.push(rel); continue; }
+    if (sha256File(abs) !== sha256File(src)) drifted.push(rel);
   }
   if (missing.length) hasError = true;
   if (drifted.length) hasError = true;
+  if (orphaned.length) hasError = true;
 
   const managedSet = new Set(marker.files);
   const unmanaged = walkFiles(target).filter((rel) => !managedSet.has(rel) && !isBackup(rel) && rel !== markerName);
   if (missing.length) console.log('MISSING managed files:');
   for (const rel of missing) console.log('  missing: ' + rel);
+  if (orphaned.length) console.log('ORPHANED managed files absent from current package:');
+  for (const rel of orphaned) console.log('  orphan : ' + rel);
   if (drifted.length) console.log('MODIFIED since install:');
   for (const rel of drifted) console.log('  drift  : ' + rel);
   if (unmanaged.length) {

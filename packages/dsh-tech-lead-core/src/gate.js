@@ -59,7 +59,7 @@ export function gatePrecheck(input = {}) {
   if (input.solo && destructiveScope.length > 0) {
     v.push({
       type: 'SOLO_FORBIDDEN',
-      detail: `solo:true cannot clear destructive scope (${destructiveScope.join(', ')})`,
+      detail: `solo:true cannot clear destructive scope (${destructiveScope.slice(0, 8).join(', ')}${destructiveScope.length > 8 ? ' …' : ''})`,
     });
   }
 

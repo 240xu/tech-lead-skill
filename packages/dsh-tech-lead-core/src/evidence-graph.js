@@ -95,5 +95,5 @@ export function evidenceFreshness(context, options = {}) {
       findings.push(finding('FINGERPRINT_DRIFT', `/evidence/${index}/fingerprint`, 'evidence fingerprint differs from current snapshot'));
     }
   }
-  return { stale: findings.some((item) => item.code === 'STALE_EVIDENCE' || item.code === 'FINGERPRINT_DRIFT'), findings, warnings, evidence: asArray(context?.evidence) };
+  return { stale: findings.some((item) => item.code === 'STALE_EVIDENCE' || item.code === 'FINGERPRINT_DRIFT' || item.code === 'FUTURE_EVIDENCE'), findings, warnings, evidence: asArray(context?.evidence) };
 }

@@ -20,5 +20,5 @@ const r = spawnSync(process.execPath, ['--test', ...files], {
   cwd: root, stdio: 'inherit',
 });
 if (r.status !== 0) process.exit(r.status ?? 1);
-console.log('\nnext: real-composition test —');
-console.log('  npm run test:composition');
+const c = spawnSync(process.execPath, ['packages/dsh-tech-lead-plugin/test/composition/run.mjs'], { cwd: root, stdio: 'inherit' });
+process.exit(c.status ?? 1);

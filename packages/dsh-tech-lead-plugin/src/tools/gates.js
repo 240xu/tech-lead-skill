@@ -49,8 +49,12 @@ export function registerGateTools(defineTool, core) {
         if (errors.length) return renderEnvelope(errorEnvelope('gate_aggregate', 'BAD_INPUT', errors));
         const result = core.gateAggregate(input.values.reportsJson, plan);
         if (!result.pass) {
+          const conditionalCount = Array.isArray(input.values.reportsJson)
+            ? input.values.reportsJson.filter((report) => report && report.verdict === 'conditional').length
+            : 0;
           const derived = [
             ...result.missingRoles.map((role) => ({ code: 'MISSING_ROLE', path: `/roles/${role}`, message: `no anchored report from required role "${role}"` })),
+            ...(conditionalCount > 0 ? [{ code: 'CONDITIONAL_VERDICT', path: '/reports', message: `${conditionalCount} report(s) hold a conditional verdict` }] : []),
             ...(result.verdict !== 'reject' && result.findings.filter((f) => f.code).length === 0 && Array.isArray(input.values.reportsJson) && input.values.reportsJson.length < plan.quorum
               ? [{ code: 'QUORUM_UNMET', path: '/reports', message: `${input.values.reportsJson.length} of ${plan.quorum} reports present` }]
               : []),

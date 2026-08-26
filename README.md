@@ -61,7 +61,7 @@ dsh --profile headless --dump-config   # verify the tech-lead-tools row is prese
 Output families and limits:
 
 - The twelve strengthened tools return a `tech-lead.result.v1` envelope (discriminator: `meta.schema`); the original nine tools return their bare domain shapes for backward compatibility.
-- Rendered output is clamped: finding/error arrays are capped at 500 entries with a `FINDINGS_TRUNCATED` warning, oversized caller-echo arrays collapse into `{truncated,total}` summaries, and payloads above 256 KB switch to compact serialization.
+- Rendered output is clamped: finding/error arrays are capped at 500 entries with a `FINDINGS_TRUNCATED` warning; caller-echo arrays (evidence/targets/expectedDiff/verification/items) collapse into `{truncated,total}` beyond 100 entries; any OTHER array inside `data` (including computed results such as `criticalPath`) is head-sliced at 1000 entries while keeping its shape; subtrees deeper than 64 levels collapse into a `DEPTH_LIMIT` marker; payloads above 256 KB switch to compact serialization. Legacy bare top-level arrays slice silently at 500 (no warning field exists on that shape).
 
 See [`docs/superpowers/specs/2026-08-25-dsh-tech-lead-system.md`](https://github.com/240xu/tech-lead-skill/blob/main/docs/superpowers/specs/2026-08-25-dsh-tech-lead-system.md) for the architecture and permission matrix.
 
@@ -131,6 +131,6 @@ The executable skill body (`SKILL.md`) is authored in Simplified Chinese; coding
 
 ## Version
 
-Current version: `v5.4.4`.
+Current version: `v5.4.5`.
 
 See [`docs/TECHNICAL_GUIDE.md`](docs/TECHNICAL_GUIDE.md) for the full operating model and [`docs/AUDIT_REPORT.md`](docs/AUDIT_REPORT.md) for the publication audit.

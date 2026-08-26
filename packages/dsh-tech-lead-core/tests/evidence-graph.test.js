@@ -99,8 +99,8 @@ test('omitted maxAgeDays uses the documented seven-day boundary', () => {
   assert.equal(stale.stale, true);
 });
 
-test('future-dated evidence is flagged without marking the set stale', () => {
-  const r = evidenceFreshness({ evidence: [{ id: 'f', time: '2027-01-01T00:00:00Z' }] }, { now: '2026-08-25T00:00:00Z' });
-  assert.equal(r.stale, false);
+test('future-dated evidence fails the freshness gate', () => {
+  const r = evidenceFreshness({ evidence: [{ id: 'f', time: '2999-01-01T00:00:00Z' }] }, { now: '2026-08-25T00:00:00Z' });
+  assert.equal(r.stale, true);
   assert.ok(r.findings.some((f) => f.code === 'FUTURE_EVIDENCE'));
 });

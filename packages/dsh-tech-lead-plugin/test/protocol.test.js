@@ -62,3 +62,28 @@ test('oversized caller-echo arrays collapse into truncation summaries', async ()
   const out = clampEnvelope({ ok: true, data: { evidence } });
   assert.deepEqual(out.data.evidence, { truncated: true, total: 150 });
 });
+
+test('renderer survives hostile nesting that native parse accepts', async () => {
+  const { renderEnvelope } = await import('../src/protocol.js');
+  let deep = 'leaf';
+  for (let i = 0; i < 6000; i += 1) deep = { n: deep };
+  const text = renderEnvelope({ ok: true, data: { payload: deep } });
+  assert.match(text, /DEPTH_LIMIT/);
+});
+
+test('computed result arrays slice at the result limit but keep their shape', async () => {
+  const { clampEnvelope } = await import('../src/protocol.js');
+  const criticalPath = Array.from({ length: 1500 }, (_, i) => `t${i}`);
+  const out = clampEnvelope({ ok: true, data: { criticalPath } });
+  assert.equal(Array.isArray(out.data.criticalPath), true);
+  assert.equal(out.data.criticalPath.length, 1000);
+});
+
+test('bare top-level finding arrays slice silently per the documented legacy contract', async () => {
+  const { renderEnvelope } = await import('../src/protocol.js');
+  const findings = Array.from({ length: 600 }, (_, i) => ({ severity: 'error', path: `x${i}`, message: 'm' }));
+  const parsed = JSON.parse(renderEnvelope(findings));
+  assert.equal(parsed.length, 500);
+  assert.equal(text_has_marker(parsed), false);
+  function text_has_marker(v) { return JSON.stringify(v).includes('FINDINGS_TRUNCATED'); }
+});

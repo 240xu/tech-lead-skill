@@ -56,3 +56,12 @@ test('gate reopen rejects snapshots without any known fingerprint key', async ()
   assert.equal(r.code, 'BAD_INPUT');
   assert.match(JSON.stringify(r.errors), /contextFingerprint/);
 });
+
+test('conditional-only block names its cause instead of empty errors', async () => {
+  const r = JSON.parse(await tool('tech_lead_gate_aggregate').execute({
+    reportsJson: '[{"role":"pm","verdict":"conditional","anchors":["a"]},{"role":"eng","verdict":"pass","anchors":["b"]},{"role":"ops","verdict":"pass","anchors":["c"]}]',
+    planJson: '{"requiredRoles":["pm","eng","ops"],"quorum":3}',
+  }));
+  assert.equal(r.code, 'GATE_BLOCKED');
+  assert.ok(r.errors.some((e) => e.code === 'CONDITIONAL_VERDICT'));
+});

@@ -54,3 +54,11 @@ test('schema errors carry the uniform code field on the context surface', async 
   assert.ok(r.errors.length >= 1);
   assert.ok(r.errors.every((e) => typeof e.code === 'string'));
 });
+
+test('whitespace-only verification is missing_verification, not verifiable', async () => {
+  const tools = registerTools(fakeDefineTool, core);
+  const tool = tools.find((t) => t.name === 'tech_lead_assumption_register');
+  const r = JSON.parse(await tool.execute({ contextJson: '{"assumptions":[{"id":"A1","verification":"   "}]}'}));
+  assert.equal(r.code, 'SCHEMA_INVALID');
+  assert.equal(r.errors[0].code, 'MISSING_VERIFICATION');
+});

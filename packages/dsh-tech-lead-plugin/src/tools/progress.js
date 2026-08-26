@@ -71,7 +71,7 @@ export function registerProgressTools(defineTool, core) {
 }
 
 function computeChangedKeys(a, b) {
-  if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return [];
+  if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return ['<root>'];
   const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
   return [...keys].filter((key) => JSON.stringify(a[key]) !== JSON.stringify(b[key])).sort();
 }
