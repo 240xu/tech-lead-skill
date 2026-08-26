@@ -1,6 +1,6 @@
 # Tech Lead Skill
 
-[简体中文](README.zh-CN.md) | English
+[简体中文](README.md) | English
 
 An evidence-driven planning and delivery skill for software, infrastructure, research, reverse-engineering, and operations work.
 
