@@ -4,6 +4,28 @@
 
 An evidence-driven planning and delivery skill for software, infrastructure, research, reverse-engineering, and operations work.
 
+## Why this instead of another prompt file
+
+Most engineering specs stay at the "advice text" layer — easy to agree with, hard to enforce. This project ships one judgment layer in two forms: a prose spec anyone can install, and `dsh-themis`, which turns key rulings into a **machine-checkable read-only runtime**.
+
+| Dimension | Generic skill/prompt | tech-lead-skill | dsh-themis (DSH plugin) |
+|---|---|---|---|
+| Task tiering | model's good faith | T0/T1/T2 hard rules + bidirectional re-tiering | same, mechanically re-checkable |
+| Input governance | none | budget clauses | **fail-closed**: oversized input rejected outright (INPUT_TOO_LARGE / SCAN_INCOMPLETE), never silently passed |
+| State validation | reminders | prose schema notes | `state_validate` full-field machine check: enums, done anchors, E0-E4 evidence provenance |
+| Leak audit | none | release checklist | `release_audit` scans absolute paths / token-like strings / credential assignments with line numbers |
+| Result format | whatever comes out | text convention | uniform `protocolJson` negotiation across 22 tools + stable v2 envelope (findings/guidance/meta.complete) |
+| Side effects | — | none | **zero-by-design**: no writes, no subprocesses, no network — computes over your JSON only |
+
+Six verifiable differentiators:
+
+1. **Governance that rules, not pleads.** Gate precheck, blind-review triggers, stall breakers are executable hard rules — the plugin mechanically answers "can this gate pass now, and which anchor is missing".
+2. **Explicit failure over false confidence.** Audits over-window refuse verdicts; the state→context-v2 projection returns NON_CONVERTIBLE_STATE when identity/source/fingerprint are missing — pinned by 250 tests, not promises.
+3. **Deterministic output.** Same input, same output; guidance actionIds are deterministic and usable as flow keys.
+4. **Smooth migration.** bare JSON → v1 → v2 envelopes negotiated by the schema-declared `protocolJson` on every tool: zero breakage for old callers, fail-closed on unknown selections.
+5. **Field-born.** Rules distilled from real multi-project incident reviews — execution reliability, config/deploy traps, backup/rollback discipline, anti-risk-control, multi-agent orchestration — not armchair templates.
+6. **One-command adoption.** Versioned single npm packages; bilingual docs throughout.
+
 ## What It Solves
 
 Many plans fail in one of two ways: they are vague and cannot guide execution, or they are over-detailed and become false after the first environmental change. This skill keeps the plan coarse until evidence justifies detail, then continuously revises it against observed reality.
