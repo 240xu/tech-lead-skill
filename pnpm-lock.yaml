@@ -21,7 +21,7 @@ importers:
   packages/dsh-tech-lead-bundle:
     dependencies:
       '@240xu/dsh-tech-lead-plugin':
-        specifier: file:../dsh-tech-lead-plugin
+        specifier: workspace:^
         version: link:../dsh-tech-lead-plugin
 
   packages/dsh-tech-lead-core: {}
@@ -29,7 +29,7 @@ importers:
   packages/dsh-tech-lead-plugin:
     dependencies:
       '@240xu/dsh-tech-lead-core':
-        specifier: file:../dsh-tech-lead-core
+        specifier: workspace:^
         version: link:../dsh-tech-lead-core
       '@deepseek-ai/dsh-tools':
         specifier: 0.1.0-rc.7

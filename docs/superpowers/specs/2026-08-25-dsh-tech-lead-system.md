@@ -140,7 +140,7 @@ cordis.patch.yml：
       name: '@240xu/dsh-tech-lead-plugin'
 ```
 
-接入方式：`dsh plugin --profile <name> add <本地路径>`（workspace 包目前为 private，必须从 clone 的源码仓库安装；CLI 自动写 profile package.json 的
+接入方式（插件市场）：`dsh plugin --profile <name> add @240xu/dsh-tech-lead-bundle`（npm 上架 0.3.1+，bundle→plugin→core 自动成链；⚠️ 发布必须用 `pnpm publish`——npm publish 不改写 workspace:^ 协议，0.3.0 即因此泄漏字面量依赖）。源码备选：clone 后 `dsh plugin add <本地路径>`；CLI 自动写 profile package.json 的
 dsh.profile.bundles 并跑 pnpm）。顺序：先建隔离 profile `techtest` → headless → web。
 
 ## 5. 权限矩阵（铁律）

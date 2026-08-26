@@ -50,7 +50,13 @@ npx github:240xu/tech-lead-skill
 
 ### DeepSeek Harness 插件（只读工具）
 
-本源码仓库提供可选 DSH bundle，暴露 21 个只读生命周期工具。原有九个审计工具保持兼容，并新增上下文校验、证据图与新鲜度分析、推进决策、关键路径与影响分析、续跑对账、Gate 计划/聚合/重开检查，以及变更预览。工具仅对调用方传入的 JSON 做计算——无文件写入、无子进程、无网络访问。根 npm 包只发布技能与安装器；DSH workspace bundle 尚未独立发布，安装前请先 clone 本仓库。
+已上架 DSH 插件市场（npm），任意 profile 一键安装：
+
+```
+dsh plugin --profile headless add @240xu/dsh-tech-lead-bundle
+```
+
+bundle 自动拉取 `@240xu/dsh-tech-lead-plugin` 与 `@240xu/dsh-tech-lead-core`，共 21 个只读生命周期工具：原九项审计＋上下文校验、证据图/新鲜度分析、推进决策、关键路径/影响分析、续跑对账、Gate 计划/聚合/重开、变更预览。仅对调用方传入的 JSON 做计算——无文件写入、无子进程、无网络访问。源码安装仍受支持：`dsh plugin add /path/to/packages/dsh-tech-lead-bundle`。根 npm 包只发布技能与安装器。
 
 ```bash
 dsh plugin --profile headless add /path/to/tech-lead-skill/packages/dsh-tech-lead-bundle
