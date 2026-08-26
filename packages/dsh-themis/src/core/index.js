@@ -17,3 +17,4 @@ export { changeImpact } from './impact.js';
 export { gatePlan, gateAggregate, gateReopen } from './gates.js';
 export { validateMutationIntent, previewMutation } from './mutation.js';
 export { inspectBounded, parseBoundedJson, getBudgetProfile } from './budgets.js';
+export { makeAction, normalizeGuidance } from './guidance.js';

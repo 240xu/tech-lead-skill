@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 
 import {
   inspectBounded, parseBoundedJson, gatePrecheck,
+  makeAction, normalizeGuidance,
 } from '../packages/dsh-tech-lead-core/src/index.js';
 import { registerTools } from '../packages/dsh-tech-lead-plugin/src/tools.js';
 import * as core from '../packages/dsh-tech-lead-core/src/index.js';
@@ -138,4 +139,58 @@ test('legacy state_validate keeps its bare shape even for budget failures', asyn
   }));
   assert.equal(out.valid, false);
   assert.match(out.errors[0].message, /byte budget/);
+});
+
+test('makeAction derives a stable deterministic actionId', () => {
+  const build = () => makeAction({
+    kind: 'gate', targetId: 'release-gate', reasonCodes: ['MISSING_ROLE'],
+    findingRef: '/gates/0', action: 'obtain anchored arch review',
+    doneWhen: 'reports contain valid arch pass', nextTool: 'tech_lead_gate_aggregate',
+  });
+  const a = build(); const b = build();
+  assert.equal(a.actionId, b.actionId);
+  assert.equal(a.kind, 'gate');
+  assert.deepEqual(a.reasonCodes, ['MISSING_ROLE']);
+});
+
+test('normalizeGuidance orders categories deterministically and numbers priorities', () => {
+  const g = normalizeGuidance({ outcome: 'PAUSE', meaning: 'blocked', actions: [
+    makeAction({ kind: 'evidence', targetId: 'e1', reasonCodes: ['STALE_EVIDENCE'], findingRef: '/evidence/0', action: 'refresh', doneWhen: 'stale!==true' }),
+    makeAction({ kind: 'gate', targetId: 'g1', reasonCodes: ['GATE_BLOCKED'], findingRef: '/gates/0', action: 'pass gate', doneWhen: 'status===pass' }),
+    makeAction({ kind: 'dependency', targetId: 'd9', reasonCodes: ['DEPENDENCY_BLOCKED'], findingRef: '/dependencies/0', action: 'resolve dep', doneWhen: 'status===done' }),
+  ] });
+  assert.deepEqual(g.actions.map((a) => a.kind), ['gate', 'dependency', 'evidence']);
+  assert.deepEqual(g.actions.map((a) => a.priority), [1, 2, 3]);
+});
+
+test('invalid actions are quarantined into guidance.warnings, never thrown', () => {
+  const g = normalizeGuidance({ actions: [
+    { kind: 'gate', targetId: 'x', reasonCodes: [], findingRef: '/g/0', action: 'a', doneWhen: 'd' },
+    makeAction({ kind: 'evidence', targetId: 'e', reasonCodes: ['R'], findingRef: '/e/0', action: '', doneWhen: 'd' }),
+    makeAction({ kind: 'hygiene', reasonCodes: ['H'], findingRef: '/', action: 'tidy', doneWhen: 'always' }),
+  ] });
+  assert.equal(g.actions.length, 1);
+  assert.equal(g.warnings.filter((w) => w.code === 'INVALID_ACTION').length, 2);
+});
+
+test('heuristics exist only under explicit heuristic mode and stay bounded/labeled', () => {
+  const h = [{ id: 'H-1', confidence: 0.45, applicableWhen: ['dep blocked'], suggestion: 'probe fallback', smallestExperiment: 'read-only probe', cannotProve: ['availability'] }];
+  const strict = normalizeGuidance({ mode: 'strict', outcome: 'PAUSE', heuristics: h });
+  assert.equal(strict.heuristics, undefined);
+  const coach = normalizeGuidance({ mode: 'heuristic', outcome: 'PAUSE', heuristics: h });
+  assert.equal(coach.mode, 'heuristic');
+  assert.equal(coach.heuristics[0].id, 'H-1');
+  const bad = normalizeGuidance({ mode: 'heuristic', heuristics: [{ id: 'H-2', confidence: 2 }] });
+  assert.equal(bad.heuristics, undefined);
+  assert.ok(bad.warnings.some((w) => w.code === 'INVALID_HEURISTIC'));
+});
+
+test('synthesized action queue is hard-capped at 50 with an explicit truncation flag', () => {
+  const actions = Array.from({ length: 60 }, (_, i) => makeAction({
+    kind: 'hygiene', targetId: `t${i}`, reasonCodes: ['HYGIENE'], findingRef: `/${i}`,
+    action: `task ${i}`, doneWhen: `t${i} done`,
+  }));
+  const g = normalizeGuidance({ actions });
+  assert.equal(g.actions.length, 50);
+  assert.equal(g.truncated, true);
 });
