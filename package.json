@@ -1,6 +1,6 @@
 {
   "name": "tech-lead-skill",
-  "version": "5.5.5",
+  "version": "5.5.6",
   "description": "Evidence-driven planning and safe change-control skill for OpenCode-compatible agents",
   "license": "MIT",
   "repository": {
@@ -20,7 +20,7 @@
     "skill/",
     "bin/",
     "README.md",
-    "README.zh-CN.md",
+    "README.en.md",
     "docs/TECHNICAL_GUIDE.md",
     "docs/AUDIT_REPORT.md",
     "LICENSE"
