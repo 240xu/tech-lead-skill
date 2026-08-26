@@ -49,7 +49,6 @@ export function csv(value) {
 const FINDINGS_LIMIT = 500;
 const ECHO_LIMIT = 100;
 const COMPACT_THRESHOLD = 262144;
-const ECHO_KEYS = new Set(['evidence', 'targets', 'expectedDiff', 'verification', 'items']);
 
 export function clampEnvelope(envelope) {
   if (Array.isArray(envelope)) return envelope.length > FINDINGS_LIMIT ? envelope.slice(0, FINDINGS_LIMIT) : envelope;
@@ -66,15 +65,24 @@ export function clampEnvelope(envelope) {
     out.warnings = [...(out.warnings ?? []), { code: 'FINDINGS_TRUNCATED', total: truncatedTotal, message: `output truncated to first ${FINDINGS_LIMIT} entries per findings field` }];
   }
   if (out.data !== null && typeof out.data === 'object') {
-    const data = { ...out.data };
-    for (const key of Object.keys(data)) {
-      if (ECHO_KEYS.has(key) && Array.isArray(data[key]) && data[key].length > ECHO_LIMIT) {
-        data[key] = { truncated: true, total: data[key].length };
-      }
-    }
-    out.data = data;
+    out.data = clampDataArrays(out.data);
   }
   return out;
+}
+
+function clampDataArrays(node) {
+  if (Array.isArray(node)) {
+    return node.length > ECHO_LIMIT ? { truncated: true, total: node.length } : node.map(clampDataArrays);
+  }
+  if (node !== null && typeof node === 'object') {
+    const out = {};
+    for (const key of Object.keys(node)) {
+      const value = node[key];
+      out[key] = Array.isArray(value) && value.length > ECHO_LIMIT ? { truncated: true, total: value.length } : clampDataArrays(value);
+    }
+    return out;
+  }
+  return node;
 }
 
 export function renderEnvelope(value) {

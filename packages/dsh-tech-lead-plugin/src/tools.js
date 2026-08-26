@@ -48,14 +48,18 @@ export function registerTools(defineTool, core) {
     },
     output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
     async execute(args) {
-      return out(core.classify({
-        touchesMultipleModules: args.touchesMultipleModules,
-        estimatedDays: args.estimatedDays,
-        irreversibleOps: csv(args.irreversibleOps),
-        protectedAssetTypes: csv(args.protectedAssetTypes),
-        publicInterfaceChange: args.publicInterfaceChange,
-        uncertainRisk: args.uncertainRisk,
-      }));
+      const provided = [args.touchesMultipleModules, args.estimatedDays, args.irreversibleOps, args.protectedAssetTypes, args.publicInterfaceChange, args.uncertainRisk];
+      const input = provided.every((v) => v === undefined || v === '')
+        ? {}
+        : {
+            touchesMultipleModules: args.touchesMultipleModules,
+            estimatedDays: args.estimatedDays,
+            irreversibleOps: csv(args.irreversibleOps),
+            protectedAssetTypes: csv(args.protectedAssetTypes),
+            publicInterfaceChange: args.publicInterfaceChange,
+            uncertainRisk: args.uncertainRisk,
+          };
+      return out(core.classify(input));
     },
   }));
 

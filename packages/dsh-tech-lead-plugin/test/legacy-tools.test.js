@@ -105,3 +105,8 @@ test('resume_card renders from defaults when the state cannot be parsed', async 
   assert.match(card.position, /T1/);
   assert.ok(card.position.includes('M2'));
 });
+
+test('input-free classification surfaces its defaulting through the tool layer', async () => {
+  const r = await run('tech_lead_classify', {});
+  assert.ok(r.reasons.some((x) => /no .*inputs/i.test(x)));
+});
