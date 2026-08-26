@@ -34,15 +34,15 @@ test('makeEnvelope does not mutate caller arrays', () => {
   assert.deepEqual(result.errors, [{ code: 'X' }]);
 });
 
-test('envelope contract metadata cannot be overridden by callers', () => {
+test('contract fields stay authoritative except an explicit deterministic:false is honored', () => {
   const result = makeEnvelope({ meta: { schema: 'other', deterministic: false, sideEffects: true } });
   assert.equal(result.meta.schema, 'tech-lead.result.v1');
-  assert.equal(result.meta.deterministic, true);
+  assert.equal(result.meta.deterministic, false);
   assert.equal(result.meta.sideEffects, false);
 });
 
-test('okEnvelope accepts extra meta while contract fields stay authoritative', () => {
+test('okEnvelope accepts extra meta; explicit deterministic:false survives', () => {
   const e = okEnvelope('op', { x: 1 }, [], { deterministic: false, tag: 't' });
-  assert.equal(e.meta.deterministic, true);
+  assert.equal(e.meta.deterministic, false);
   assert.equal(e.meta.tag, 't');
 });

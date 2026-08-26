@@ -34,14 +34,14 @@ export function releaseAudit(input = {}) {
 
     const lines = file.content.split('\n');
     lines.forEach((line, idx) => {
+      // Detectors are independent: one line can legitimately carry several leak classes.
       if (ABS_PATH_RE.test(line)) {
         push(v, 'ABS_PATH', file.path, idx + 1, 'absolute home/user path');
-      } else {
-        const tok = line.match(TOKEN_RE);
-        if (tok) push(v, 'TOKEN_SUSPECT', file.path, idx + 1, `token-like literal (${tok[0].slice(0, 6)}…)`);
-        const cred = line.match(CRED_LINE_RE);
-        if (cred) push(v, 'CREDENTIAL_LINE', file.path, idx + 1, 'credential assignment');
       }
+      const tok = line.match(TOKEN_RE);
+      if (tok) push(v, 'TOKEN_SUSPECT', file.path, idx + 1, `token-like literal (${tok[0].slice(0, 6)}…)`);
+      const cred = line.match(CRED_LINE_RE);
+      if (cred) push(v, 'CREDENTIAL_LINE', file.path, idx + 1, 'credential assignment');
     });
   }
   return v;

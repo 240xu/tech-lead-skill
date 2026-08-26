@@ -24,7 +24,7 @@ export function makeEnvelope({
       ...meta,
       schema: SCHEMA,
       operation,
-      deterministic: true,
+      deterministic: meta.deterministic === false ? false : true,
       sideEffects: false,
     },
   };

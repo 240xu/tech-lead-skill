@@ -35,9 +35,16 @@ export function clampEnvelope(envelope) {
   if (Array.isArray(envelope)) return envelope.length > FINDINGS_LIMIT ? envelope.slice(0, FINDINGS_LIMIT) : envelope;
   if (envelope === null || typeof envelope !== 'object') return envelope;
   const out = { ...envelope };
+  // First observed truncation wins; metadata lands ONLY in meta so pinned
+  // domain shapes and echo-collapse objects stay byte-identical.
+  let truncation = null;
+  const note = (kind, observed, limit, path = '/') => {
+    if (!truncation) truncation = { kind, observed, limit, path };
+  };
   let truncatedTotal = 0;
   for (const field of ['errors', 'warnings']) {
     if (Array.isArray(out[field]) && out[field].length > FINDINGS_LIMIT) {
+      note(field, out[field].length, FINDINGS_LIMIT, `/${field}`);
       truncatedTotal = Math.max(truncatedTotal, out[field].length);
       out[field] = out[field].slice(0, FINDINGS_LIMIT);
     }
@@ -46,7 +53,10 @@ export function clampEnvelope(envelope) {
     out.warnings = [...(out.warnings ?? []), { code: 'FINDINGS_TRUNCATED', total: truncatedTotal, message: `output truncated to first ${FINDINGS_LIMIT} entries per findings field` }];
   }
   if (out.data !== null && typeof out.data === 'object') {
-    out.data = clampNode(out.data, 0);
+    out.data = clampNode(out.data, 0, note);
+  }
+  if (truncation) {
+    out.meta = { ...(out.meta ?? {}), complete: false, truncation };
   }
   return out;
 }
@@ -54,7 +64,7 @@ export function clampEnvelope(envelope) {
 // Iterative walk with a hard depth cap: subtrees deeper than WALK_DEPTH_LIMIT are
 // passed through untouched (native JSON serialization handles arbitrary depth),
 // so hostile nesting can no longer turn the renderer into an INTERNAL error.
-function clampNode(root, rootDepth) {
+function clampNode(root, rootDepth, note) {
   const result = Array.isArray(root) ? [...root] : { ...root };
   const stack = [[result, rootDepth]];
   while (stack.length) {
@@ -69,8 +79,10 @@ function clampNode(root, rootDepth) {
       }
       if (Array.isArray(value)) {
         if (ECHO_KEYS.has(key) && value.length > ECHO_LIMIT) {
+          note(`echo:${key}`, value.length, ECHO_LIMIT, key);
           node[key] = { truncated: true, total: value.length };
         } else if (value.length > RESULT_ARRAY_LIMIT) {
+          note('array', value.length, RESULT_ARRAY_LIMIT, key);
           node[key] = value.slice(0, RESULT_ARRAY_LIMIT);
         } else {
           node[key] = [...value];

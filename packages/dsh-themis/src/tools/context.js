@@ -73,6 +73,7 @@ export function registerContextTools(defineTool, core) {
         const data = guidance ? { ...result, guidance } : result;
         const envelope = okEnvelope('evidence_freshness', data, result.warnings);
         envelope.meta.deterministic = clockPinned;
+        if (!clockPinned) envelope.meta.clockSource = 'runtime';
         return renderEnvelope(envelope);
       });
     },

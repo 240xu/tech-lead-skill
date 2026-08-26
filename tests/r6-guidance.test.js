@@ -8,8 +8,10 @@ import {
   inspectBounded, parseBoundedJson, gatePrecheck,
   makeAction, normalizeGuidance, progressDecide, criticalPath,
   gatePlan, changeImpact, transitionCheck, evidenceLint, evidenceFreshness,
+  releaseAudit, planLint,
 } from '../packages/dsh-tech-lead-core/src/index.js';
 import { registerTools } from '../packages/dsh-tech-lead-plugin/src/tools.js';
+import * as pluginProtocol from '../packages/dsh-tech-lead-plugin/src/protocol.js';
 import * as core from '../packages/dsh-tech-lead-core/src/index.js';
 
 const makeTools = () => registerTools((d) => d, core);
@@ -312,4 +314,68 @@ test('evidence lint names the minimum level and freshness findings carry refresh
   const drift = fresh.findings.find((f) => f.code === 'FINGERPRINT_DRIFT');
   assert.match(staleFinding.refreshAction.doneWhen, /freshness window/);
   assert.match(drift.refreshAction.action, /fingerprint new/);
+});
+
+test('release detectors run independently so one line can carry all three leak classes', () => {
+  const v = releaseAudit({
+    allowlist: ['a'],
+    files: [{ path: 'a', content: 'see /root/x key sk-abcdef12345 password=hunter22' }],
+  });
+  const types = v.filter((x) => x.line === 1).map((x) => x.type).sort();
+  assert.deepEqual(types, ['ABS_PATH', 'CREDENTIAL_LINE', 'TOKEN_SUSPECT']);
+});
+
+test('oversized audit results fail closed instead of silently slicing (C4)', async () => {
+  const tools = makeTools();
+  const hugePlan = JSON.stringify({ goal: 'g', metric: 'm', target: 't', assumptions: Array.from({ length: 600 }, (_, i) => `claim ${i}`) });
+  const plan = JSON.parse(await tools.find((t) => t.name === 'tech_lead_plan_lint').execute({ planJson: hugePlan }));
+  assert.equal(plan.ok, false);
+  assert.equal(plan.code, 'SCAN_INCOMPLETE');
+  assert.ok(plan.errors[0].details.observed > 500);
+  assert.equal(plan.data.legacy.length, 500);
+
+  const hugeEvidence = JSON.stringify(Array.from({ length: 600 }, (_, i) => ({ id: `e${i}` })));
+  const ev = JSON.parse(await tools.find((t) => t.name === 'tech_lead_evidence_lint').execute({ evidenceJson: hugeEvidence }));
+  assert.equal(ev.code, 'SCAN_INCOMPLETE');
+
+  const files = JSON.stringify(Array.from({ length: 600 }, (_, i) => ({ path: `f${i}.txt` })));
+  const rel = JSON.parse(await tools.find((t) => t.name === 'tech_lead_release_audit').execute({ allowlistCsv: 'keep.txt', filesJson: files }));
+  assert.equal(rel.code, 'SCAN_INCOMPLETE');
+  assert.equal(rel.data.legacy.length, 500);
+});
+
+test('clamped envelopes expose truncation metadata without touching domain data', () => {
+  const noisy = pluginProtocol.renderEnvelope({
+    ok: true, code: 'OK', data: null,
+    errors: [], warnings: [],
+    meta: { schema: 'tech-lead.result.v1', operation: 'probe' },
+  });
+  const fat = pluginProtocol.renderEnvelope({
+    ok: false, code: 'SCHEMA_INVALID',
+    errors: Array.from({ length: 700 }, (_, i) => ({ code: 'X', message: String(i) })),
+    warnings: [], data: null,
+    meta: { schema: 'tech-lead.result.v1', operation: 'probe' },
+  });
+  const parsed = JSON.parse(fat);
+  assert.equal(parsed.errors.length, 500);
+  assert.equal(parsed.meta.complete, false);
+  assert.equal(parsed.meta.truncation.observed, 700);
+  // echo-collapse objects are never mutated by completeness metadata
+  const echoed = JSON.parse(noisy || '{}');
+  assert.ok(!echoed.data);
+});
+
+test('freshness marks runtime-clock envelopes honestly with a clock source', async () => {
+  const tools = makeTools();
+  const out = JSON.parse(await tools.find((t) => t.name === 'tech_lead_evidence_freshness').execute({ contextJson: '{"evidence":[]}' }));
+  assert.equal(out.meta.deterministic, false);
+  assert.equal(out.meta.clockSource, 'runtime');
+});
+
+test('resume_card surfaces its runtime clock as an explicit warning hint', async () => {
+  const tools = makeTools();
+  const card = JSON.parse(await tools.find((t) => t.name === 'tech_lead_resume_card').execute({
+    stateJson: JSON.stringify({ tier: 'T1', phase: 'M2', mode: 'EXECUTE', evidence: [] }),
+  }));
+  assert.ok(card.warnings.some((w) => w.includes('runtime clock')));
 });

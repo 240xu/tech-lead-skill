@@ -31,6 +31,19 @@ export function registerTools(defineTool, core) {
     String(str ?? '').split(',').map((s) => s.trim()).filter(Boolean);
   const out = (value) => renderEnvelope(value);
 
+  // Legacy audits cannot carry completeness metadata in their bare-array shape,
+  // so an over-window result fails closed instead of being silently sliced.
+  const AUDIT_WINDOW = 500;
+  const auditWindow = (findings, operation) => {
+    if (!Array.isArray(findings) || findings.length <= AUDIT_WINDOW) return findings;
+    return errorEnvelope(operation, 'SCAN_INCOMPLETE', [{
+      code: 'SCAN_INCOMPLETE',
+      path: '/',
+      message: `${findings.length} findings exceed the ${AUDIT_WINDOW}-entry audit window; result is not certifiable`,
+      details: { observed: findings.length, limit: AUDIT_WINDOW },
+    }], { legacy: findings.slice(0, AUDIT_WINDOW) });
+  };
+
   /** @type {ReturnType<defineTool>[]} */
   const tools = [];
 
@@ -105,7 +118,7 @@ export function registerTools(defineTool, core) {
     async execute(args) {
       const parsed = json('planJson', args.planJson);
       if (!parsed.ok) return out([{ severity: 'error', path: 'planJson', message: parsed.error }]);
-      return out(core.planLint(parsed.value));
+      return out(auditWindow(core.planLint(parsed.value), 'plan_lint'));
     },
   }));
 
@@ -121,7 +134,7 @@ export function registerTools(defineTool, core) {
     async execute(args) {
       const parsed = json('evidenceJson', args.evidenceJson, 'release');
       if (!parsed.ok) return out([{ severity: 'error', path: 'evidenceJson', message: parsed.error }]);
-      return out(core.evidenceLint(parsed.value, { highRiskChange: args.highRiskChange }));
+      return out(auditWindow(core.evidenceLint(parsed.value, { highRiskChange: args.highRiskChange }), 'evidence_lint'));
     },
   }));
 
@@ -156,11 +169,11 @@ export function registerTools(defineTool, core) {
     async execute(args) {
       const parsed = json('filesJson', args.filesJson, 'release');
       if (!parsed.ok) return out([{ type: 'BAD_INPUT', path: 'filesJson', line: 0, detail: parsed.error }]);
-      return out(core.releaseAudit({
+      return out(auditWindow(core.releaseAudit({
         allowlist: csv(args.allowlistCsv),
         files: parsed.value,
         contentScan: args.contentScan,
-      }));
+      }), 'release_audit'));
     },
   }));
 
@@ -204,7 +217,11 @@ export function registerTools(defineTool, core) {
       if (!parsed.ok) {
         return out({ position: '?', lastGate: '?', nextStep: '(invalid state)', staleEvidenceIds: [], warnings: [parsed.error] });
       }
-      return out(core.resumeCard(parsed.value, { now: args.nowIso, maxAgeDays: args.maxAgeDays }));
+      const card = core.resumeCard(parsed.value, { now: args.nowIso, maxAgeDays: args.maxAgeDays });
+      const runtimeClock = !args.nowIso || Number.isNaN(Date.parse(args.nowIso));
+      return out(runtimeClock
+        ? { ...card, warnings: [...card.warnings, 'clockSource: runtime clock — pass nowIso for deterministic output'] }
+        : card);
     },
   }));
 
