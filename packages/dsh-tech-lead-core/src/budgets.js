@@ -16,10 +16,10 @@ export function getBudgetProfile(name) {
   return { ...(PROFILES[name] ?? PROFILES.default) };
 }
 
-function stop(kind, code, path, limitDetail, extra = {}) {
+function stop(kind, code, path, limit, extra = {}) {
   return {
     complete: false,
-    stoppedAt: { kind, path, limit: limitDetail.limit, ...extra },
+    stoppedAt: { kind, path, limit, ...extra },
     code,
   };
 }

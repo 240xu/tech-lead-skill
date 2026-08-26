@@ -63,8 +63,10 @@ test('depth beyond the profile stops the walk as SCAN_INCOMPLETE, never success'
 });
 
 test('node budget exhaustion fails closed even when structure is shallow', () => {
-  const arr = Array.from({ length: 5200 }, () => ({ a: [1] }));
-  const r = parseBoundedJson('contextJson', JSON.stringify(arr), 'default');
+  const wide = Array.from({ length: 800 }, () => Object.fromEntries(
+    Array.from({ length: 12 }, (_, k) => [`k${k}`, [0]]),
+  )); // 800*13 + 1 ≈ 10401 containers, array length 800 stays under items cap
+  const r = parseBoundedJson('contextJson', JSON.stringify(wide), 'default');
   assert.equal(r.ok, false);
   assert.equal(r.error.code, 'SCAN_INCOMPLETE');
   assert.equal(r.error.details.kind, 'nodes');
