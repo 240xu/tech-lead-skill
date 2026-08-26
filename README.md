@@ -50,13 +50,13 @@ The installer is idempotent: repeated runs back up existing files as `*.bak-<tim
 
 ### DeepSeek Harness plugin (read-only tools)
 
-Ships on the DSH plugin market (npm). Install into any profile:
+Ships on the DSH plugin market (npm) as ONE self-contained package. Install into any profile:
 
 ```
-dsh plugin --profile headless add @240xu/dsh-tech-lead-bundle
+dsh plugin --profile headless add @240xu/dsh-tech-lead
 ```
 
-The bundle pulls in `@240xu/dsh-tech-lead-plugin` and `@240xu/dsh-tech-lead-core` automatically — 21 read-only lifecycle tools total: the original nine audits plus context validation, evidence graph/freshness analysis, progress decisions, critical-path/impact analysis, resume reconciliation, gate planning/aggregation/reopen checks, and mutation preview. Tools compute over caller-supplied JSON only — no filesystem writes, no subprocesses, no network access. Source checkouts remain supported: `dsh plugin add /path/to/packages/dsh-tech-lead-bundle`. The root npm package distributes the skill and installer only.
+21 read-only lifecycle tools in a single artifact (the original nine audits plus context validation, evidence graph/freshness analysis, progress decisions, critical-path/impact analysis, resume reconciliation, gate planning/aggregation/reopen checks, and mutation preview). Tools compute over caller-supplied JSON only — no filesystem writes, no subprocesses, no network access. The earlier split packages (`dsh-tech-lead-{core,plugin,bundle}`) are deprecated in favor of this one. Source checkouts remain supported: build via `node scripts/build-market-package.mjs` then `dsh plugin add packages/dsh-tech-lead`. The root npm package distributes the skill and installer only.
 
 ```bash
 dsh plugin --profile headless add /path/to/tech-lead-skill/packages/dsh-tech-lead-bundle

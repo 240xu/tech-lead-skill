@@ -140,7 +140,7 @@ cordis.patch.yml：
       name: '@240xu/dsh-tech-lead-plugin'
 ```
 
-接入方式（插件市场）：`dsh plugin --profile <name> add @240xu/dsh-tech-lead-bundle`（npm 上架 0.3.1+，bundle→plugin→core 自动成链；⚠️ 发布必须用 `pnpm publish`——npm publish 不改写 workspace:^ 协议，0.3.0 即因此泄漏字面量依赖）。源码备选：clone 后 `dsh plugin add <本地路径>`；CLI 自动写 profile package.json 的
+接入方式（插件市场）：`dsh plugin --profile <name> add @240xu/dsh-tech-lead`（**单一自包含包** @1.0.0，由 `scripts/build-market-package.mjs` 从 workspace 三层装配内联生成，唯一运行时依赖 @deepseek-ai/dsh-tools；旧拆分三包已 npm deprecate 指向新包）。源码备选：装配后 `dsh plugin add <本地路径>`；CLI 自动写 profile package.json 的
 dsh.profile.bundles 并跑 pnpm）。顺序：先建隔离 profile `techtest` → headless → web。
 
 ## 5. 权限矩阵（铁律）

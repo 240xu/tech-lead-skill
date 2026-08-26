@@ -1,0 +1,6 @@
+# tech-lead bundle: one insert row over the profile root. The plugin is
+# strictly read-only (no fs writes, no subprocesses, no network); see
+# packages/dsh-tech-lead-plugin/src/tools.js for the full surface.
+- insert:
+    - id: tech-lead-tools
+      name: '@240xu/dsh-tech-lead'
