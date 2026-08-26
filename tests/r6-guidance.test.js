@@ -159,8 +159,8 @@ test('normalizeGuidance orders categories deterministically and numbers prioriti
     makeAction({ kind: 'gate', targetId: 'g1', reasonCodes: ['GATE_BLOCKED'], findingRef: '/gates/0', action: 'pass gate', doneWhen: 'status===pass' }),
     makeAction({ kind: 'dependency', targetId: 'd9', reasonCodes: ['DEPENDENCY_BLOCKED'], findingRef: '/dependencies/0', action: 'resolve dep', doneWhen: 'status===done' }),
   ] });
-  assert.deepEqual(g.actions.map((a) => a.kind), ['gate', 'dependency', 'evidence']);
-  assert.deepEqual(g.actions.map((a) => a.priority), [1, 2, 3]);
+  assert.deepEqual(g.nextActions.map((a) => a.kind), ['gate', 'dependency', 'evidence']);
+  assert.deepEqual(g.nextActions.map((a) => a.priority), [1, 2, 3]);
 });
 
 test('invalid actions are quarantined into guidance.warnings, never thrown', () => {
@@ -169,7 +169,7 @@ test('invalid actions are quarantined into guidance.warnings, never thrown', () 
     makeAction({ kind: 'evidence', targetId: 'e', reasonCodes: ['R'], findingRef: '/e/0', action: '', doneWhen: 'd' }),
     makeAction({ kind: 'hygiene', reasonCodes: ['H'], findingRef: '/', action: 'tidy', doneWhen: 'always' }),
   ] });
-  assert.equal(g.actions.length, 1);
+  assert.equal(g.nextActions.length, 1);
   assert.equal(g.warnings.filter((w) => w.code === 'INVALID_ACTION').length, 2);
 });
 
@@ -191,6 +191,6 @@ test('synthesized action queue is hard-capped at 50 with an explicit truncation 
     action: `task ${i}`, doneWhen: `t${i} done`,
   }));
   const g = normalizeGuidance({ actions });
-  assert.equal(g.actions.length, 50);
+  assert.equal(g.nextActions.length, 50);
   assert.equal(g.truncated, true);
 });
