@@ -62,7 +62,52 @@ test('artifact mutation preview denies casing variants and honors scan depth win
   assert.equal(previewMutation(beyond).code, 'SCAN_INCOMPLETE');
 });
 
-test('artifact resume_reconcile reports scalar-root drift keys via plugin protocol', async () => {
+test('artifact progress adapter renders PAUSE as ok:true with ordered guidance', async () => {
+  const [{ registerTools }, core] = await Promise.all([
+    import(A + 'tools.js'),
+    import(A + 'core/index.js'),
+  ]);
+  const tools = registerTools((d) => d, core);
+  const decide = tools.find((t) => t.name === 'tech_lead_progress_decide');
+  const out = JSON.parse(await decide.execute({
+    contextJson: JSON.stringify({
+      dependencies: [{ id: 'd1', blocker: true, status: 'open' }],
+      evidence: [], gates: [],
+    }),
+  }));
+  assert.equal(out.ok, true);
+  assert.equal(out.data.outcome, 'PAUSE');
+  assert.deepEqual(out.data.guidance.nextActions.map((a) => a.kind), ['dependency']);
+});
+
+test('artifact gate aggregate returns ok:true conditional analyses with closure actions', async () => {
+  const [{ registerTools }, core] = await Promise.all([
+    import(A + 'tools.js'),
+    import(A + 'core/index.js'),
+  ]);
+  const agg = registerTools((d) => d, core).find((t) => t.name === 'tech_lead_gate_aggregate');
+  const out = JSON.parse(await agg.execute({
+    reportsJson: '[{"role":"pm","verdict":"pass","anchors":["a"]}]',
+    planJson: '{"requiredRoles":["pm","arch"],"quorum":2}',
+  }));
+  assert.equal(out.code, 'OK');
+  assert.ok(out.data.findings.some((f) => f.code === 'MISSING_ROLE'));
+  assert.ok(out.data.guidance.nextActions.length >= 1);
+});
+
+test('artifact legacy audits fail closed beyond the 500-finding window', async () => {
+  const [{ registerTools }, core] = await Promise.all([
+    import(A + 'tools.js'),
+    import(A + 'core/index.js'),
+  ]);
+  const lint = registerTools((d) => d, core).find((t) => t.name === 'tech_lead_plan_lint');
+  const huge = JSON.stringify({ goal: 'g', metric: 'm', target: 't', assumptions: Array.from({ length: 600 }, (_, i) => `c${i}`) });
+  const out = JSON.parse(await lint.execute({ planJson: huge }));
+  assert.equal(out.ok, false);
+  assert.equal(out.code, 'SCAN_INCOMPLETE');
+});
+
+test('resume_reconcile reports scalar-root drift keys via plugin protocol', async () => {
   const proto = await import(A + 'protocol.js');
   assert.equal(typeof proto.canonicalStringify, 'function');
   const changed = JSON.stringify(proto.canonicalStringify('old')) !== JSON.stringify(proto.canonicalStringify('new'));

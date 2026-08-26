@@ -81,6 +81,17 @@ dsh --profile headless --dump-config   # 确认 tech-lead-tools 行已注入
 
 该技能由"构建项目/搭系统/制定执行计划/部署/迁移/发布/恢复/重构/运维"等实质性任务触发，即使用户没有明确说“项目”或“Tech Lead”也应加载；也可以显式加载。
 
+## 生命周期结果是有效分析
+
+`tech_lead_progress_decide` 的 `PAUSE`/`PIVOT`/`SCOPE-DOWN`/`STOP` 以 **ok:true** 分析返回（`data.outcome`）；未通过的 Gate 同样 ok:true（`data.verdict`/`data.pass`）。`ok:false` 只用于非法输入、超预算载荷（`INPUT_TOO_LARGE`、`ITEM_LIMIT_EXCEEDED`）与不完整安全扫描（`SCAN_INCOMPLETE`）。决策类工具附带确定性的 `data.guidance.nextActions[]`：每条动作含原因码、finding 引用与 `doneWhen` 完成谓词。启发式建议仅在显式 `guidanceMode:"heuristic"` 下出现。
+
+## 四工具起步环
+
+1. `tech_lead_classify` —— 把返回的 tier 写入快照 `current.tier`。
+2. `tech_lead_context_validate` —— 校验完整内联快照（schema `tech-lead.context.v1`；范例 tests/fixtures/starter-context.v1.json）。
+3. `tech_lead_evidence_lint` —— 把快照的 `evidence` 数组序列化为字符串传入；findings 仅作建议。
+4. `tech_lead_progress_decide` —— 喂入同一快照；读 `data.outcome` 后按 `data.guidance` 行动。
+
 ## 工作模式
 
 ### PLAN

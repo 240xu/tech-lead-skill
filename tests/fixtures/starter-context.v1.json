@@ -1,0 +1,28 @@
+{
+  "schema": "tech-lead.context.v1",
+  "project": { "id": "starter", "name": "Starter Project", "repositoryMode": "git" },
+  "goalLedger": [
+    { "id": "g1", "goal": "ship the first governed increment", "metric": "suite pass", "target": "all suites green" }
+  ],
+  "nonGoals": [],
+  "constraints": [],
+  "assets": [{ "id": "a1", "kind": "SOURCE" }],
+  "assumptions": [
+    { "id": "as1", "claim": "local toolchain can run the suite", "verification": "npm test exits 0" }
+  ],
+  "decisions": [],
+  "risks": [],
+  "dependencies": [],
+  "evidence": [
+    { "id": "E-1", "level": "E2", "source": "node --test", "time": "2026-08-26T00:00:00Z", "scope": "unit", "repro": "npm test" }
+  ],
+  "gates": [{ "id": "gate-1", "status": "pass", "destructive": false }],
+  "current": {
+    "mode": "EXECUTE",
+    "tier": "T1",
+    "phase": "M1",
+    "lastOutcome": "",
+    "nextStep": "run the four-tool starter loop and record fresh evidence"
+  },
+  "snapshot": { "at": "2026-08-26T00:00:00Z", "source": "inline", "fingerprint": "starter-fp-0001" }
+}

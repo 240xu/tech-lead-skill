@@ -131,3 +131,7 @@ The bundled templates are records, not decorative checklists:
 - `release-check.md` records the seven release phases and stops publication when a prerequisite or remote verification is unresolved.
 
 Use the smallest applicable artifact set, but do not omit a required record merely because the work is inconvenient to document. A template entry without an evidence anchor is an open item, not proof of completion.
+
+## Lifecycle results (R6)
+
+PAUSE/PIVOT/SCOPE-DOWN/STOP and gate non-pass states are valid `ok:true` analyses; `ok:false` is reserved for malformed input, budget overruns and incomplete scans (`SCAN_INCOMPLETE`). Guidance actions always carry `doneWhen` predicates.

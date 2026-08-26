@@ -62,7 +62,10 @@ writeFileSync(join(out, 'README.md'), [
   '`dsh plugin --profile headless add dsh-themis`',
   '',
   'No filesystem writes, no subprocesses, no network access — every tool computes',
-  'over caller-supplied JSON only. Upstream docs: https://github.com/240xu/tech-lead-skill',
+  'over caller-supplied JSON only. Inputs are budget-bounded (oversized or',
+  'unscannable payloads fail closed with INPUT_TOO_LARGE / SCAN_INCOMPLETE), and',
+  'decision tools attach deterministic guidance (nextActions with doneWhen).',
+  'Upstream docs: https://github.com/240xu/tech-lead-skill',
   '',
 ].join('\n'));
 

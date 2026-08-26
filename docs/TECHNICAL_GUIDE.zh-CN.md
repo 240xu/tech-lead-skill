@@ -131,3 +131,7 @@ Git 仓库用 commit/tag 记录源码与配置的版本谱系；非 Git 环境�
 - `release-check.md` 记录七阶段发布状态机；前置阶段或远程验证未解决时停止发布。
 
 按任务使用最小适用工件集，但不能因为记录不方便就省略必要记录。没有证据锚点的模板条目仍是开放事项，不是完成证明。
+
+## Lifecycle results (R6)
+
+PAUSE/PIVOT/SCOPE-DOWN/STOP and gate non-pass states are valid `ok:true` analyses; `ok:false` is reserved for malformed input, budget overruns and incomplete scans (`SCAN_INCOMPLETE`). Guidance actions always carry `doneWhen` predicates.

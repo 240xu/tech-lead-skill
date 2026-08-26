@@ -81,6 +81,17 @@ Copy `skill/SKILL.md` and the `skill/templates/` directory into the skills direc
 
 The skill is triggered by project construction, system building, implementation plans, deployment, migration, release, recovery, restructuring, operations work, and other substantial planning requests. It can also be loaded explicitly.
 
+## Lifecycle results are valid analyses
+
+`PAUSE`, `PIVOT`, `SCOPE-DOWN` and `STOP` from `tech_lead_progress_decide` are returned as **ok:true** analyses with `data.outcome`; a not-yet-passed gate returns `ok:true` with `data.verdict`/`data.pass`. `ok:false` is reserved for malformed input, over-budget payloads (`INPUT_TOO_LARGE`, `ITEM_LIMIT_EXCEEDED`) and incomplete safety scans (`SCAN_INCOMPLETE`). Decision tools attach a deterministic `data.guidance.nextActions[]`; every action carries reason codes, a finding reference and a `doneWhen` predicate. Heuristic suggestions appear only under explicit `guidanceMode:"heuristic"`.
+
+## Four-tool starter loop
+
+1. `tech_lead_classify` — copy the returned tier into your snapshot's `current.tier`.
+2. `tech_lead_context_validate` — validate the full inline snapshot (schema `tech-lead.context.v1`; canonical example: tests/fixtures/starter-context.v1.json).
+3. `tech_lead_evidence_lint` — pass the snapshot's `evidence` array as a JSON string; findings are advisory.
+4. `tech_lead_progress_decide` — feed the same snapshot; read `data.outcome`, then follow `data.guidance`.
+
 ## Operating Modes
 
 ### PLAN

@@ -12,6 +12,8 @@ import {
 } from '../packages/dsh-tech-lead-core/src/index.js';
 import { registerTools } from '../packages/dsh-tech-lead-plugin/src/tools.js';
 import * as pluginProtocol from '../packages/dsh-tech-lead-plugin/src/protocol.js';
+import { readFileSync } from 'node:fs';
+const FIXTURE = JSON.parse(readFileSync(new URL('./fixtures/starter-context.v1.json', import.meta.url), 'utf8'));
 import * as core from '../packages/dsh-tech-lead-core/src/index.js';
 
 const makeTools = () => registerTools((d) => d, core);
@@ -314,6 +316,22 @@ test('evidence lint names the minimum level and freshness findings carry refresh
   const drift = fresh.findings.find((f) => f.code === 'FINGERPRINT_DRIFT');
   assert.match(staleFinding.refreshAction.doneWhen, /freshness window/);
   assert.match(drift.refreshAction.action, /fingerprint new/);
+});
+
+test('starter fixture satisfies context v1 and drives the four-tool starter loop', async () => {
+  const tools = makeTools();
+  assert.equal(core.validateContext(FIXTURE).valid, true);
+  const tier = JSON.parse(await tools.find((t) => t.name === 'tech_lead_classify').execute({
+    estimatedDays: 2, touchesMultipleModules: false,
+  }));
+  assert.equal(tier.tier, FIXTURE.current.tier);
+  const ctx = await tools.find((t) => t.name === 'tech_lead_context_validate').execute({ contextJson: JSON.stringify(FIXTURE) });
+  assert.equal(JSON.parse(ctx).data.valid, true);
+  const lint = await tools.find((t) => t.name === 'tech_lead_evidence_lint').execute({ evidenceJson: JSON.stringify(FIXTURE.evidence) });
+  assert.deepEqual(JSON.parse(lint), []);
+  const progress = JSON.parse(await tools.find((t) => t.name === 'tech_lead_progress_decide').execute({ contextJson: JSON.stringify(FIXTURE) }));
+  assert.equal(progress.ok, true);
+  assert.equal(progress.data.outcome, 'CONTINUE');
 });
 
 test('release detectors run independently so one line can carry all three leak classes', () => {
