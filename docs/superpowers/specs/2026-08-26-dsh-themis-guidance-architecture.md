@@ -579,3 +579,112 @@ The architecture is ready for implementation when a reviewer can answer yes to e
 6. Is R6 independently valuable without R7/R8? It must answer yes.
 7. Are R7 and R8 guarded by observed need rather than speculative architecture? It must answer yes.
 8. Can the released npm artifact, rather than only workspace source, prove these properties? It must answer yes.
+
+## 14. Post-Approval Review Amendments
+
+This section resolves interface ambiguity found in an independent review of this specification against the shipped v1.0.1 artifact. It is normative and overrides earlier wording when there is a conflict.
+
+### 14.1 R6 parsing and budget boundary
+
+Create one public protocol helper:
+
+```js
+parseBoundedJson(fieldName, value, budgetProfile)
+// -> { ok:true, value, inspection:{bytes,nodes,maxDepth,complete:true} }
+// |  { ok:false, error:{code,path,message,details?} }
+```
+
+All public JSON-string parameters, including the nine legacy adapters in `src/tools.js`, must use this helper. The helper measures UTF-8 bytes before `JSON.parse`, then iteratively validates parsed structure against the profile before any domain function, clone, canonicalization, or renderer runs. A tool using multiple JSON fields applies its field profile independently and an aggregate request profile across all JSON text.
+
+Profiles are named, not ad hoc: `default`, `graph`, `release`, `mutation`, and `state`. `graph`, `release`, and `mutation` use lower node limits where their algorithms have higher traversal cost. Deep canonicalization must return completeness metadata; it may not replace omitted subtrees with a value that makes two distinct governance inputs compare equal.
+
+### 14.2 R6 legacy compatibility and completeness
+
+The original nine tool names retain their legacy bare output shapes throughout R6. They cannot carry `meta.complete`; therefore R6 treats them as follows:
+
+| Legacy tool | R6 behavior |
+|---|---|
+| `classify`, `state_validate`, `transition_check`, `install_audit`, `resume_card` | Keep bare projection. Input-budget and malformed-input failures use the existing domain-invalid shape, with an additive `code` field where the shape is object-like. |
+| `plan_lint`, `evidence_lint`, `release_audit` | Keep bare finding arrays only when the full scan/result fits the declared budget. If finding or scan limits would truncate, return one non-success structured object `{ok:false,code:"SCAN_INCOMPLETE",data:{legacy:[]},errors:[...]}` rather than silently slice an authoritative audit. |
+| `gate_precheck` | Upgrade to an object envelope projection in R6 because malformed report-container handling is a governance boundary. Preserve prior fields under `data.pass` and `data.violations`. |
+
+No R6 caller may use a truncated legacy release/evidence/plan result as a passing safety decision. R8 performs the general bare-result envelope migration.
+
+### 14.3 R6 exact result projections
+
+The R6 adapters use these rules:
+
+| Tool | Valid non-passing analysis | Malformed/safety-incomplete input |
+|---|---|---|
+| `tech_lead_progress_decide` | `{ok:true,code:"OK",data:{outcome,allowed,reasons,blockers,requiredActions,...}}` | `{ok:false,code:"BAD_INPUT"|"INPUT_TOO_LARGE"|...,errors:[...]}` |
+| `tech_lead_gate_precheck` | `{ok:true,code:"OK",data:{pass:false,violations:[...]}}` | `{ok:false,code:"BAD_REPORTS"|"BAD_INPUT",data:{pass:false,violations:[...]},errors:[...]}` |
+| `tech_lead_gate_aggregate` | `{ok:true,code:"OK",data:{pass:false,verdict,findings,missingRoles,...}}` | `{ok:false,code:"BAD_INPUT"|"SCAN_INCOMPLETE",errors:[...]}` |
+| strengthened context, evidence, impact, transition, critical-path tools | Valid negative governance state remains `ok:true`, with domain result in `data` | Invalid parse/schema/budget/capability state is `ok:false` |
+
+`forcePivot:true` remains a valid request. It produces `ok:true`, `data.outcome:"PIVOT"`, and strict guidance requiring a recorded falsified decision or explicitly declares that such evidence is missing. `allowed:false` is retained as domain data and is not the envelope failure signal.
+
+### 14.4 R6 guidance-enabled tool matrix
+
+Only the following tools accept an optional `optionsJson` object with `guidanceMode` in R6: `tech_lead_progress_decide`, `tech_lead_critical_path`, `tech_lead_change_impact`, `tech_lead_evidence_freshness`, `tech_lead_assumption_register`, `tech_lead_gate_plan`, `tech_lead_gate_aggregate`, and `tech_lead_gate_reopen`.
+
+- Absent `guidanceMode` means `strict`.
+- Any value other than `strict` or `heuristic` returns `ok:false`, `code:"BAD_INPUT"`, at `/optionsJson/guidanceMode`.
+- Strict guidance is always calculated first.
+- Heuristic mode may append `guidance.heuristics` only; it cannot remove, reorder, or change strict actions or domain outcomes.
+- `transition_check` remains a legacy tool in R6 and gets a strict `requiredStateChanges` field in its existing object projection; heuristic mode waits for R8 migration.
+
+Every strict action has `actionId`, `findingRef`, `reasonCodes`, `doneWhen`, and `nextTool`. `findingRef` is a JSON Pointer into the input/result finding source. Guidance-enabled domain functions must preserve `blockingGateIds`, `blockedDependencyIds`, and `staleEvidenceIds`; a missing identifier produces a malformed-record finding instead of the synthetic identifier `unknown`.
+
+### 14.5 R6 starter fixture
+
+R6 creates `tests/fixtures/starter-context.v1.json` as the canonical complete `tech-lead.context.v1` starter input. It has a stable inline fingerprint and all currently required context arrays. The handoff contract is:
+
+| Step | Input | Handoff |
+|---|---|---|
+| classify | primitive inputs | Copy `tier` to `context.current.tier`; classification never builds a context automatically. |
+| context validate | complete fixture/snapshot | The same snapshot is retained as the source of truth. |
+| evidence lint | `context.evidence` serialized as `evidenceJson` | Findings are advisory; the snapshot is only changed by the caller. |
+| progress decide | same complete snapshot as `contextJson` | Returns lifecycle outcome and action queue. |
+
+The fixture proves a documented path without implying hidden persistence or automatic transformation.
+
+### 14.6 R7 discoverability and aggregator wire contract
+
+R7 adds the registered, read-only `tech_lead_capabilities` tool. It returns only capabilities that are actually registered in the current `registerTools()` invocation. `nextTools` must be validated against this registered set at assembly time and omitted when unavailable.
+
+If the R7 admission gate permits `tech_lead_guidance`, its input is:
+
+```json
+{
+  "contextJson": "{...}",
+  "resultsJson": "[{\"tool\":\"tech_lead_progress_decide\",\"resultJson\":\"{...}\"}]",
+  "optionsJson": "{\"guidanceMode\":\"strict\"}"
+}
+```
+
+Each supplied result must be an R6 envelope with matching `tool === result.meta.operation`, a recognized schema/version, matching context fingerprint when one is present, and a complete strict `guidance.nextActions` array. Duplicate action IDs are deduplicated; conflicting action IDs with different completion predicates return `GUIDANCE_CONFLICT`. Bare legacy results are not accepted by the aggregator. It merges R6 action queues and never translates raw domain findings itself.
+
+### 14.7 R8 narrowed migration and exact context v2 shape
+
+R8 first implements only one-way projection: `state.json v1 -> tech-lead.context.v2`. Reverse conversion is deferred until lossless equivalence is proven against representative fixtures.
+
+Context v2 uses:
+
+```json
+{
+  "schema": "tech-lead.context",
+  "version": 2,
+  "project": {"id":"...","name":"...","repositoryMode":"git"},
+  "current": {"mode":"PLAN","tier":"T1","phase":"M0","lastOutcome":"","nextStep":"collect the first project snapshot"},
+  "snapshot": {"at":"...","source":"inline","fingerprint":"..."},
+  "state": {"persistence":"available","done":[],"openGates":[],"criticalPath":[],"protectedAssets":[],"hypotheses":[],"nextReviewTrigger":"","degradedReason":"","tags":[]},
+  "goalLedger": [], "nonGoals": [], "constraints": [], "decisions": [], "risks": [], "dependencies": [], "evidence": [], "assumptions": [],
+  "extensions": {}
+}
+```
+
+The projection table must cover every known v1 state field. Fields with no semantic v1 source, specifically `project.id`, `project.name`, `snapshot.source`, and `snapshot.fingerprint`, are required projection options; omission returns `NON_CONVERTIBLE_STATE` with a loss report. No invented defaults are allowed for identity or fingerprint data.
+
+V1 parsing recognizes exactly `schema:"tech-lead.context.v1"` and normalizes it internally to `{schema:"tech-lead.context",version:1}`. V2 requires the explicit two-field representation above. Strict mode rejects unknown fields outside `extensions`; compat mode preserves namespaced `extensions` keys as opaque data that core decision functions ignore.
+
+R8 adds public `protocolJson` to every tool: `{"inputCompatibility":"strict"|"compat","outputProtocol":"legacy"|"tech-lead.result.v2"}`. Original nine tools default to `legacy` for one published minor-release cycle; strengthened tools default to v2. Unsupported selections return `UNSUPPORTED_SCHEMA_VERSION` or `BAD_INPUT`.
