@@ -42,3 +42,23 @@ test('resume reconcile ignores key order when snapshots match semantically', asy
   assert.equal(result.ok, true);
   assert.equal(result.data.drift, false);
 });
+
+test('critical path rejects non-array graph inputs and surfaces cycles as errors', async () => {
+  const tools = registerTools((d) => d, core);
+  const badType = JSON.parse(await tools.find((t) => t.name === 'tech_lead_critical_path').execute({
+    tasksJson: '"str"', dependenciesJson: '[]',
+  }));
+  assert.equal(badType.code, 'BAD_INPUT');
+  const cycled = JSON.parse(await tools.find((t) => t.name === 'tech_lead_critical_path').execute({
+    tasksJson: '[{"id":"a"},{"id":"b"}]', dependenciesJson: '[{"from":"a","to":"b"},{"from":"b","to":"a"}]',
+  }));
+  assert.equal(cycled.code, 'SCHEMA_INVALID');
+  assert.ok(cycled.errors.some((e) => e.code === 'CYCLE'));
+});
+
+test('resume reconcile names the differing top-level keys', async () => {
+  const result = JSON.parse(await registerTools((d) => d, core).find((t) => t.name === 'tech_lead_resume_reconcile').execute({
+    previousJson: '{"a":1,"keep":true}', currentJson: '{"a":2,"keep":true}',
+  }));
+  assert.equal(result.data.changedKeys.includes('a'), true);
+});

@@ -4,7 +4,7 @@ import { parseJsonString, renderEnvelope, runGuarded } from '../protocol.js';
 export function registerMutationTools(defineTool) {
   return [defineTool({
     name: 'tech_lead_mutation_preview',
-    description: 'Validate and preview a mutation intent. Never writes files or executes commands.',
+    description: 'Validate and preview a MutationIntent without executing anything. Schema tech-lead.mutation-intent.v1: mode MUST be "read-only-preview"; requires target[] (each {path,operation}; operations apply/execute/deploy are denied anywhere in the payload), expectedDiff[], recoveryPoint{required:true,...}, verification[] commands-as-inert-strings, authorization{required:true}. Returns CAPABILITY_DENIED for executable modes/markers, SERIALIZATION_FAILED for unserializable payloads.',
     parameters: { intentJson: { type: 'string', required: true, description: 'mutation intent JSON text' } },
     output: { schema: { type: 'string' }, render: (_a, value) => [{ type: 'text', text: value }] },
     async execute(args) {

@@ -15,6 +15,10 @@ export function classify(maybeInput) {
   const input = maybeInput !== null && typeof maybeInput === 'object' ? maybeInput : {};
   const reasons = [];
   let tier = 'T0';
+  const provided = ['touchesMultipleModules', 'estimatedDays', 'irreversibleOps', 'protectedAssetTypes', 'publicInterfaceChange', 'uncertainRisk'];
+  if (provided.every((key) => input[key] === undefined)) {
+    reasons.unshift('no classification inputs provided; defaulting to T0');
+  }
 
   const t2 =
     input.touchesMultipleModules === true ||

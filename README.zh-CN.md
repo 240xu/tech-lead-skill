@@ -57,6 +57,12 @@ dsh plugin --profile headless add /path/to/tech-lead-skill/packages/dsh-tech-lea
 dsh --profile headless --dump-config   # 确认 tech-lead-tools 行已注入
 ```
 
+
+输出家族与限制：
+
+- 十二个强化工具返回 `tech-lead.result.v1` 信封（判别字段：`meta.schema`）；原有九个工具为向后兼容保留裸领域形状。
+- 渲染输出有上限：finding/error 数组每字段最多 500 条并附 `FINDINGS_TRUNCATED` 警告；超限调用方回显数组折叠为 `{truncated,total}` 摘要；超过 256KB 自动切换紧凑序列化。
+
 架构与权限矩阵见 [spec](https://github.com/240xu/tech-lead-skill/blob/main/docs/superpowers/specs/2026-08-25-dsh-tech-lead-system.md)。
 
 ### 手动方式
@@ -125,6 +131,6 @@ dsh --profile headless --dump-config   # 确认 tech-lead-tools 行已注入
 
 ## 版本
 
-当前版本：`v5.4.3`。
+当前版本：`v5.4.4`。
 
 完整运行模型见[技术指南](./docs/TECHNICAL_GUIDE.zh-CN.md)，发布审计见 [docs/AUDIT_REPORT.md](docs/AUDIT_REPORT.md)。

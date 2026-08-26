@@ -88,3 +88,19 @@ test('self-referencing evidence is flagged as a cycle', () => {
   assert.equal(result.valid, false);
   assert.ok(result.findings.some((f) => f.code === 'CYCLE'));
 });
+
+test('omitted maxAgeDays uses the documented seven-day boundary', () => {
+  const opts = { now: '2026-08-25T00:00:00Z' };
+  const fresh = evidenceFreshness({ evidence: [{ id: 'e', time: '2026-08-19T00:00:00Z' }] }, opts);
+  assert.equal(fresh.stale, false);
+  const boundary = evidenceFreshness({ evidence: [{ id: 'e', time: '2026-08-18T00:00:00Z' }] }, opts);
+  assert.equal(boundary.stale, false);
+  const stale = evidenceFreshness({ evidence: [{ id: 'e', time: '2026-08-17T23:00:00Z' }] }, opts);
+  assert.equal(stale.stale, true);
+});
+
+test('future-dated evidence is flagged without marking the set stale', () => {
+  const r = evidenceFreshness({ evidence: [{ id: 'f', time: '2027-01-01T00:00:00Z' }] }, { now: '2026-08-25T00:00:00Z' });
+  assert.equal(r.stale, false);
+  assert.ok(r.findings.some((f) => f.code === 'FUTURE_EVIDENCE'));
+});

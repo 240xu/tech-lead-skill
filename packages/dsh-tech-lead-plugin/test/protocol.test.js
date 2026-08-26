@@ -38,3 +38,27 @@ test('runGuarded converts unexpected throws into INTERNAL envelopes without stac
   assert.match(parsed.errors[0].message, /TypeError/);
   assert.doesNotMatch(parsed.errors[0].message, /\/secret\/path/);
 });
+
+test('renderEnvelope clamps oversized findings arrays with a truncation marker', async () => {
+  const { renderEnvelope } = await import('../src/protocol.js');
+  const errors = Array.from({ length: 600 }, (_, i) => ({ code: 'E', path: `/x/${i}`, message: 'm' }));
+  const text = renderEnvelope({ ok: false, code: 'SCHEMA_INVALID', errors, warnings: [] });
+  const parsed = JSON.parse(text);
+  assert.equal(parsed.errors.length, 500);
+  assert.ok(parsed.warnings.some((w) => w.code === 'FINDINGS_TRUNCATED' && w.total === 600));
+});
+
+test('large envelopes switch to compact serialization', async () => {
+  const { renderEnvelope } = await import('../src/protocol.js');
+  const big = { ok: true, data: { blob: 'x'.repeat(300000) } };
+  const text = renderEnvelope(big);
+  assert.ok(text.length > 262144);
+  assert.equal(text.includes('\n  '), false);
+});
+
+test('oversized caller-echo arrays collapse into truncation summaries', async () => {
+  const { clampEnvelope } = await import('../src/protocol.js');
+  const evidence = Array.from({ length: 150 }, (_, i) => ({ id: `e${i}` }));
+  const out = clampEnvelope({ ok: true, data: { evidence } });
+  assert.deepEqual(out.data.evidence, { truncated: true, total: 150 });
+});

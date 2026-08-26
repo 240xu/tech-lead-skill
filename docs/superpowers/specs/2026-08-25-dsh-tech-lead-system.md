@@ -171,7 +171,8 @@ dsh.profile.bundles 并跑 pnpm）。顺序：先建隔离 profile `techtest` �
 - context 校验只到字段级：goalLedger 等集合的元素级形状检查委托给 evidence_graph_lint / planLint 等专项 lint，不在 validateContext 内重复。
 - ~~前九个遗留工具无专属 plugin 单测~~ 已闭合：test/legacy-tools.test.js 以 9 个特征化回归钉覆盖正例与各自 JSON 解析降级形状。
 - mutation 标记扫描按 Unicode 语义匹配 `apply|execute|deploy`；同形字/ZWSP/全角混淆可绕过字符串扫描，但 preview 模式无任何执行汇（capability 完整性不受影响），仅决策支持层需知悉。
-- envelope 对超大规模调用方数据存在与输入成正比的回显放大（无输出上限），由输入体积自然约束；如需硬上限待后续版本引入。
+- 输出放大已在工具层封顶：findings/error 每字段 ≤500 条（附 FINDINGS_TRUNCATED）、回显数组 >100 折叠为 {truncated,total}、>256KB 紧凑序列化；遗留九工具的裸数组输出仅做静默切片（保形不附警告）。核心层保持完整确定性结果不变。
+- gateAggregate 角色满足度判定已由 O(roles×reports) 优化为 Set 查表 O(n+m)。
 - 前九个遗留工具假定入参为对象（DSH harness 保证 args 为对象）；绕过 harness 直接以 undefined 调用属库级误用。
 - 离线测试套件需 Node ≥18（node:test CLI）；运行时包本身 engines ≥16 即可。
 

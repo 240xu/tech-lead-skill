@@ -2,6 +2,7 @@ import { registerContextTools } from './tools/context.js';
 import { registerProgressTools } from './tools/progress.js';
 import { registerGateTools } from './tools/gates.js';
 import { registerMutationTools } from './tools/mutation.js';
+import { clampEnvelope } from './protocol.js';
 
 /**
  * Tool definitions for the tech-lead read-only surface.
@@ -10,6 +11,8 @@ import { registerMutationTools } from './tools/mutation.js';
  * - composite inputs arrive as JSON strings (parsed defensively),
  * - list inputs arrive as comma-separated values,
  * - outputs are pretty-printed JSON strings (uniform string schema); malformed inputs yield structured BAD_INPUT/invalid results instead of throws.
+ * - Legacy nine tools return BARE domain shapes (not wrapped in a tech-lead.result.v1 envelope); consumers can discriminate via the absence of meta.schema.
+ * - All rendered output is clamped: finding/error arrays are capped at 500 entries (FINDINGS_TRUNCATED warning appended), oversized caller-echo arrays collapse into {truncated,total}, and payloads above 256KB switch to compact serialization.
  *
  * No tool touches the filesystem, spawns processes, or performs network I/O.
  *
@@ -26,7 +29,7 @@ export function registerTools(defineTool, core) {
   };
   const csv = (str) =>
     String(str ?? '').split(',').map((s) => s.trim()).filter(Boolean);
-  const out = (value) => JSON.stringify(value, null, 2);
+  const out = (value) => JSON.stringify(clampEnvelope(value), null, 2);
 
   /** @type {ReturnType<defineTool>[]} */
   const tools = [];

@@ -57,6 +57,12 @@ dsh plugin --profile headless add /path/to/tech-lead-skill/packages/dsh-tech-lea
 dsh --profile headless --dump-config   # verify the tech-lead-tools row is present
 ```
 
+
+Output families and limits:
+
+- The twelve strengthened tools return a `tech-lead.result.v1` envelope (discriminator: `meta.schema`); the original nine tools return their bare domain shapes for backward compatibility.
+- Rendered output is clamped: finding/error arrays are capped at 500 entries with a `FINDINGS_TRUNCATED` warning, oversized caller-echo arrays collapse into `{truncated,total}` summaries, and payloads above 256 KB switch to compact serialization.
+
 See [`docs/superpowers/specs/2026-08-25-dsh-tech-lead-system.md`](https://github.com/240xu/tech-lead-skill/blob/main/docs/superpowers/specs/2026-08-25-dsh-tech-lead-system.md) for the architecture and permission matrix.
 
 ### Manual
@@ -125,6 +131,6 @@ The executable skill body (`SKILL.md`) is authored in Simplified Chinese; coding
 
 ## Version
 
-Current version: `v5.4.3`.
+Current version: `v5.4.4`.
 
 See [`docs/TECHNICAL_GUIDE.md`](docs/TECHNICAL_GUIDE.md) for the full operating model and [`docs/AUDIT_REPORT.md`](docs/AUDIT_REPORT.md) for the publication audit.

@@ -40,3 +40,16 @@ test('array context is rejected like other malformed shapes', () => {
   assert.equal(r.outcome, 'PAUSE');
   assert.equal(r.allowed, false);
 });
+
+test('forcePivot escalates the outcome to PIVOT', () => {
+  const ctx = { dependencies: [], evidence: [], gates: [], decisions: [], goalLedger: [], risks: [] };
+  const r = progressDecide(ctx, { forcePivot: true });
+  assert.equal(r.outcome, 'PIVOT');
+});
+
+test('open destructive gate pauses with GATE_BLOCKED reasoning', () => {
+  const ctx = { dependencies: [], evidence: [], gates: [{ id: 'g1', destructive: true, status: 'open' }] };
+  const r = progressDecide(ctx, {});
+  assert.equal(r.outcome, 'PAUSE');
+  assert.match(JSON.stringify(r.reasons), /GATE_BLOCKED/);
+});

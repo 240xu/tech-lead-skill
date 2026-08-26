@@ -13,9 +13,11 @@ export function registerContextTools(defineTool, core) {
         const parsed = parseJsonString(args?.contextJson, 'contextJson');
         if (!parsed.ok) return renderEnvelope(errorEnvelope('context_validate', parsed.error.code, [parsed.error]));
         const result = core.validateContext(parsed.value);
-        return renderEnvelope(result.valid
-          ? okEnvelope('context_validate', result)
-          : errorEnvelope('context_validate', 'SCHEMA_INVALID', result.errors, result));
+        if (!result.valid) {
+          const errors = result.errors.map((item) => ({ code: 'SCHEMA_INVALID', path: item.path, message: item.message }));
+          return renderEnvelope(errorEnvelope('context_validate', 'SCHEMA_INVALID', errors, result));
+        }
+        return renderEnvelope(okEnvelope('context_validate', result));
       });
     },
   }));
@@ -80,9 +82,11 @@ export function registerContextTools(defineTool, core) {
           affects: Array.isArray(item?.affects) ? item.affects.slice() : [],
         }));
         const missing = items.filter((item) => item.status === 'missing_verification');
-        return renderEnvelope(missing.length
-          ? errorEnvelope('assumption_register', 'SCHEMA_INVALID', missing, { items })
-          : okEnvelope('assumption_register', { items }));
+        if (missing.length) {
+          const errors = missing.map((item) => ({ code: 'MISSING_VERIFICATION', path: `/assumptions/${item.id}`, message: 'assumption lacks a verification method' }));
+          return renderEnvelope(errorEnvelope('assumption_register', 'SCHEMA_INVALID', errors, { items }));
+        }
+        return renderEnvelope(okEnvelope('assumption_register', { items }));
       });
     },
   }));

@@ -54,3 +54,10 @@ test('string maxAgeDays follows the strict-number policy with default semantics'
   assert.ok(c.warnings.some((w) => w.includes('maxAgeDays')));
   assert.deepEqual(c.staleEvidenceIds, []);
 });
+
+test('resumeCard honors the seven-day default when maxAgeDays omitted', () => {
+  const base = { tier: 'T0', phase: 'M0', mode: 'PLAN' };
+  const opts = { now: '2026-08-25T00:00:00Z' };
+  assert.deepEqual(resumeCard({ ...base, evidence: [{ id: 'e', time: '2026-08-19T00:00:00Z' }] }, opts).staleEvidenceIds, []);
+  assert.deepEqual(resumeCard({ ...base, evidence: [{ id: 'e', time: '2026-08-17T00:00:00Z' }] }, opts).staleEvidenceIds, ['e']);
+});

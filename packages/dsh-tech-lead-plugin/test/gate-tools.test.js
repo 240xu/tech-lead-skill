@@ -39,3 +39,20 @@ test('gate plan reports every failing argument at once', async () => {
   assert.equal(result.code, 'BAD_INPUT');
   assert.equal(result.errors.length, 2);
 });
+
+test('blocked aggregation derives actionable MISSING_ROLE error entries', async () => {
+  const r = JSON.parse(await tool('tech_lead_gate_aggregate').execute({
+    reportsJson: '[{"role":"eng","verdict":"pass","anchors":["a"]}]',
+    planJson: '{"requiredRoles":["eng","arch"],"quorum":2}',
+  }));
+  assert.equal(r.code, 'GATE_BLOCKED');
+  assert.ok(r.errors.some((e) => e.code === 'MISSING_ROLE'));
+});
+
+test('gate reopen rejects snapshots without any known fingerprint key', async () => {
+  const r = JSON.parse(await tool('tech_lead_gate_reopen').execute({
+    previousJson: '{"fingerprint":"a"}', currentJson: '{"fingerprint":"b"}',
+  }));
+  assert.equal(r.code, 'BAD_INPUT');
+  assert.match(JSON.stringify(r.errors), /contextFingerprint/);
+});

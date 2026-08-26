@@ -44,3 +44,8 @@ test('truthy-but-not-true flags do not emit mismatched reasons', () => {
   assert.equal(r.tier, 'T0');
   assert.equal(r.reasons.some((x) => x.includes('T2')), false);
 });
+
+test('input-free classification states its defaulting instead of asserting triviality', () => {
+  const r = classify({});
+  assert.ok(r.reasons.some((x) => /no .*inputs/i.test(x)));
+});

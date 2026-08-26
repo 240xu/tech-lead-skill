@@ -79,3 +79,14 @@ test('invalid plan marks the aggregation unresolved even when roles are filled',
   assert.equal(result.verdict, 'conditional');
   assert.equal(result.unresolved, true);
 });
+
+test('empty anchors array never satisfies the anchored-review guarantee', () => {
+  const r = gateAggregate([{ role: 'eng', verdict: 'pass', anchors: [] }], { requiredRoles: ['eng'], quorum: 1 });
+  assert.equal(r.pass, false);
+  assert.ok(r.findings.some((f) => f.code === 'INVALID_REPORT'));
+});
+
+test('dependency and impact fingerprint drift each trigger reopen accounting', () => {
+  assert.deepEqual(gateReopen({ dependencyFingerprint: 'a' }, { dependencyFingerprint: 'b' }).changedInputs, ['dependencies']);
+  assert.deepEqual(gateReopen({ impactFingerprint: 'a' }, { impactFingerprint: 'b' }).changedInputs, ['impact']);
+});

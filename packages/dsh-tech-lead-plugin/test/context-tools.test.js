@@ -45,3 +45,12 @@ test('freshness envelope marks determinism honestly based on injected clock', as
   });
   assert.equal(JSON.parse(pinned).meta.deterministic, true);
 });
+
+test('schema errors carry the uniform code field on the context surface', async () => {
+  const tools = registerTools(fakeDefineTool, core);
+  const tool = tools.find((t) => t.name === 'tech_lead_context_validate');
+  const r = JSON.parse(await tool.execute({ contextJson: '{"schema":"tech-lead.context.v1"}' }));
+  assert.equal(r.ok, false);
+  assert.ok(r.errors.length >= 1);
+  assert.ok(r.errors.every((e) => typeof e.code === 'string'));
+});

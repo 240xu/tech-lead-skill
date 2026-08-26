@@ -46,6 +46,38 @@ export function csv(value) {
   return String(value ?? '').split(',').map((item) => item.trim()).filter(Boolean);
 }
 
+const FINDINGS_LIMIT = 500;
+const ECHO_LIMIT = 100;
+const COMPACT_THRESHOLD = 262144;
+const ECHO_KEYS = new Set(['evidence', 'targets', 'expectedDiff', 'verification', 'items']);
+
+export function clampEnvelope(envelope) {
+  if (Array.isArray(envelope)) return envelope.length > FINDINGS_LIMIT ? envelope.slice(0, FINDINGS_LIMIT) : envelope;
+  if (envelope === null || typeof envelope !== 'object') return envelope;
+  const out = { ...envelope };
+  let truncatedTotal = 0;
+  for (const field of ['errors', 'warnings']) {
+    if (Array.isArray(out[field]) && out[field].length > FINDINGS_LIMIT) {
+      truncatedTotal = Math.max(truncatedTotal, out[field].length);
+      out[field] = out[field].slice(0, FINDINGS_LIMIT);
+    }
+  }
+  if (truncatedTotal > 0) {
+    out.warnings = [...(out.warnings ?? []), { code: 'FINDINGS_TRUNCATED', total: truncatedTotal, message: `output truncated to first ${FINDINGS_LIMIT} entries per findings field` }];
+  }
+  if (out.data !== null && typeof out.data === 'object') {
+    const data = { ...out.data };
+    for (const key of Object.keys(data)) {
+      if (ECHO_KEYS.has(key) && Array.isArray(data[key]) && data[key].length > ECHO_LIMIT) {
+        data[key] = { truncated: true, total: data[key].length };
+      }
+    }
+    out.data = data;
+  }
+  return out;
+}
+
 export function renderEnvelope(value) {
-  return JSON.stringify(value, null, 2);
+  const pretty = JSON.stringify(clampEnvelope(value), null, 2);
+  return pretty.length > COMPACT_THRESHOLD ? JSON.stringify(clampEnvelope(value)) : pretty;
 }

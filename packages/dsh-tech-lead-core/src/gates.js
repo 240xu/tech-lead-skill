@@ -58,7 +58,8 @@ export function gateAggregate(reports, plan = {}) {
   const required = [...new Set(list(plan.requiredRoles).filter((role) => typeof role === 'string' && role))];
   const quorum = Number.isInteger(plan.quorum) && plan.quorum > 0 ? plan.quorum : required.length;
   if (!required.length || quorum > required.length) findings.push({ code: 'INVALID_PLAN', message: 'plan needs non-empty requiredRoles and a valid quorum' });
-  const missing = required.filter((role) => !validReports.some((report) => report.role === role));
+  const satisfiedRoles = new Set(validReports.map((report) => report.role));
+  const missing = required.filter((role) => !satisfiedRoles.has(role));
   const pass = findings.length === 0 && missing.length === 0 && validReports.length >= quorum && rejects.length === 0 && conditionals.length === 0;
   const verdict = rejects.length ? 'reject' : pass ? 'pass' : 'conditional';
   return { pass, verdict, findings, missingRoles: missing, unresolved: missing.length > 0 || rejects.length > 0 || conditionals.length > 0 || findings.length > 0 };

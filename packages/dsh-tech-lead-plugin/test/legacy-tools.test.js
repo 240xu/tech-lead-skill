@@ -44,7 +44,9 @@ test('plan_lint emits raw findings arrays for both lint and parse paths', async 
   const missing = await run('tech_lead_plan_lint', { planJson: '{"goal":"g"}' });
   assert.ok(missing.some((f) => f.path === 'metric'));
   const broken = await run('tech_lead_plan_lint', { planJson: '{' });
-  assert.deepEqual(broken[0], { severity: 'error', path: 'planJson', message: broken[0].message });
+  assert.equal(broken[0].severity, 'error');
+  assert.equal(broken[0].path, 'planJson');
+  assert.match(broken[0].message, /invalid JSON/);
 });
 
 test('evidence_lint enforces E3 minimum through the raw severity field', async () => {
