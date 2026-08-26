@@ -1,5 +1,7 @@
 import { errorEnvelope } from '@240xu/dsh-tech-lead-core';
 
+export { inspectBounded, parseBoundedJson, getBudgetProfile } from '@240xu/dsh-tech-lead-core';
+
 export function parseJsonString(value, path = 'input') {
   if (typeof value !== 'string') {
     return { ok: false, error: { code: 'BAD_INPUT', path, message: 'expected JSON text string' } };
