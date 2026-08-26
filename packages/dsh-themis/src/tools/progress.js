@@ -12,11 +12,11 @@ export function registerProgressTools(defineTool, core) {
   }, async (args) => {
     return runGuarded('progress_decide', () => {
       const input = parseJsonFields(args ?? {}, ['contextJson']);
-      if (!input.ok) return renderEnvelope(errorEnvelope('progress_decide', 'BAD_INPUT', input.errors));
+      if (!input.ok) return renderEnvelope(errorEnvelope('progress_decide', input.code ?? 'BAD_INPUT', input.errors));
       let options = {};
       if (args.optionsJson != null && args.optionsJson !== '') {
         const parsedOptions = parseJsonFields(args, ['optionsJson']);
-        if (!parsedOptions.ok) return renderEnvelope(errorEnvelope('progress_decide', 'BAD_INPUT', parsedOptions.errors));
+        if (!parsedOptions.ok) return renderEnvelope(errorEnvelope('progress_decide', parsedOptions.code ?? 'BAD_INPUT', parsedOptions.errors));
         options = parsedOptions.values.optionsJson;
       }
       const result = core.progressDecide(input.values.contextJson, options);
@@ -29,7 +29,7 @@ export function registerProgressTools(defineTool, core) {
   }, async (args) => {
     return runGuarded('critical_path', () => {
       const input = parseJsonFields(args ?? {}, ['tasksJson', 'dependenciesJson']);
-      if (!input.ok) return renderEnvelope(errorEnvelope('critical_path', 'BAD_INPUT', input.errors));
+      if (!input.ok) return renderEnvelope(errorEnvelope('critical_path', input.code ?? 'BAD_INPUT', input.errors));
       const errors = [];
       if (!Array.isArray(input.values.tasksJson)) errors.push({ code: 'BAD_INPUT', path: 'tasksJson', message: 'expected JSON array of tasks' });
       if (!Array.isArray(input.values.dependenciesJson)) errors.push({ code: 'BAD_INPUT', path: 'dependenciesJson', message: 'expected JSON array of edges' });
@@ -58,7 +58,7 @@ export function registerProgressTools(defineTool, core) {
   }, async (args) => {
     return runGuarded('resume_reconcile', () => {
       const input = parseJsonFields(args ?? {}, ['previousJson', 'currentJson']);
-      if (!input.ok) return renderEnvelope(errorEnvelope('resume_reconcile', 'BAD_INPUT', input.errors));
+      if (!input.ok) return renderEnvelope(errorEnvelope('resume_reconcile', input.code ?? 'BAD_INPUT', input.errors));
       const previous = canonicalStringify(input.values.previousJson);
       const current = canonicalStringify(input.values.currentJson);
       const changed = JSON.stringify(previous) !== JSON.stringify(current);

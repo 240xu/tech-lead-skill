@@ -10,7 +10,7 @@ export function registerContextTools(defineTool, core) {
     output: { schema: { type: 'string' }, render: (_a, value) => [{ type: 'text', text: value }] },
     async execute(args) {
       return runGuarded('context_validate', () => {
-        const parsed = parseJsonString(args?.contextJson, 'contextJson');
+        const parsed = parseJsonString(args?.contextJson, 'contextJson', 'graph');
         if (!parsed.ok) return renderEnvelope(errorEnvelope('context_validate', parsed.error.code, [parsed.error]));
         const result = core.validateContext(parsed.value);
         if (!result.valid) {
@@ -28,7 +28,7 @@ export function registerContextTools(defineTool, core) {
     output: { schema: { type: 'string' }, render: (_a, value) => [{ type: 'text', text: value }] },
     async execute(args) {
       return runGuarded('evidence_graph_lint', () => {
-        const parsed = parseJsonString(args?.contextJson, 'contextJson');
+        const parsed = parseJsonString(args?.contextJson, 'contextJson', 'graph');
         if (!parsed.ok) return renderEnvelope(errorEnvelope('evidence_graph_lint', parsed.error.code, [parsed.error]));
         const result = core.evidenceGraphLint(parsed.value);
         return renderEnvelope(result.valid
@@ -48,7 +48,7 @@ export function registerContextTools(defineTool, core) {
     async execute(args) {
       return runGuarded('evidence_freshness', () => {
         const input = parseJsonFields(args ?? {}, ['contextJson']);
-        if (!input.ok) return renderEnvelope(errorEnvelope('evidence_freshness', 'BAD_INPUT', input.errors));
+        if (!input.ok) return renderEnvelope(errorEnvelope('evidence_freshness', input.code ?? 'BAD_INPUT', input.errors));
         let options = {};
         if (args.optionsJson != null && args.optionsJson !== '') {
           const parsedOptions = parseJsonString(args.optionsJson, 'optionsJson');
@@ -72,7 +72,7 @@ export function registerContextTools(defineTool, core) {
     output: { schema: { type: 'string' }, render: (_a, value) => [{ type: 'text', text: value }] },
     async execute(args) {
       return runGuarded('assumption_register', () => {
-        const parsed = parseJsonString(args?.contextJson, 'contextJson');
+        const parsed = parseJsonString(args?.contextJson, 'contextJson', 'graph');
         if (!parsed.ok) return renderEnvelope(errorEnvelope('assumption_register', parsed.error.code, [parsed.error]));
         const assumptions = Array.isArray(parsed.value?.assumptions) ? parsed.value.assumptions : [];
         const items = assumptions.map((item, index) => ({

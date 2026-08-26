@@ -1,14 +1,16 @@
-import { errorEnvelope } from './core/index.js';
+import { errorEnvelope, parseBoundedJson } from './core/index.js';
 
-export function parseJsonString(value, path = 'input') {
-  if (typeof value !== 'string') {
-    return { ok: false, error: { code: 'BAD_INPUT', path, message: 'expected JSON text string' } };
-  }
-  try {
-    return { ok: true, value: JSON.parse(value) };
-  } catch (error) {
-    return { ok: false, error: { code: 'BAD_INPUT', path, message: `invalid JSON: ${error.message}` } };
-  }
+export { inspectBounded, parseBoundedJson, getBudgetProfile } from './core/index.js';
+
+const BUDGET_CODES = new Set(['INPUT_TOO_LARGE', 'ITEM_LIMIT_EXCEEDED', 'SCAN_INCOMPLETE']);
+
+export function parseJsonString(value, path = 'input', profileName = 'default') {
+  const result = parseBoundedJson(path, value, profileName);
+  return result.ok ? result : { ok: false, error: result.error };
+}
+
+function promoteCode(errors) {
+  return errors.find((item) => BUDGET_CODES.has(item.code))?.code ?? 'BAD_INPUT';
 }
 
 export function parseJsonFields(args, fields) {
@@ -19,7 +21,7 @@ export function parseJsonFields(args, fields) {
     if (result.ok) values[field] = result.value;
     else errors.push(result.error);
   }
-  return errors.length ? { ok: false, errors } : { ok: true, values };
+  return errors.length ? { ok: false, code: promoteCode(errors), errors } : { ok: true, values };
 }
 
 const FINDINGS_LIMIT = 500;

@@ -20,12 +20,14 @@ export function gatePrecheck(input = {}) {
     return { pass: false, violations: [{ type: 'BAD_INPUT', detail: 'gate precheck input must be an object' }] };
   }
   const reviewerIds = Array.isArray(input.reviewerIds) ? input.reviewerIds : [];
-  const reports = Array.isArray(input.reports) ? input.reports : [];
-  if (input.reports !== undefined && !Array.isArray(input.reports)) {
-    // fall through with empty reports; violation recorded below for parity
-  }
+  const malformedReports = input.reports !== undefined && !Array.isArray(input.reports);
+  const reports = malformedReports ? [] : Array.isArray(input.reports) ? input.reports : [];
   /** @type {Array<{type:string, detail:string}>} */
   const v = [];
+  if (malformedReports) {
+    // Fail closed: supplied-but-malformed review data can never count as "no reviews".
+    v.push({ type: 'BAD_REPORTS', detail: 'reports must be an array when provided' });
+  }
 
   if (input.proposalAuthorId && input.proposalAuthorId === input.executorId) {
     v.push({ type: 'PROPOSER_IS_EXECUTOR', detail: 'referee separation requires proposalAuthorId != executorId' });

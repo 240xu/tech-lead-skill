@@ -2,7 +2,7 @@ import { registerContextTools } from './tools/context.js';
 import { registerProgressTools } from './tools/progress.js';
 import { registerGateTools } from './tools/gates.js';
 import { registerMutationTools } from './tools/mutation.js';
-import { renderEnvelope } from './protocol.js';
+import { parseBoundedJson, renderEnvelope } from './protocol.js';
 
 /**
  * Tool definitions for the tech-lead read-only surface.
@@ -20,12 +20,11 @@ import { renderEnvelope } from './protocol.js';
  * @param {Record<string, Function>} core pure validators (inlined under src/core in the published artifact)
  */
 export function registerTools(defineTool, core) {
-  const json = (str) => {
-    try {
-      return { ok: true, value: JSON.parse(str) };
-    } catch (err) {
-      return { ok: false, error: 'invalid JSON: ' + err.message };
-    }
+  // Legacy bare-shape helper: same {ok,error:string} contract, now bounded.
+  // Budget failures surface their message inside the existing domain-invalid shapes.
+  const json = (field, str, profile = 'default') => {
+    const r = parseBoundedJson(field, str, profile);
+    return r.ok ? { ok: true, value: r.value } : { ok: false, error: r.error.message };
   };
   const csv = (str) =>
     String(str ?? '').split(',').map((s) => s.trim()).filter(Boolean);
@@ -72,7 +71,7 @@ export function registerTools(defineTool, core) {
     },
     output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
     async execute(args) {
-      const parsed = json(args.stateJson);
+      const parsed = json('stateJson', args.stateJson, 'state');
       if (!parsed.ok) return out({ valid: false, errors: [{ path: 'stateJson', message: parsed.error }], warnings: [], unknownFields: [] });
       return out(core.validateState(parsed.value));
     },
@@ -88,7 +87,7 @@ export function registerTools(defineTool, core) {
     },
     output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
     async execute(args) {
-      const parsed = json(args.stateJson);
+      const parsed = json('stateJson', args.stateJson, 'state');
       if (!parsed.ok) return out({ allowed: false, reason: parsed.error });
       return out(core.transitionCheck(parsed.value, args.proposed));
     },
@@ -103,7 +102,7 @@ export function registerTools(defineTool, core) {
     },
     output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
     async execute(args) {
-      const parsed = json(args.planJson);
+      const parsed = json('planJson', args.planJson);
       if (!parsed.ok) return out([{ severity: 'error', path: 'planJson', message: parsed.error }]);
       return out(core.planLint(parsed.value));
     },
@@ -119,7 +118,7 @@ export function registerTools(defineTool, core) {
     },
     output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
     async execute(args) {
-      const parsed = json(args.evidenceJson);
+      const parsed = json('evidenceJson', args.evidenceJson, 'release');
       if (!parsed.ok) return out([{ severity: 'error', path: 'evidenceJson', message: parsed.error }]);
       return out(core.evidenceLint(parsed.value, { highRiskChange: args.highRiskChange }));
     },
@@ -134,7 +133,7 @@ export function registerTools(defineTool, core) {
     },
     output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
     async execute(args) {
-      const parsed = json(args.inputJson);
+      const parsed = json('inputJson', args.inputJson);
       if (!parsed.ok) return out({ pass: false, violations: [{ type: 'BAD_INPUT', detail: parsed.error }] });
       return out(core.gatePrecheck(parsed.value));
     },
@@ -151,7 +150,7 @@ export function registerTools(defineTool, core) {
     },
     output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
     async execute(args) {
-      const parsed = json(args.filesJson);
+      const parsed = json('filesJson', args.filesJson, 'release');
       if (!parsed.ok) return out([{ type: 'BAD_INPUT', path: 'filesJson', line: 0, detail: parsed.error }]);
       return out(core.releaseAudit({
         allowlist: csv(args.allowlistCsv),
@@ -173,7 +172,7 @@ export function registerTools(defineTool, core) {
     },
     output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
     async execute(args) {
-      const parsed = json(args.manifestJson);
+      const parsed = json('manifestJson', args.manifestJson, 'state');
       if (!parsed.ok || !parsed.value || !Array.isArray(parsed.value.files)) {
         return out({ missingManaged: [], unmanaged: [], versionMismatch: false, newInPackage: [], error: 'manifestJson must be {version, files[]}' });
       }
@@ -197,7 +196,7 @@ export function registerTools(defineTool, core) {
     },
     output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
     async execute(args) {
-      const parsed = json(args.stateJson);
+      const parsed = json('stateJson', args.stateJson, 'state');
       if (!parsed.ok) {
         return out({ position: '?', lastGate: '?', nextStep: '(invalid state)', staleEvidenceIds: [], warnings: [parsed.error] });
       }

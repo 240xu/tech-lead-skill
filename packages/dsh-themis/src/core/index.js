@@ -16,3 +16,4 @@ export { criticalPath } from './critical-path.js';
 export { changeImpact } from './impact.js';
 export { gatePlan, gateAggregate, gateReopen } from './gates.js';
 export { validateMutationIntent, previewMutation } from './mutation.js';
+export { inspectBounded, parseBoundedJson, getBudgetProfile } from './budgets.js';
