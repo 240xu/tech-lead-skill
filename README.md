@@ -1,160 +1,160 @@
 # Tech Lead Skill
 
-English | [简体中文](README.zh-CN.md)
+[English](README.en.md) | 简体中文
 
-An evidence-driven planning and delivery skill for software, infrastructure, research, reverse-engineering, and operations work.
+一套以证据驱动的规划与交付技能，适用于软件、基础设施、研究、逆向工程与运维类工作。
 
-## What It Solves
+## 解决什么问题
 
-Many plans fail in one of two ways: they are vague and cannot guide execution, or they are over-detailed and become false after the first environmental change. This skill keeps the plan coarse until evidence justifies detail, then continuously revises it against observed reality.
+计划失败通常有两种方式：要么模糊到无法指导执行，要么过度细化而在第一次环境变化后就失真。本技能让计划在证据支撑之前保持粗粒度，然后依据观察到的现实持续修订。
 
-The control loop is:
+控制回路：
 
 ```text
-goal -> constraints/assumptions -> L0/L1/L2 plan -> execute -> observe evidence
-     -> revise -> choose CONTINUE / PAUSE / SCOPE-DOWN / PIVOT / STOP
+目标 -> 约束/假设 -> L0/L1/L2 计划 -> 执行 -> 观察证据
+     -> 修订 -> 选择 CONTINUE / PAUSE / SCOPE-DOWN / PIVOT / STOP
 ```
 
-## Core Features
+## 核心特性
 
-- PLAN and EXECUTE modes with a clear boundary between planning and side effects.
-- Progressive disclosure: L0 architecture, L1 milestones, L2 executable focus.
-- Goal, metric, fact, assumption, decision, risk, dependency, and evidence ledgers.
-- Protected asset handling for source, user data, configuration, secrets, runtime state, and generated artifacts.
-- Minimal mutation protocol: `READ -> CLASSIFY -> PROTECT -> CHANGE -> VERIFY -> RECONCILE -> ROLLBACK/RECORD`.
-- Evidence levels E0-E4, from model inference to observed user outcomes.
-- Failure re-planning, stagnation circuit breaker, rollback discipline, and real-state reconciliation.
-- Optional adversarial review for high-impact or irreversible changes.
-- Git-backed and non-Git project-state recovery.
-- Release-readiness checks for public documentation and skill publishing.
-- Runtime discipline rules for external dependency health, silent failure classes, automation guardrails, idempotent batch jobs, and fallback ladders.
+- PLAN 与 EXECUTE 双模式，划清规划与副作用的边界。
+- 渐进展开：L0 架构、L1 里程碑、L2 可执行焦点。
+- 目标、指标、事实、假设、决策、风险、依赖与证据账本。
+- 受保护资产处置：源码、用户数据、配置、秘密、运行态与生成物。
+- 最小变更协议：`READ -> CLASSIFY -> PROTECT -> CHANGE -> VERIFY -> RECONCILE -> ROLLBACK/RECORD`。
+- E0-E4 证据分级，从模型推断到真实用户结果。
+- 失败重规划、停滞断路器、回滚纪律与真实状态对账。
+- 面向高影响或不可逆变更的对抗式评审（可选）。
+- 支持 Git 与非 Git 两种项目状态恢复方式。
+- 面向公开文档与技能发布的收尾验证检查。
+- 运行期纪律规则：外部依赖健康、静默失败类别、自动化护栏、幂等批处理与降级阶梯。
 
-## Install
+## 安装
 
-Pick your edition:
+先选版本：
 
-- **Prose skill for any agent environment** (opencode / Claude Code / Codex) → `tech-lead-skill`
-- **DSH plugin with machine-checked read-only tools** → `dsh-themis`
+- **纯文本规范，任意 agent 环境**（opencode / Claude Code / Codex）→ `tech-lead-skill`
+- **带机器可校验只读工具的 DSH 插件** → `dsh-themis`
 
-### npm (GitHub-hosted, no registry account needed)
+### npm 方式（GitHub 源，无需注册账号）
 
 ```bash
 npm i -g github:240xu/tech-lead-skill
-tech-lead-skill          # installs into ~/.config/opencode/skills/tech-lead
+tech-lead-skill          # 安装到 ~/.config/opencode/skills/tech-lead
 ```
 
-One-shot without a global install:
+一次性运行（不全局安装）：
 
 ```bash
 npx github:240xu/tech-lead-skill
 ```
 
-The installer is idempotent: repeated runs back up existing files as `*.bak-<timestamp>` first. Use `--target <dir>` to choose another destination, `--check` to verify an installed copy against the package (hash + version drift), `--dry-run` to preview without writing, and `--uninstall` to remove. Uninstall removes only manifest-managed files — user files and `*.bak-*` backups are kept.
+安装器幂等，重复执行会先把旧文件备份为 `*.bak-<时间戳>`；`--target <目录>` 可自定义目标；`--check` 校验已装副本与包的哈希/版本漂移；`--dry-run` 预览不写入；`--uninstall` 卸载时只删除清单受管文件，用户文件与 `*.bak-*` 备份全部保留。
 
-`--check` exit codes: `0` clean, `1` drift detected, `2` usage/refusal error.
+`--check` 退出码：`0` 正常，`1` 检出漂移，`2` 用法/拒绝错误。
 
-### DeepSeek Harness plugin (read-only tools)
+### DeepSeek Harness 插件（只读工具）
 
-**For DSH users:** ships on the DSH plugin market (npm) as ONE self-contained package, **`dsh-themis`** — named after the goddess of divine order: gates as verdicts, evidence weighed, releases audited. Install into any profile:
+**DSH 用户看这里：** 已上架 DSH 插件市场（npm）——**单一自包含包**，任意 profile 一键安装：
 
-```bash
+```
 dsh plugin --profile headless add dsh-themis
 ```
 
-22 registered entry points in a single artifact: 21 read-only governance tools plus a capability-discovery tool (`tech_lead_capabilities`) that lists only what this bundle actually registers (the original nine audits plus context validation, evidence graph/freshness analysis, progress decisions, critical-path/impact analysis, resume reconciliation, gate planning/aggregation/reopen checks, and mutation preview). Tools compute over caller-supplied JSON only — no filesystem writes, no subprocesses, no network access. The earlier split packages (`dsh-tech-lead-{core,plugin,bundle}`) are deprecated in favor of this one. Source checkouts remain supported: build via `node scripts/build-market-package.mjs` then `dsh plugin add packages/dsh-themis`. The root npm package distributes the skill and installer only.
+单包注册 22 个入口：21 个只读治理工具（原九项审计＋上下文校验、证据图/新鲜度分析、推进决策、关键路径/影响分析、续跑对账、Gate 计划/聚合/重开、变更预览）＋能力发现工具 `tech_lead_capabilities`（只列出本包实际注册的工具）。仅对调用方传入的 JSON 做计算——无文件写入、无子进程、无网络访问。旧拆分包（`dsh-tech-lead-{core,plugin,bundle}`）已弃用并指向本包。源码安装：`node scripts/build-market-package.mjs` 装配后 `dsh plugin add packages/dsh-themis`。根 npm 包只发布技能与安装器。
 
-**Two artifacts, one rulebook:** `tech-lead-skill` is the conservative, broadly-compatible prose spec — install it into any agent environment (opencode, Claude Code, Codex) and nothing else is required. **`dsh-themis` is the DSH-plugin specialized edition**: the same judgment layer plus a machine-checked read-only runtime — schema-declared `protocolJson` negotiation on all 22 tools (bare legacy by default, explicit v1/v2 envelopes, fail-closed on unknown selections), one-way state→context-v2 projection that never invents identity or provenance, strict/compat input handling, and stable v2 envelopes (`findings`, `guidance`, `meta.complete`, `meta.outputProtocol`).
+**两个产物，同一套规范：** `tech-lead-skill` 是保守、广泛兼容的纯文本规范——装进任何 agent 环境（opencode/Claude Code/Codex）即可，无其他依赖。**`dsh-themis` 是 DSH 插件专项优化版**：同样的判断层外加机器可校验的只读运行时——全部 22 工具在 schema 中声明 `protocolJson`（legacy 默认裸形态、显式请求 v1/v2 信封、未知取值 fail-closed）、state→context-v2 单向投影（身份与来源永不虚构）、strict/compat 输入兼容模式，以及稳定的 v2 信封（`findings`/`guidance`/`meta.complete`/`meta.outputProtocol`）。
 
 ```bash
 dsh plugin --profile headless add /path/to/tech-lead-skill/packages/dsh-themis
-dsh --profile headless --dump-config   # verify the tech-lead-tools row is present
+dsh --profile headless --dump-config   # 确认 tech-lead-tools 行已注入
 ```
 
 
-Output families and limits:
+输出家族与限制：
 
-- The twelve strengthened tools return a `tech-lead.result.v1` envelope (discriminator: `meta.schema`); the original nine tools return their bare domain shapes for backward compatibility.
-- Rendered output is clamped: finding/error arrays are capped at 500 entries with a `FINDINGS_TRUNCATED` warning; caller-echo arrays (evidence/targets/expectedDiff/verification/items) collapse into `{truncated,total}` beyond 100 entries; any OTHER array inside `data` (including computed results such as `criticalPath`) is head-sliced at 1000 entries while keeping its shape; subtrees deeper than 64 levels collapse into a `DEPTH_LIMIT` marker; payloads above 256 KB switch to compact serialization. Legacy bare top-level arrays slice silently at 500 (no warning field exists on that shape).
+- 十二个强化工具返回 `tech-lead.result.v1` 信封（判别字段：`meta.schema`）；原有九个工具为向后兼容保留裸领域形状。
+- 渲染输出有上限：finding/error 数组每字段最多 500 条并附 `FINDINGS_TRUNCATED` 警告；超限调用方回显数组折叠为 `{truncated,total}` 摘要；超过 256KB 自动切换紧凑序列化。
 
-See [`docs/superpowers/specs/2026-08-25-dsh-tech-lead-system.md`](https://github.com/240xu/tech-lead-skill/blob/main/docs/superpowers/specs/2026-08-25-dsh-tech-lead-system.md) for the architecture and permission matrix.
+架构与权限矩阵见 [spec](https://github.com/240xu/tech-lead-skill/blob/main/docs/superpowers/specs/2026-08-25-dsh-tech-lead-system.md)。
 
-### Manual
+### 手动方式
 
-Copy `skill/SKILL.md` and the `skill/templates/` directory into the skills directory of your OpenCode-compatible environment:
+将 `skill/SKILL.md` 和 `skill/templates/` 目录复制到你所用 OpenCode 兼容环境的技能目录：
 
 ```text
 ~/.config/opencode/skills/tech-lead/
 ```
 
-The skill is triggered by project construction, system building, implementation plans, deployment, migration, release, recovery, restructuring, operations work, and other substantial planning requests. It can also be loaded explicitly.
+该技能由"构建项目/搭系统/制定执行计划/部署/迁移/发布/恢复/重构/运维"等实质性任务触发，即使用户没有明确说“项目”或“Tech Lead”也应加载；也可以显式加载。
 
-## Lifecycle results are valid analyses
+## 生命周期结果是有效分析
 
-`PAUSE`, `PIVOT`, `SCOPE-DOWN` and `STOP` from `tech_lead_progress_decide` are returned as **ok:true** analyses with `data.outcome`; a not-yet-passed gate returns `ok:true` with `data.verdict`/`data.pass`. `ok:false` is reserved for malformed input, over-budget payloads (`INPUT_TOO_LARGE`, `ITEM_LIMIT_EXCEEDED`) and incomplete safety scans (`SCAN_INCOMPLETE`). Decision tools attach a deterministic `data.guidance.nextActions[]`; every action carries reason codes, a finding reference and a `doneWhen` predicate. Heuristic suggestions appear only under explicit `guidanceMode:"heuristic"`.
+`tech_lead_progress_decide` 的 `PAUSE`/`PIVOT`/`SCOPE-DOWN`/`STOP` 以 **ok:true** 分析返回（`data.outcome`）；未通过的 Gate 同样 ok:true（`data.verdict`/`data.pass`）。`ok:false` 只用于非法输入、超预算载荷（`INPUT_TOO_LARGE`、`ITEM_LIMIT_EXCEEDED`）与不完整安全扫描（`SCAN_INCOMPLETE`）。决策类工具附带确定性的 `data.guidance.nextActions[]`：每条动作含原因码、finding 引用与 `doneWhen` 完成谓词。启发式建议仅在显式 `guidanceMode:"heuristic"` 下出现。
 
-## Four-tool starter loop
+## 四工具起步环
 
-1. `tech_lead_classify` — copy the returned tier into your snapshot's `current.tier`.
-2. `tech_lead_context_validate` — validate the full inline snapshot (schema `tech-lead.context.v1`; canonical example: tests/fixtures/starter-context.v1.json).
-3. `tech_lead_evidence_lint` — pass the snapshot's `evidence` array as a JSON string; findings are advisory.
-4. `tech_lead_progress_decide` — feed the same snapshot; read `data.outcome`, then follow `data.guidance`.
+1. `tech_lead_classify` —— 把返回的 tier 写入快照 `current.tier`。
+2. `tech_lead_context_validate` —— 校验完整内联快照（schema `tech-lead.context.v1`；范例 tests/fixtures/starter-context.v1.json）。
+3. `tech_lead_evidence_lint` —— 把快照的 `evidence` 数组序列化为字符串传入；findings 仅作建议。
+4. `tech_lead_progress_decide` —— 喂入同一快照；读 `data.outcome` 后按 `data.guidance` 行动。
 
-## Operating Modes
+## 工作模式
 
 ### PLAN
 
-Use for intake, goal definition, architecture, decomposition, risk analysis, and verification design. PLAN does not edit files or run side-effecting commands.
+用于需求接入、目标定义、架构设计、任务分解、风险分析与验证设计。PLAN 不改文件、不执行有副作用的命令。
 
 ### EXECUTE
 
-Use after the L2 scope is clear. Execute only the smallest approved mutation, record the change, verify behavior, reconcile actual state, and update the plan.
+在 L2 范围明确后使用。只执行最小已批准变更，记录改动，验证行为，对账实际状态，并更新计划。
 
-## Protected Assets
+## 受保护资产
 
-| Class | Default handling |
+| 类别 | 默认处置 |
 |---|---|
-| `SOURCE` | Inspectable diff, tests, and restore point |
-| `USER_DATA` | Read-only by default; write only to an explicit target with recovery |
-| `CONFIG` | Read current state, make the smallest change, reload, verify |
-| `SECRET` | Never place in plans, logs, ordinary backups, or diffs |
-| `RUNTIME` | Inspect live state before restart, kill, replace, or migration |
-| `GENERATED` | Prefer regeneration; do not treat as the source of truth |
+| `SOURCE` | 可审查 diff、测试与恢复点 |
+| `USER_DATA` | 默认只读；仅在目标明确且有可恢复副本时写入 |
+| `CONFIG` | 先读现状，最小修改，重载后验证 |
+| `SECRET` | 绝不进入计划、日志、普通备份或 diff |
+| `RUNTIME` | 重启/杀进程/替换/迁移前必须先查实时状态 |
+| `GENERATED` | 优先重新生成；不作为事实源 |
 
-## Evidence Levels
+## 证据分级
 
-- `E0`: model inference; hypothesis only.
-- `E1`: static inspection, grep, or configuration inspection.
-- `E2`: local command or unit test; local behavior only.
-- `E3`: integration test, real process, or real endpoint.
-- `E4`: user acceptance, real business result, or production observation.
+- `E0`：模型推断；仅可用于提出假设。
+- `E1`：静态阅读、grep 或配置检查。
+- `E2`：本地命令或单元测试；仅证明局部行为。
+- `E3`：集成测试、真实进程或真实端点。
+- `E4`：用户验收、真实业务结果或生产观察。
 
-## Templates
+## 模板
 
-- `templates/intake.md`: goal, constraints, assets, risk, and completion level.
-- `templates/plan.md`: L0/L1/L2 plan and current focus.
-- `templates/change-record.md`: one EXECUTE mutation and its reconciliation.
-- `templates/round.md`: one planning iteration and its outcome.
-- `templates/state.json`: canonical resumable state projection.
-- `templates/gate-review.md` and `templates/gate-verdict.md`: independent review and decision records.
-- `templates/release-check.md`: publication inventory, scans, remote verification, and limitations.
+- `templates/intake.md`：目标、约束、资产、风险与完成层级。
+- `templates/plan.md`：L0/L1/L2 计划与当前焦点。
+- `templates/change-record.md`：单次 EXECUTE 变更及其对账。
+- `templates/round.md`：单轮规划迭代及其结果。
+- `templates/state.json`：可续跑的规范状态投影。
+- `templates/gate-review.md` 与 `templates/gate-verdict.md`：独立评审与裁决记录。
+- `templates/release-check.md`：发布清单、扫描、远程验证与限制记录。
 
-## Scope
+## 范围
 
-This is an engineering planning skill. It focuses on correctness of planning, safe handling of user files and code changes, evidence quality, rollback, and real-environment reconciliation. It intentionally stays focused on project-level engineering work rather than organization-wide process design.
+这是一套工程规划技能，聚焦规划正确性、用户文件与代码改动的安全处置、证据质量、回滚以及真实环境对账。它有意不涉及组织级流程设计或通用项目管理方法论。
 
-## Limitations
+## 局限
 
-- The prose judgment layer stays non-mechanical by design; only the source-checkout DSH bundle adds a machine-checkable read-only runtime for context, evidence, progress, gates, release/install audits, recovery, and mutation preview.
-- Inside the prose skill itself (without the bundle), evidence freshness and state reconciliation remain operator/agent responsibilities.
-- The skill does not provide a sandbox; untrusted code must not be executed unless an actual isolated execution environment is already available.
-- MCP candidates should be selected only after observing repeated real-project violations.
+- 文本判断层有意保持非机械化；只有源码安装的 DSH bundle 才提供上下文、证据、推进、Gate、发布/安装审计、恢复与变更预览的可机检只读运行时。
+- 在纯文本技能形态下（无 bundle），证据时效与状态对账仍依赖执行环境与操作者。
+- 本技能不提供沙箱；除非已有真实隔离执行环境，否则不得运行不可信代码。
+- MCP 工具化候选应在观察到真实项目中反复违例之后再筛选。
 
-## Notes
+## 说明
 
-The executable skill body (`SKILL.md`) is authored in Simplified Chinese; coding agents execute it correctly regardless of the conversation language. Templates are English and agent-facing. Documentation translations cover this README and the technical guide.
+可执行的技能正文 `SKILL.md` 以简体中文编写；编码代理无论对话语言为何均可正确执行。模板为面向代理的英文文件。文档翻译覆盖本 README 与技术指南。
 
-## Version
+## 版本
 
-Current version: `v5.5.5`.
+当前版本：`v5.5.5`.
 
-See [`docs/TECHNICAL_GUIDE.md`](docs/TECHNICAL_GUIDE.md) for the full operating model and [`docs/AUDIT_REPORT.md`](docs/AUDIT_REPORT.md) for the publication audit.
+完整运行模型见[技术指南](./docs/TECHNICAL_GUIDE.zh-CN.md)，发布审计见 [docs/AUDIT_REPORT.md](docs/AUDIT_REPORT.md)。

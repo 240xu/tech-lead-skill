@@ -307,7 +307,7 @@
 
 **Files:**
 - Modify: `README.md`
-- Modify: `README.zh-CN.md`
+- Modify: `README.en.md`
 - Modify: `docs/TECHNICAL_GUIDE.md`
 - Modify: `docs/AUDIT_REPORT.md`
 - Modify: `packages/dsh-tech-lead-plugin/package.json`

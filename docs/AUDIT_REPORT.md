@@ -17,7 +17,7 @@ The publication set contains only the following intended artifacts:
 - `skill/templates/state.json`
 - `skill/templates/gate-review.md`
 - `skill/templates/gate-verdict.md`
-- `README.md` (English) / `README.zh-CN.md` (简体中文)
+- `README.md` (简体中文, GitHub 默认) / `README.en.md` (English)
 - `docs/TECHNICAL_GUIDE.md` (English; Chinese README ships separately)
 - `docs/AUDIT_REPORT.md`
 - `LICENSE`

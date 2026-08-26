@@ -564,7 +564,7 @@ This map is a handoff boundary, not implementation authorization.
 | `src/core/impact.js`, `src/core/transition.js` | Trigger provenance and transition completion checklist |
 | `src/core/capabilities.js` | R7 metadata only; no R6 super-tool |
 | `src/tools/*.js`, `src/tools.js` | Additive schema/options wiring and lifecycle result compatibility |
-| `README.md`, `README.zh-CN.md`, package README | Starter loop, decision meanings, install/version truth |
+| `README.md`, `README.en.md`, package README | Starter loop, decision meanings, install/version truth |
 | `tests/`, package tests, artifact smoke | Boundary, property, end-to-end, and shipped-artifact coverage |
 
 ## 13. Definition of Done
