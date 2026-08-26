@@ -1,6 +1,6 @@
 {
   "name": "dsh-themis",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Themis — tech-lead lifecycle governance for DeepSeek Harness: 21 read-only tools (classify/state/plan/evidence/gates/release/install audits, context/evidence/progress analysis, mutation preview). No writes, no subprocesses, no network.",
   "license": "MIT",
   "type": "module",
@@ -10,7 +10,8 @@
   },
   "files": [
     "src/",
-    "cordis.patch.yml"
+    "cordis.patch.yml",
+    "README.md"
   ],
   "keywords": [
     "dsh",
@@ -27,7 +28,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/240xu/tech-lead-skill.git",
-    "directory": "packages/dsh-tech-lead"
+    "directory": "packages/dsh-themis"
   },
   "dsh": {
     "bundle": {

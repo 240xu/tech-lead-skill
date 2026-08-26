@@ -35,7 +35,7 @@ The source set was scanned for local absolute paths, passwords, API-key prefixes
 ### Structural scan
 
 - YAML frontmatter has `name: tech-lead` and a trigger description.
-- The skill version is `v5.4.9`.
+- The skill version is `v5.4.10`.
 - The eight templates referenced by the skill exist.
 - The installer validates options, requires a marker before removing any target, and records the managed package/version after installation.
 - The release-check template covers allowlist inventory, sensitive-content scanning, reference checks, scope checks, publication results, and remote verification.

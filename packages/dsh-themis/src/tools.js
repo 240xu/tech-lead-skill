@@ -17,7 +17,7 @@ import { renderEnvelope } from './protocol.js';
  * No tool touches the filesystem, spawns processes, or performs network I/O.
  *
  * @param {Function} defineTool harness tool factory
- * @param {Record<string, Function>} core pure validators from @240xu/dsh-tech-lead-core
+ * @param {Record<string, Function>} core pure validators (inlined under src/core in the published artifact)
  */
 export function registerTools(defineTool, core) {
   const json = (str) => {

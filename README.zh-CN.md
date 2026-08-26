@@ -56,10 +56,10 @@ npx github:240xu/tech-lead-skill
 dsh plugin --profile headless add dsh-themis
 ```
 
-单包内含全部 21 个只读生命周期工具：原九项审计＋上下文校验、证据图/新鲜度分析、推进决策、关键路径/影响分析、续跑对账、Gate 计划/聚合/重开、变更预览。仅对调用方传入的 JSON 做计算——无文件写入、无子进程、无网络访问。旧拆分包（`dsh-tech-lead-{core,plugin,bundle}`）已弃用并指向本包。源码安装：`node scripts/build-market-package.mjs` 装配后 `dsh plugin add packages/dsh-tech-lead`。根 npm 包只发布技能与安装器。
+单包内含全部 21 个只读生命周期工具：原九项审计＋上下文校验、证据图/新鲜度分析、推进决策、关键路径/影响分析、续跑对账、Gate 计划/聚合/重开、变更预览。仅对调用方传入的 JSON 做计算——无文件写入、无子进程、无网络访问。旧拆分包（`dsh-tech-lead-{core,plugin,bundle}`）已弃用并指向本包。源码安装：`node scripts/build-market-package.mjs` 装配后 `dsh plugin add packages/dsh-themis`。根 npm 包只发布技能与安装器。
 
 ```bash
-dsh plugin --profile headless add /path/to/tech-lead-skill/packages/dsh-tech-lead-bundle
+dsh plugin --profile headless add /path/to/tech-lead-skill/packages/dsh-themis
 dsh --profile headless --dump-config   # 确认 tech-lead-tools 行已注入
 ```
 

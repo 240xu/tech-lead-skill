@@ -56,10 +56,10 @@ Ships on the DSH plugin market (npm) as ONE self-contained package, **`dsh-themi
 dsh plugin --profile headless add dsh-themis
 ```
 
-21 read-only lifecycle tools in a single artifact (the original nine audits plus context validation, evidence graph/freshness analysis, progress decisions, critical-path/impact analysis, resume reconciliation, gate planning/aggregation/reopen checks, and mutation preview). Tools compute over caller-supplied JSON only — no filesystem writes, no subprocesses, no network access. The earlier split packages (`dsh-tech-lead-{core,plugin,bundle}`) are deprecated in favor of this one. Source checkouts remain supported: build via `node scripts/build-market-package.mjs` then `dsh plugin add packages/dsh-tech-lead`. The root npm package distributes the skill and installer only.
+21 read-only lifecycle tools in a single artifact (the original nine audits plus context validation, evidence graph/freshness analysis, progress decisions, critical-path/impact analysis, resume reconciliation, gate planning/aggregation/reopen checks, and mutation preview). Tools compute over caller-supplied JSON only — no filesystem writes, no subprocesses, no network access. The earlier split packages (`dsh-tech-lead-{core,plugin,bundle}`) are deprecated in favor of this one. Source checkouts remain supported: build via `node scripts/build-market-package.mjs` then `dsh plugin add packages/dsh-themis`. The root npm package distributes the skill and installer only.
 
 ```bash
-dsh plugin --profile headless add /path/to/tech-lead-skill/packages/dsh-tech-lead-bundle
+dsh plugin --profile headless add /path/to/tech-lead-skill/packages/dsh-themis
 dsh --profile headless --dump-config   # verify the tech-lead-tools row is present
 ```
 

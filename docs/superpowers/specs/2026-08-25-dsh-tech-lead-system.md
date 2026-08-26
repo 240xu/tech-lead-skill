@@ -173,6 +173,7 @@ dsh.profile.bundles 并跑 pnpm）。顺序：先建隔离 profile `techtest` �
 - mutation 标记扫描按 Unicode 语义匹配 `apply|execute|deploy`；同形字/ZWSP/全角混淆可绕过字符串扫描，但 preview 模式无任何执行汇（capability 完整性不受影响），仅决策支持层需知悉。
 - 输出放大已在工具层封顶（双门限）：findings/error 每字段 ≤500 条（附 FINDINGS_TRUNCATED）；回显键（evidence/targets/expectedDiff/verification/items）>100 折叠为 {truncated,total}；data 下其余数组 >1000 保形头切；深层 >64 级子树折叠为 DEPTH_LIMIT 哨兵（原生 stringify 在本机 V8 于 ~6k 层亦会溢出，透传不可依赖）；>256KB 紧凑序列化。遗留裸顶层数组 500 处静默切片。核心层保持完整确定性结果不变。
 - gateAggregate 角色满足度判定已由 O(roles×reports) 优化为 Set 查表 O(n+m)。
+- 出厂工件纳入测试射程：tests/artifact-smoke.test.js 直载 packages/dsh-themis/src 执行 6 组关键行为探针（21 工具数、信封元数据权威、dup-role reject、未来证据判陈旧、大小写拒绝+扫描深度窗、标量漂移键），装配突变不再能无感上线；构建脚本内置残留 @240xu/ 说明符守卫与 yml 替换断言，并随包发布 README。
 - 前九个遗留工具假定入参为对象（DSH harness 保证 args 为对象）；绕过 harness 直接以 undefined 调用属库级误用。
 - 离线测试套件需 Node ≥18（node:test CLI）；运行时包本身 engines ≥16 即可。
 

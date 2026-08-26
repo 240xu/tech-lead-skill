@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Assembles the single DSH-market package (@240xu/dsh-tech-lead) from the
- * internal workspace layers: core validators are inlined under src/core and
+ * Assembles the single DSH-market package (dsh-themis) from the
+ * internal workspace layers (requires Node >= 18.17 to build): core validators are inlined under src/core and
  * every cross-package import is rewritten to a relative path, so the published
  * artifact carries exactly one runtime dependency (@deepseek-ai/dsh-tools).
  */
@@ -35,18 +35,49 @@ for (const rel of readdirSync(join(out, 'src'), { recursive: true })) {
 writeFileSync(join(out, 'cordis.patch.yml'), readFileSync(join(root, 'packages/dsh-tech-lead-bundle/cordis.patch.yml'), 'utf8')
   .replace("name: '@240xu/dsh-tech-lead-plugin'", "name: 'dsh-themis'"));
 
+// Post-rewrite guard: any surviving scoped specifier means a future format
+// drift would ship an unloadable artifact while printing success.
+for (const rel of readdirSync(join(out, 'src'), { recursive: true })) {
+  if (!rel.endsWith('.js')) continue;
+  const text = readFileSync(join(out, 'src', rel), 'utf8');
+  if (/['"]@240xu\//.test(text)) {
+    console.error(`build aborted: unrewritten specifier in ${rel}`);
+    process.exit(1);
+  }
+}
+const ymlText = readFileSync(join(out, 'cordis.patch.yml'), 'utf8');
+if (!ymlText.includes("name: 'dsh-themis'")) {
+  console.error('build aborted: cordis.patch.yml name replacement did not apply');
+  process.exit(1);
+}
+
+writeFileSync(join(out, 'README.md'), [
+  '# dsh-themis',
+  '',
+  'Themis — tech-lead lifecycle governance for DeepSeek Harness: **21 read-only tools**',
+  '(task tiering, state/plan/evidence validation, gate precheck/aggregation/reopen,',
+  'release/install audits, context & progress analysis, critical path,',
+  'resume reconciliation, mutation preview that always denies execution).',
+  '',
+  '`dsh plugin --profile headless add dsh-themis`',
+  '',
+  'No filesystem writes, no subprocesses, no network access — every tool computes',
+  'over caller-supplied JSON only. Upstream docs: https://github.com/240xu/tech-lead-skill',
+  '',
+].join('\n'));
+
 const pkg = {
   name: 'dsh-themis',
-  version: '1.0.0',
+  version: '1.0.1',
   description: 'Themis — tech-lead lifecycle governance for DeepSeek Harness: 21 read-only tools (classify/state/plan/evidence/gates/release/install audits, context/evidence/progress analysis, mutation preview). No writes, no subprocesses, no network.',
   license: 'MIT',
   type: 'module',
   main: 'src/index.js',
   exports: { '.': './src/index.js' },
-  files: ['src/', 'cordis.patch.yml'],
+  files: ['src/', 'cordis.patch.yml', 'README.md'],
   keywords: ['dsh', 'deepseek-harness', 'cordis', 'tech-lead', 'plugin', 'governance', 'themis'],
   publishConfig: { access: 'public' },
-  repository: { type: 'git', url: 'git+https://github.com/240xu/tech-lead-skill.git', directory: 'packages/dsh-tech-lead' },
+  repository: { type: 'git', url: 'git+https://github.com/240xu/tech-lead-skill.git', directory: 'packages/dsh-themis' },
   dsh: { bundle: { patch: './cordis.patch.yml' } },
   dependencies: { '@deepseek-ai/dsh-tools': '0.1.0-rc.7' },
   engines: { node: '>=16' },
