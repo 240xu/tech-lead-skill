@@ -65,13 +65,17 @@ writeFileSync(join(out, 'README.md'), [
   'over caller-supplied JSON only. Inputs are budget-bounded (oversized or',
   'unscannable payloads fail closed with INPUT_TOO_LARGE / SCAN_INCOMPLETE), and',
   'decision tools attach deterministic guidance (nextActions with doneWhen).',
+  'Every tool accepts `protocolJson` to negotiate the result wire format',
+  '(bare legacy / tech-lead.result.v1 envelope / tech-lead.result.v2 default), and',
+  'canonical context snapshots (tech-lead.context v2) validate strictly or migrate',
+  'unknown keys into namespaced extensions under compat mode.',
   'Upstream docs: https://github.com/240xu/tech-lead-skill',
   '',
 ].join('\n'));
 
 const pkg = {
   name: 'dsh-themis',
-  version: '1.3.1',
+  version: '1.3.2',
   description: 'Themis — tech-lead lifecycle governance for DeepSeek Harness: 21 governance tools plus capability discovery (classify/state/plan/evidence/gates/release/install audits, context/evidence/progress analysis, mutation preview). No writes, no subprocesses, no network.',
   license: 'MIT',
   type: 'module',
