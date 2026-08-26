@@ -1,7 +1,7 @@
 {
-  "name": "tech-lead-skill",
+  "name": "nomos-skill",
   "version": "5.5.6",
-  "description": "Evidence-driven planning and safe change-control skill for OpenCode-compatible agents",
+  "description": "Nomos — evidence-driven planning & safe change-control skill for any agent environment; prose edition of the verdict-engine governance layer",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -10,6 +10,7 @@
   "homepage": "https://github.com/240xu/tech-lead-skill#readme",
   "bugs": "https://github.com/240xu/tech-lead-skill/issues",
   "bin": {
+    "nomos-skill": "bin/install.js",
     "tech-lead-skill": "bin/install.js"
   },
   "scripts": {

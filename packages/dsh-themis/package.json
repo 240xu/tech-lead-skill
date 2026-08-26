@@ -27,7 +27,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/240xu/tech-lead-skill.git",
+    "url": "git+https://github.com/240xu/verdict-engine.git",
     "directory": "packages/dsh-themis"
   },
   "dsh": {

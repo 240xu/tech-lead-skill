@@ -69,7 +69,7 @@ writeFileSync(join(out, 'README.md'), [
   '(bare legacy / tech-lead.result.v1 envelope / tech-lead.result.v2 default), and',
   'canonical context snapshots (tech-lead.context v2) validate strictly or migrate',
   'unknown keys into namespaced extensions under compat mode.',
-  'Upstream docs: https://github.com/240xu/tech-lead-skill',
+  'Upstream docs: https://github.com/240xu/verdict-engine',
   '',
 ].join('\n'));
 
@@ -84,7 +84,7 @@ const pkg = {
   files: ['src/', 'cordis.patch.yml', 'README.md'],
   keywords: ['dsh', 'deepseek-harness', 'cordis', 'tech-lead', 'plugin', 'governance', 'themis'],
   publishConfig: { access: 'public' },
-  repository: { type: 'git', url: 'git+https://github.com/240xu/tech-lead-skill.git', directory: 'packages/dsh-themis' },
+  repository: { type: 'git', url: 'git+https://github.com/240xu/verdict-engine.git', directory: 'packages/dsh-themis' },
   dsh: { bundle: { patch: './cordis.patch.yml' } },
   dependencies: { '@deepseek-ai/dsh-tools': '0.1.0-rc.7' },
   engines: { node: '>=16' },

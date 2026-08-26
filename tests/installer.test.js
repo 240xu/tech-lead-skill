@@ -63,7 +63,7 @@ test('install copies full managed set including state.json and writes exact mani
     );
   }
   const marker = JSON.parse(fs.readFileSync(path.join(target, MARKER), 'utf8'));
-  assert.strictEqual(marker.package, 'tech-lead-skill');
+  assert.strictEqual(marker.package, 'nomos-skill');
   assert.strictEqual(typeof marker.version, 'string');
   assert.strictEqual(
     (marker.files || []).slice().sort().join(','),

@@ -1,4 +1,4 @@
-# Tech Lead Skill
+# Verdict Engine · Nomos（原 tech-lead-skill）
 
 [English](README.en.md) | 简体中文
 
@@ -55,20 +55,20 @@
 
 先选版本：
 
-- **纯文本规范，任意 agent 环境**（opencode / Claude Code / Codex）→ `tech-lead-skill`
+- **纯文本规范，任意 agent 环境**（opencode / Claude Code / Codex）→ **`nomos-skill`**（npm 包名，CLI 别名 `tech-lead-skill` 保留）
 - **带机器可校验只读工具的 DSH 插件** → `dsh-themis`
 
 ### npm 方式（GitHub 源，无需注册账号）
 
 ```bash
-npm i -g github:240xu/tech-lead-skill
-tech-lead-skill          # 安装到 ~/.config/opencode/skills/tech-lead
+npm i -g nomos-skill  # 或 npm i -g github:240xu/verdict-engine
+nomos-skill              # 安装到 ~/.config/opencode/skills/tech-lead
 ```
 
 一次性运行（不全局安装）：
 
 ```bash
-npx github:240xu/tech-lead-skill
+npx nomos-skill
 ```
 
 安装器幂等，重复执行会先把旧文件备份为 `*.bak-<时间戳>`；`--target <目录>` 可自定义目标；`--check` 校验已装副本与包的哈希/版本漂移；`--dry-run` 预览不写入；`--uninstall` 卸载时只删除清单受管文件，用户文件与 `*.bak-*` 备份全部保留。
@@ -85,7 +85,7 @@ dsh plugin --profile headless add dsh-themis
 
 单包注册 22 个入口：21 个只读治理工具（原九项审计＋上下文校验、证据图/新鲜度分析、推进决策、关键路径/影响分析、续跑对账、Gate 计划/聚合/重开、变更预览）＋能力发现工具 `tech_lead_capabilities`（只列出本包实际注册的工具）。仅对调用方传入的 JSON 做计算——无文件写入、无子进程、无网络访问。旧拆分包（`dsh-tech-lead-{core,plugin,bundle}`）已弃用并指向本包。源码安装：`node scripts/build-market-package.mjs` 装配后 `dsh plugin add packages/dsh-themis`。根 npm 包只发布技能与安装器。
 
-**两个产物，同一套规范：** `tech-lead-skill` 是保守、广泛兼容的纯文本规范——装进任何 agent 环境（opencode/Claude Code/Codex）即可，无其他依赖。**`dsh-themis` 是 DSH 插件专项优化版**：同样的判断层外加机器可校验的只读运行时——全部 22 工具在 schema 中声明 `protocolJson`（legacy 默认裸形态、显式请求 v1/v2 信封、未知取值 fail-closed）、state→context-v2 单向投影（身份与来源永不虚构）、strict/compat 输入兼容模式，以及稳定的 v2 信封（`findings`/`guidance`/`meta.complete`/`meta.outputProtocol`）。
+**两个产物，同一套规范：** `nomos-skill`（Verdict Engine 纯文本版）是保守、广泛兼容的纯文本规范——装进任何 agent 环境（opencode/Claude Code/Codex）即可，无其他依赖。**`dsh-themis` 是 DSH 插件专项优化版**：同样的判断层外加机器可校验的只读运行时——全部 22 工具在 schema 中声明 `protocolJson`（legacy 默认裸形态、显式请求 v1/v2 信封、未知取值 fail-closed）、state→context-v2 单向投影（身份与来源永不虚构）、strict/compat 输入兼容模式，以及稳定的 v2 信封（`findings`/`guidance`/`meta.complete`/`meta.outputProtocol`）。
 
 ```bash
 dsh plugin --profile headless add /path/to/tech-lead-skill/packages/dsh-themis
@@ -98,7 +98,7 @@ dsh --profile headless --dump-config   # 确认 tech-lead-tools 行已注入
 - 十二个强化工具返回 `tech-lead.result.v1` 信封（判别字段：`meta.schema`）；原有九个工具为向后兼容保留裸领域形状。
 - 渲染输出有上限：finding/error 数组每字段最多 500 条并附 `FINDINGS_TRUNCATED` 警告；超限调用方回显数组折叠为 `{truncated,total}` 摘要；超过 256KB 自动切换紧凑序列化。
 
-架构与权限矩阵见 [spec](https://github.com/240xu/tech-lead-skill/blob/main/docs/superpowers/specs/2026-08-25-dsh-tech-lead-system.md)。
+架构与权限矩阵见 [spec](https://github.com/240xu/verdict-engine/blob/main/docs/superpowers/specs/2026-08-25-dsh-tech-lead-system.md)。
 
 ### 手动方式
 
@@ -177,6 +177,6 @@ dsh --profile headless --dump-config   # 确认 tech-lead-tools 行已注入
 
 ## 版本
 
-当前版本：`v5.5.6`.
+当前版本：`v5.5.7`.
 
 完整运行模型见[技术指南](./docs/TECHNICAL_GUIDE.zh-CN.md)，发布审计见 [docs/AUDIT_REPORT.md](docs/AUDIT_REPORT.md)。

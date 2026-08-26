@@ -8,7 +8,7 @@ const crypto = require('crypto');
 const pkgRoot = path.resolve(__dirname, '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(pkgRoot, 'package.json'), 'utf8'));
 const srcSkill = path.join(pkgRoot, 'skill');
-const markerName = '.tech-lead-skill.json';
+const markerName = '.tech-lead-skill.json'; // marker name is legacy-stable across the nomos-skill rebrand
 const args = process.argv.slice(2);
 const defaultTarget = path.resolve(path.join(os.homedir(), '.config', 'opencode', 'skills', 'tech-lead'));
 const knownFlags = new Set([
@@ -36,8 +36,8 @@ function argValue(name) {
 
 if (args.includes('--help') || args.includes('-h')) {
   console.log(
-    `tech-lead-skill ${pkg.version}\n` +
-    'Usage: tech-lead-skill [options]\n' +
+    `nomos-skill ${pkg.version}\n` +
+    'Usage: nomos-skill [options]\n' +
     '  (no args)         install into ~/.config/opencode/skills/tech-lead\n' +
     '  --target <dir>    install into <dir>\n' +
     '  --check           verify installed files match this package\n' +
@@ -223,7 +223,7 @@ if (args.includes('--check')) {
     for (const rel of unmanaged) console.log('  extra  : ' + rel);
   }
   if (hasError) process.exit(1);
-  console.log(`ok: ${marker.files.length} managed files match tech-lead-skill v${pkg.version}`);
+  console.log(`ok: ${marker.files.length} managed files match nomos-skill v${pkg.version}`);
   process.exit(0);
 }
 
@@ -244,7 +244,7 @@ if (!dryRun) {
     installedAt: new Date().toISOString(),
     files,
   }, null, 2) + '\n');
-  console.log('installed: tech-lead-skill v' + pkg.version + ' -> ' + target);
+  console.log('installed: nomos-skill v' + pkg.version + ' -> ' + target);
 } else {
   console.log('[dry-run] no changes written');
 }

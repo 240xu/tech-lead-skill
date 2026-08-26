@@ -15,4 +15,4 @@ Every tool accepts `protocolJson` to negotiate the result wire format
 (bare legacy / tech-lead.result.v1 envelope / tech-lead.result.v2 default), and
 canonical context snapshots (tech-lead.context v2) validate strictly or migrate
 unknown keys into namespaced extensions under compat mode.
-Upstream docs: https://github.com/240xu/tech-lead-skill
+Upstream docs: https://github.com/240xu/verdict-engine
