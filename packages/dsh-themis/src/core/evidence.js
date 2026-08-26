@@ -42,6 +42,7 @@ export function evidenceLint(evidence, opts = {}) {
         severity: 'error',
         path: 'evidence',
         message: 'high-risk change requires at least one E3+ evidence (integration/real-process)',
+        minimumRequiredLevel: 'E3',
       });
     }
   }

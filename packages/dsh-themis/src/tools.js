@@ -2,6 +2,7 @@ import { registerContextTools } from './tools/context.js';
 import { registerProgressTools } from './tools/progress.js';
 import { registerGateTools } from './tools/gates.js';
 import { registerMutationTools } from './tools/mutation.js';
+import { errorEnvelope, okEnvelope } from './core/index.js';
 import { parseBoundedJson, renderEnvelope } from './protocol.js';
 
 /**
@@ -11,7 +12,7 @@ import { parseBoundedJson, renderEnvelope } from './protocol.js';
  * - composite inputs arrive as JSON strings (parsed defensively),
  * - list inputs arrive as comma-separated values,
  * - outputs are pretty-printed JSON strings (uniform string schema); malformed inputs yield structured BAD_INPUT/invalid results instead of throws.
- * - Legacy nine tools return BARE domain shapes (not wrapped in a tech-lead.result.v1 envelope); consumers can discriminate via the absence of meta.schema. Bare top-level finding arrays slice silently at 500 entries (shape preserved, no warning field exists).
+ * - Legacy tools return BARE domain shapes except tech_lead_gate_precheck, which projects onto a tech-lead.result.v1 envelope preserving data.pass/data.violations. Bare top-level finding arrays slice silently at 500 entries (shape preserved, no warning field exists).
  * - All rendered output is clamped: finding/error arrays are capped at 500 entries (FINDINGS_TRUNCATED warning appended), oversized caller-echo arrays collapse into {truncated,total}, and payloads above 256KB switch to compact serialization.
  *
  * No tool touches the filesystem, spawns processes, or performs network I/O.
@@ -127,15 +128,18 @@ export function registerTools(defineTool, core) {
   tools.push(defineTool({
     name: 'tech_lead_gate_precheck',
     description:
-      'Precheck a gate review: referee identity separation (proposer/executor must not review), per-report anchors, verdict vocabulary (pass|conditional|reject), solo-review prohibition on destructive scope, blind-gate quorum of ≥3 distinct anchored reviewers. Returns {pass, violations[]}.',
+      'Precheck a gate review: referee identity separation (proposer/executor must not review), per-report anchors, verdict vocabulary (pass|conditional|reject), solo-review prohibition on destructive scope, blind-gate quorum of ≥3 distinct anchored reviewers. Returns a tech-lead.result.v1 envelope whose data carries {pass, violations[]}; supplied-but-malformed reports fail closed as BAD_REPORTS.',
     parameters: {
       inputJson: { type: 'string', required: true, description: '{proposalAuthorId?,executorId?,reviewerIds[],solo?,blindRequired?,destructiveScope[],reports[{reviewerId,verdict,anchors[]}]}' },
     },
     output: { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
     async execute(args) {
       const parsed = json('inputJson', args.inputJson);
-      if (!parsed.ok) return out({ pass: false, violations: [{ type: 'BAD_INPUT', detail: parsed.error }] });
-      return out(core.gatePrecheck(parsed.value));
+      if (!parsed.ok) {
+        return out(errorEnvelope('gate_precheck', 'BAD_INPUT', [{ code: 'BAD_INPUT', path: 'inputJson', message: parsed.error }], { pass: false, violations: [{ type: 'BAD_INPUT', detail: parsed.error }] }));
+      }
+      const result = core.gatePrecheck(parsed.value);
+      return out(okEnvelope('gate_precheck', { pass: result.pass, violations: result.violations }));
     },
   }));
 

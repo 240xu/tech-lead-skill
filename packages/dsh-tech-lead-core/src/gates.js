@@ -7,11 +7,26 @@ export function gatePlan(impact = {}, context = {}) {
   context = object(context) ? context : {};
   const high = impact.tier === 'T2' || impact.destructive === true || context.tier === 'T2';
   const requiredRoles = high ? roles.slice() : ['eng'];
+  const minimumEvidence = high ? 'E3' : 'E2';
+  const quorum = requiredRoles.length;
   return {
     requiredRoles,
-    minimumEvidence: high ? 'E3' : 'E2',
-    quorum: requiredRoles.length,
+    minimumEvidence,
+    quorum,
     conditions: high ? ['all roles anchored', 'no reject', 'snapshot current'] : ['one anchored reviewer', 'no reject'],
+    closurePlan: {
+      passWhen: {
+        allRequiredRolesAnchored: true,
+        reportCountAtLeast: quorum,
+        noVerdicts: ['conditional', 'reject'],
+        minimumEvidence,
+      },
+      nextActions: requiredRoles.map((role) => ({
+        role,
+        action: `obtain one anchored ${role} review`,
+        doneWhen: `reports contain a valid ${role} report with verdict 'pass' and non-empty anchors`,
+      })),
+    },
   };
 }
 

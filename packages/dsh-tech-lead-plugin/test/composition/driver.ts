@@ -61,7 +61,7 @@ const cases: Case[] = [
   {
     tool: 'tech_lead_gate_precheck',
     args: { inputJson: JSON.stringify({ solo: true, destructiveScope: ['prod-db'] }) },
-    expect: (r) => r.pass === false && r.violations.some((v: any) => v.type === 'SOLO_FORBIDDEN'),
+    expect: (r) => r.ok === true && r.data.pass === false && r.data.violations.some((v: any) => v.type === 'SOLO_FORBIDDEN'),
   },
   {
     tool: 'tech_lead_release_audit',
@@ -106,7 +106,7 @@ const cases: Case[] = [
       contextJson: JSON.stringify({ evidence: [{ id: 'e1', time: '2026-08-01T00:00:00Z' }] }),
       optionsJson: JSON.stringify({ now: '2026-08-25T00:00:00Z', maxAgeDays: 7 }),
     },
-    expect: (r) => r.ok === false && r.code === 'STALE_EVIDENCE',
+    expect: (r) => r.ok === true && r.data.stale === true,
   },
   {
     tool: 'tech_lead_assumption_register',
@@ -141,12 +141,12 @@ const cases: Case[] = [
   {
     tool: 'tech_lead_gate_aggregate',
     args: { reportsJson: JSON.stringify([{ role: 'pm', verdict: 'pass', anchors: ['a'] }]), planJson: JSON.stringify({ requiredRoles: ['pm', 'arch'], quorum: 2 }) },
-    expect: (r) => r.ok === false && r.code === 'GATE_BLOCKED',
+    expect: (r) => r.ok === true && r.data.pass === false && r.data.verdict === 'conditional',
   },
   {
     tool: 'tech_lead_gate_reopen',
     args: { previousJson: JSON.stringify({ contextFingerprint: 'old' }), currentJson: JSON.stringify({ contextFingerprint: 'new' }) },
-    expect: (r) => r.ok === false && r.code === 'DRIFT_DETECTED',
+    expect: (r) => r.ok === true && r.data.reopen === true,
   },
   {
     tool: 'tech_lead_mutation_preview',

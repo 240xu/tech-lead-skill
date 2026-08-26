@@ -9,22 +9,26 @@ test('gate orchestration tools are registered', () => {
   for (const name of ['tech_lead_gate_plan', 'tech_lead_gate_aggregate', 'tech_lead_gate_reopen']) assert.ok(tool(name));
 });
 
-test('gate aggregate rejects missing required role', async () => {
+test('gate aggregate reports a valid conditional analysis under ok:true', async () => {
   const result = JSON.parse(await tool('tech_lead_gate_aggregate').execute({
     reportsJson: JSON.stringify([{ role: 'pm', verdict: 'pass', anchors: ['a'] }]),
     planJson: JSON.stringify({ requiredRoles: ['pm', 'arch'], quorum: 2 }),
   }));
-  assert.equal(result.ok, false);
-  assert.equal(result.code, 'GATE_BLOCKED');
+  assert.equal(result.ok, true);
+  assert.equal(result.code, 'OK');
+  assert.equal(result.data.pass, false);
+  assert.equal(result.data.verdict, 'conditional');
+  assert.ok(result.data.guidance.nextActions.some((a) => a.kind === 'gate'));
 });
 
-test('gate reopen reports drift', async () => {
+test('gate reopen reports drift as a valid analysis', async () => {
   const result = JSON.parse(await tool('tech_lead_gate_reopen').execute({
     previousJson: JSON.stringify({ contextFingerprint: 'a' }),
     currentJson: JSON.stringify({ contextFingerprint: 'b' }),
   }));
-  assert.equal(result.ok, false);
-  assert.equal(result.code, 'DRIFT_DETECTED');
+  assert.equal(result.ok, true);
+  assert.equal(result.code, 'OK');
+  assert.equal(result.data.reopen, true);
 });
 
 test('gate tools return BAD_INPUT for JSON null roots and malformed aggregate schemas', async () => {
@@ -45,8 +49,8 @@ test('blocked aggregation derives actionable MISSING_ROLE error entries', async 
     reportsJson: '[{"role":"eng","verdict":"pass","anchors":["a"]}]',
     planJson: '{"requiredRoles":["eng","arch"],"quorum":2}',
   }));
-  assert.equal(r.code, 'GATE_BLOCKED');
-  assert.ok(r.errors.some((e) => e.code === 'MISSING_ROLE'));
+  assert.equal(r.code, 'OK');
+  assert.ok(r.data.findings.some((e) => e.code === 'MISSING_ROLE'));
 });
 
 test('gate reopen rejects snapshots without any known fingerprint key', async () => {
@@ -62,6 +66,6 @@ test('conditional-only block names its cause instead of empty errors', async () 
     reportsJson: '[{"role":"pm","verdict":"conditional","anchors":["a"]},{"role":"eng","verdict":"pass","anchors":["b"]},{"role":"ops","verdict":"pass","anchors":["c"]}]',
     planJson: '{"requiredRoles":["pm","eng","ops"],"quorum":3}',
   }));
-  assert.equal(r.code, 'GATE_BLOCKED');
-  assert.ok(r.errors.some((e) => e.code === 'CONDITIONAL_VERDICT'));
+  assert.equal(r.code, 'OK');
+  assert.ok(r.data.findings.some((e) => e.code === 'CONDITIONAL_VERDICT'));
 });

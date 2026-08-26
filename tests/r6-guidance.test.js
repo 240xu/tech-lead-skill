@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import {
   inspectBounded, parseBoundedJson, gatePrecheck,
   makeAction, normalizeGuidance, progressDecide, criticalPath,
+  gatePlan, changeImpact, transitionCheck, evidenceLint, evidenceFreshness,
 } from '../packages/dsh-tech-lead-core/src/index.js';
 import { registerTools } from '../packages/dsh-tech-lead-plugin/src/tools.js';
 import * as core from '../packages/dsh-tech-lead-core/src/index.js';
@@ -270,4 +271,45 @@ test('critical path exposes readiness waves and honest scheduling semantics', ()
   const wave = r.nextWave.find((t) => t.id === 'b');
   assert.ok(wave);
   assert.deepEqual(wave.blockedBy, ['a']);
+});
+
+test('gatePlan ships a closurePlan with machine-checkable passWhen', () => {
+  const plan = gatePlan({ tier: 'T2', destructive: true }, {});
+  assert.deepEqual(plan.closurePlan.passWhen.noVerdicts, ['conditional', 'reject']);
+  assert.equal(plan.closurePlan.passWhen.reportCountAtLeast, 4);
+  assert.equal(plan.closurePlan.passWhen.minimumEvidence, 'E3');
+  assert.ok(plan.closurePlan.nextActions.every((a) => a.doneWhen.includes("verdict 'pass'")));
+});
+
+test('changeImpact exposes trigger provenance and per-gate reopen actions', () => {
+  const r = changeImpact({ modules: ['a', 'b'], assets: ['SECRET'], irreversible: true }, { gates: [{ id: 'g1' }, { id: 'g2' }] });
+  assert.ok(r.triggeredBy.some((t) => t.rule === 'IRREVERSIBLE' && t.effect === 'T2'));
+  assert.ok(r.triggeredBy.some((t) => t.rule === 'PROTECTED_ASSET'));
+  assert.deepEqual(r.gateActions.map((g) => g.gateId), ['g1', 'g2']);
+  assert.ok(r.gateActions.every((g) => g.action === 'reopen' && g.reason.length > 0));
+});
+
+test('transitionCheck returns requiredStateChanges for every outcome branch', () => {
+  const deniedPivot = transitionCheck({ decisions: [], goal_ledger: [], risks: [], done: [], degraded_reason: '' }, 'PIVOT');
+  assert.equal(deniedPivot.allowed, false);
+  assert.equal(deniedPivot.requiredStateChanges.length, 2);
+  const pause = transitionCheck({ decisions: [], goal_ledger: [], risks: [], done: [], degraded_reason: '' }, 'PAUSE');
+  assert.equal(pause.allowed, true);
+  assert.match(pause.requiredStateChanges[0].doneWhen, /next_step/);
+  const stop = transitionCheck({ decisions: [], goal_ledger: [], risks: [], done: [], degraded_reason: '' }, 'STOP');
+  assert.equal(stop.requiredStateChanges.length, 1);
+});
+
+test('evidence lint names the minimum level and freshness findings carry refresh actions', () => {
+  const lint = evidenceLint([{ id: 'a', level: 'E2', source: 's', time: 't', scope: 'sc', repro: 'r' }], { highRiskChange: true });
+  const gap = lint.find((f) => f.message.includes('high-risk'));
+  assert.equal(gap.minimumRequiredLevel, 'E3');
+  const fresh = evidenceFreshness(
+    { evidence: [{ id: 'e9', time: '2020-01-01T00:00:00Z', fingerprint: 'old' }] },
+    { now: '2026-08-25T00:00:00Z', fingerprint: 'new' },
+  );
+  const staleFinding = fresh.findings.find((f) => f.code === 'STALE_EVIDENCE');
+  const drift = fresh.findings.find((f) => f.code === 'FINGERPRINT_DRIFT');
+  assert.match(staleFinding.refreshAction.doneWhen, /freshness window/);
+  assert.match(drift.refreshAction.action, /fingerprint new/);
 });

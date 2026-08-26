@@ -1,4 +1,4 @@
-import { errorEnvelope, okEnvelope } from '@240xu/dsh-tech-lead-core';
+import { errorEnvelope, makeAction, normalizeGuidance, okEnvelope } from '@240xu/dsh-tech-lead-core';
 import { parseJsonFields, parseJsonString, renderEnvelope, runGuarded } from '../protocol.js';
 
 export function registerContextTools(defineTool, core) {
@@ -57,9 +57,21 @@ export function registerContextTools(defineTool, core) {
         }
         const clockPinned = typeof options.now === 'string' && Number.isFinite(Date.parse(options.now));
         const result = core.evidenceFreshness(input.values.contextJson, options);
-        const envelope = result.stale
-          ? errorEnvelope('evidence_freshness', 'STALE_EVIDENCE', result.findings, result)
-          : okEnvelope('evidence_freshness', result, result.warnings);
+        const guidance = result.stale
+          ? normalizeGuidance({ mode: 'strict', outcome: 'PAUSE', meaning: 'Evidence is not fresh enough to trust.', actions: result.findings
+            .filter((item) => item.refreshAction)
+            .map((item) => makeAction({
+              kind: 'evidence',
+              targetId: item.path.split('/').slice(0, 3).join('/') || 'evidence',
+              reasonCodes: [item.code],
+              findingRef: item.path,
+              action: item.refreshAction.action,
+              doneWhen: item.refreshAction.doneWhen,
+              nextTool: 'tech_lead_evidence_freshness',
+            })) })
+          : undefined;
+        const data = guidance ? { ...result, guidance } : result;
+        const envelope = okEnvelope('evidence_freshness', data, result.warnings);
         envelope.meta.deterministic = clockPinned;
         return renderEnvelope(envelope);
       });
@@ -81,12 +93,23 @@ export function registerContextTools(defineTool, core) {
           verification: item?.verification ?? null,
           affects: Array.isArray(item?.affects) ? item.affects.slice() : [],
         }));
-        const missing = items.filter((item) => item.status === 'missing_verification');
-        if (missing.length) {
-          const errors = missing.map((item) => ({ code: 'MISSING_VERIFICATION', path: `/assumptions/${item.id}`, message: 'assumption lacks a verification method' }));
-          return renderEnvelope(errorEnvelope('assumption_register', 'SCHEMA_INVALID', errors, { items }));
-        }
-        return renderEnvelope(okEnvelope('assumption_register', { items }));
+        const enriched = items.map((item) => item.status === 'missing_verification'
+          ? { ...item, nextAction: makeAction({
+              kind: 'assumption',
+              targetId: item.id,
+              reasonCodes: ['MISSING_VERIFICATION'],
+              findingRef: `/assumptions/${item.id}`,
+              action: `Add one deterministic verification method to assumption ${item.id}.`,
+              doneWhen: `assumptions entry id ${item.id} has a non-empty verification string`,
+            }) }
+          : item);
+        const missing = enriched.filter((item) => item.status === 'missing_verification');
+        const warnings = missing.map((item) => ({
+          code: 'MISSING_VERIFICATION',
+          path: `/assumptions/${item.id}`,
+          message: 'assumption lacks a verification method',
+        }));
+        return renderEnvelope(okEnvelope('assumption_register', { items: enriched }, warnings));
       });
     },
   }));

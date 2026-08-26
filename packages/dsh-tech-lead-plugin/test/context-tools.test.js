@@ -29,8 +29,8 @@ test('evidence freshness tool returns stale evidence deterministically', async (
     optionsJson: JSON.stringify({ now: '2026-08-25T00:00:00Z', maxAgeDays: 7 }),
   });
   const result = JSON.parse(output);
-  assert.equal(result.ok, false);
-  assert.equal(result.code, 'STALE_EVIDENCE');
+  assert.equal(result.ok, true);
+  assert.equal(result.code, 'OK');
   assert.equal(result.data.stale, true);
 });
 
@@ -59,6 +59,8 @@ test('whitespace-only verification is missing_verification, not verifiable', asy
   const tools = registerTools(fakeDefineTool, core);
   const tool = tools.find((t) => t.name === 'tech_lead_assumption_register');
   const r = JSON.parse(await tool.execute({ contextJson: '{"assumptions":[{"id":"A1","verification":"   "}]}'}));
-  assert.equal(r.code, 'SCHEMA_INVALID');
-  assert.equal(r.errors[0].code, 'MISSING_VERIFICATION');
+  assert.equal(r.ok, true);
+  assert.equal(r.data.items[0].status, 'missing_verification');
+  const flagged = r.data.items.find((item) => item.status === 'missing_verification');
+  assert.ok(flagged.nextAction.doneWhen.length > 0);
 });

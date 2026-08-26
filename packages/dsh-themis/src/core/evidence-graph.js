@@ -89,10 +89,10 @@ export function evidenceFreshness(context, options = {}) {
       findings.push(finding('INVALID_EVIDENCE_TIME', `/evidence/${index}/time`, 'time is not parseable'));
       continue;
     }
-    if (time > now) findings.push(finding('FUTURE_EVIDENCE', `/evidence/${index}/time`, 'evidence time is in the future'));
-    if (now - time > ageDays * 86400000) findings.push(finding('STALE_EVIDENCE', `/evidence/${index}`, 'evidence exceeds freshness window'));
+    if (time > now) findings.push({ ...finding('FUTURE_EVIDENCE', `/evidence/${index}/time`, 'evidence time is in the future'), refreshAction: { action: `re-collect evidence ${item?.id ?? index} with a current timestamp`, doneWhen: `evidence[${index}].time <= referenceTime` } });
+    if (now - time > ageDays * 86400000) findings.push({ ...finding('STALE_EVIDENCE', `/evidence/${index}`, 'evidence exceeds freshness window'), refreshAction: { action: `reproduce evidence ${item?.id ?? index} against the current snapshot`, doneWhen: `evidence[${index}] re-recorded within the freshness window` } });
     if (options.fingerprint != null && item.fingerprint != null && item.fingerprint !== options.fingerprint) {
-      findings.push(finding('FINGERPRINT_DRIFT', `/evidence/${index}/fingerprint`, 'evidence fingerprint differs from current snapshot'));
+      findings.push({ ...finding('FINGERPRINT_DRIFT', `/evidence/${index}/fingerprint`, 'evidence fingerprint differs from current snapshot'), refreshAction: { action: `rerun evidence ${item?.id ?? index} and record fingerprint ${options.fingerprint}`, doneWhen: `evidence[${index}].fingerprint === current snapshot fingerprint` } });
     }
   }
   return { stale: findings.some((item) => item.code === 'STALE_EVIDENCE' || item.code === 'FINGERPRINT_DRIFT' || item.code === 'FUTURE_EVIDENCE'), findings, warnings, evidence: asArray(context?.evidence) };

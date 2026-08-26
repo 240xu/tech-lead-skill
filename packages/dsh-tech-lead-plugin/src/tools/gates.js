@@ -1,4 +1,4 @@
-import { errorEnvelope, okEnvelope } from '@240xu/dsh-tech-lead-core';
+import { errorEnvelope, makeAction, normalizeGuidance, okEnvelope } from '@240xu/dsh-tech-lead-core';
 import { parseJsonFields, renderEnvelope, runGuarded } from '../protocol.js';
 
 const FINGERPRINT_KEYS = ['contextFingerprint', 'evidenceFingerprint', 'dependencyFingerprint', 'impactFingerprint'];
@@ -48,20 +48,63 @@ export function registerGateTools(defineTool, core) {
         }
         if (errors.length) return renderEnvelope(errorEnvelope('gate_aggregate', 'BAD_INPUT', errors));
         const result = core.gateAggregate(input.values.reportsJson, plan);
-        if (!result.pass) {
-          const conditionalCount = Array.isArray(input.values.reportsJson)
-            ? input.values.reportsJson.filter((report) => report && report.verdict === 'conditional').length
-            : 0;
-          const derived = [
-            ...result.missingRoles.map((role) => ({ code: 'MISSING_ROLE', path: `/roles/${role}`, message: `no anchored report from required role "${role}"` })),
-            ...(conditionalCount > 0 ? [{ code: 'CONDITIONAL_VERDICT', path: '/reports', message: `${conditionalCount} report(s) hold a conditional verdict` }] : []),
-            ...(result.verdict !== 'reject' && result.findings.filter((f) => f.code).length === 0 && Array.isArray(input.values.reportsJson) && input.values.reportsJson.length < plan.quorum
-              ? [{ code: 'QUORUM_UNMET', path: '/reports', message: `${input.values.reportsJson.length} of ${plan.quorum} reports present` }]
-              : []),
-          ];
-          return renderEnvelope(errorEnvelope('gate_aggregate', 'GATE_BLOCKED', [...derived, ...result.findings], result));
+        const reports = Array.isArray(input.values.reportsJson) ? input.values.reportsJson : [];
+        const conditionalCount = reports.filter((report) => report && report.verdict === 'conditional').length;
+        const derived = [
+          ...result.missingRoles.map((role) => ({ code: 'MISSING_ROLE', path: `/roles/${role}`, message: `no anchored report from required role "${role}"` })),
+          ...(conditionalCount > 0 ? [{ code: 'CONDITIONAL_VERDICT', path: '/reports', message: `${conditionalCount} report(s) hold a conditional verdict` }] : []),
+          ...(result.verdict !== 'reject' && result.findings.filter((f) => f.code).length === 0 && reports.length < plan.quorum
+            ? [{ code: 'QUORUM_UNMET', path: '/reports', message: `${reports.length} of ${plan.quorum} reports present` }]
+            : []),
+        ];
+        // Governance-negative outcomes are valid analyses: ok:true with the
+        // verdict/findings in data plus deterministic closure guidance.
+        const actions = [];
+        for (const role of result.missingRoles) {
+          actions.push(makeAction({
+            kind: 'gate', targetId: role, reasonCodes: ['MISSING_ROLE'], findingRef: `/roles/${role}`,
+            action: `Obtain one anchored ${role} review.`,
+            doneWhen: `reports contain a valid ${role} report with verdict 'pass' and non-empty anchors`,
+            nextTool: 'tech_lead_gate_aggregate',
+          }));
         }
-        return renderEnvelope(okEnvelope('gate_aggregate', result));
+        reports.forEach((report, index) => {
+          if (report?.verdict === 'conditional') {
+            actions.push(makeAction({
+              kind: 'gate', targetId: report.role ?? `report-${index}`, reasonCodes: ['CONDITIONAL_VERDICT'], findingRef: `/reports/${index}`,
+              action: `Resolve the conditional findings raised by the ${report.role ?? 'reviewer'} report, then re-submit with verdict 'pass'.`,
+              doneWhen: `reports[${index}].verdict === 'pass'`,
+              nextTool: 'tech_lead_gate_aggregate',
+            }));
+          }
+          if (report?.verdict === 'reject') {
+            actions.push(makeAction({
+              kind: 'safety', targetId: report.role ?? `report-${index}`, reasonCodes: ['REJECT'], findingRef: `/reports/${index}`,
+              action: `Address every finding behind the ${report.role ?? 'reviewer'} rejection before another round.`,
+              doneWhen: 'all referenced findings are resolved and a fresh anchored pass report replaces the reject',
+            }));
+          }
+        });
+        for (const item of [...derived, ...result.findings]) {
+          if (item.code === 'QUORUM_UNMET') {
+            actions.push(makeAction({
+              kind: 'gate', targetId: 'quorum', reasonCodes: ['QUORUM_UNMET'], findingRef: '/reports',
+              action: `Collect ${plan.quorum - reports.length} more distinct anchored report(s).`,
+              doneWhen: `distinct valid reports count >= ${plan.quorum}`,
+              nextTool: 'tech_lead_gate_aggregate',
+            }));
+          }
+          if (item.code === 'INVALID_REPORT' || item.code === 'INVALID_VERDICT' || item.code === 'DUPLICATE_ROLE') {
+            actions.push(makeAction({
+              kind: 'safety', targetId: item.path ?? 'reports', reasonCodes: [item.code], findingRef: item.path ?? '/reports',
+              action: 'Fix the malformed report entry named by this finding.',
+              doneWhen: `no ${item.code} finding remains`,
+            }));
+          }
+        }
+        const guidance = normalizeGuidance({ mode: 'strict', outcome: result.pass ? 'CONTINUE' : 'PAUSE', meaning: result.pass ? undefined : 'Gate is not passed yet.', actions });
+        const enriched = { ...result, findings: [...result.findings, ...derived], guidance };
+        return renderEnvelope(okEnvelope('gate_aggregate', enriched));
       });
     },
   });
@@ -85,7 +128,7 @@ export function registerGateTools(defineTool, core) {
         if (errors.length) return renderEnvelope(errorEnvelope('gate_reopen', 'BAD_INPUT', errors));
         const result = core.gateReopen(input.values.previousJson, input.values.currentJson);
         const reasons = result.changedInputs.map((item) => ({ code: `${item.toUpperCase()}_DRIFT`, path: `/${item}Fingerprint`, message: `${item} changed` }));
-        return renderEnvelope(result.reopen ? errorEnvelope('gate_reopen', 'DRIFT_DETECTED', reasons, result) : okEnvelope('gate_reopen', result));
+        return renderEnvelope(okEnvelope('gate_reopen', result, result.reopen ? reasons : []));
       });
     },
   });

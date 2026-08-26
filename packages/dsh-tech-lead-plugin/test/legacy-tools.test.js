@@ -57,14 +57,21 @@ test('evidence_lint enforces E3 minimum through the raw severity field', async (
   assert.ok(r.some((f) => f.severity === 'error'));
 });
 
-test('gate_precheck preserves violation typing on both input paths', async () => {
+test('gate_precheck projects onto an envelope while preserving violation typing', async () => {
   const solo = await run('tech_lead_gate_precheck', {
     inputJson: '{"solo":true,"destructiveScope":["prod-db"]}',
   });
-  assert.equal(solo.pass, false);
-  assert.ok(solo.violations.some((v) => v.type === 'SOLO_FORBIDDEN'));
+  assert.equal(solo.ok, true);
+  assert.equal(solo.data.pass, false);
+  assert.ok(solo.data.violations.some((v) => v.type === 'SOLO_FORBIDDEN'));
+  const malformed = await run('tech_lead_gate_precheck', { inputJson: '{"reports":"nope"}' });
+  assert.equal(malformed.ok, true);
+  assert.equal(malformed.data.pass, false);
+  assert.ok(malformed.data.violations.some((v) => v.type === 'BAD_REPORTS'));
   const broken = await run('tech_lead_gate_precheck', { inputJson: '{' });
-  assert.equal(broken.violations[0].type, 'BAD_INPUT');
+  assert.equal(broken.ok, false);
+  assert.equal(broken.code, 'BAD_INPUT');
+  assert.equal(broken.data.violations[0].type, 'BAD_INPUT');
 });
 
 test('release_audit scans allowlist drift and degrades parse errors to typed entries', async () => {
