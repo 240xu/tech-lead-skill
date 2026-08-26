@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 
 import {
   inspectBounded, parseBoundedJson, gatePrecheck,
-  makeAction, normalizeGuidance,
+  makeAction, normalizeGuidance, progressDecide, criticalPath,
 } from '../packages/dsh-tech-lead-core/src/index.js';
 import { registerTools } from '../packages/dsh-tech-lead-plugin/src/tools.js';
 import * as core from '../packages/dsh-tech-lead-core/src/index.js';
@@ -193,4 +193,81 @@ test('synthesized action queue is hard-capped at 50 with an explicit truncation 
   const g = normalizeGuidance({ actions });
   assert.equal(g.nextActions.length, 50);
   assert.equal(g.truncated, true);
+});
+
+test('core progress preserves typed id arrays and quarantines id-less blockers', () => {
+  const ctx = {
+    dependencies: [{ id: 'd1', blocker: true, status: 'open' }, { blocker: true, status: 'open' }],
+    evidence: [{ id: 'e1', stale: true }, { stale: true }],
+    gates: [{ id: 'g1', destructive: true, status: 'open' }],
+  };
+  const r = progressDecide(ctx);
+  assert.equal(r.outcome, 'PAUSE');
+  assert.deepEqual(r.blockedDependencyIds, ['d1']);
+  assert.deepEqual(r.staleEvidenceIds, ['e1']);
+  assert.deepEqual(r.blockingGateIds, ['g1']);
+  const missing = r.reasons.filter((x) => x.code === 'MISSING_ID');
+  assert.equal(missing.length, 2);
+  assert.ok(missing.every((m) => String(m.id).startsWith('missing:')));
+});
+
+test('adapter renders PAUSE as an ok:true analysis with ordered strict guidance', async () => {
+  const tools = makeTools();
+  const out = JSON.parse(await tools.find((t) => t.name === 'tech_lead_progress_decide').execute({
+    contextJson: JSON.stringify({
+      dependencies: [{ id: 'd1', blocker: true, status: 'open' }],
+      evidence: [{ id: 'e1', stale: true, fingerprint: 'old' }],
+      gates: [{ id: 'g1', destructive: true, status: 'open' }],
+    }),
+    optionsJson: '{"guidanceMode":"strict"}',
+  }));
+  assert.equal(out.ok, true);
+  assert.equal(out.code, 'OK');
+  assert.equal(out.data.outcome, 'PAUSE');
+  assert.equal(out.data.allowed, false);
+  const acts = out.data.guidance.nextActions;
+  assert.deepEqual(acts.map((a) => a.kind), ['gate', 'dependency', 'evidence']);
+  assert.deepEqual(acts.map((a) => a.priority), [1, 2, 3]);
+  assert.ok(acts.every((a) => typeof a.doneWhen === 'string' && a.doneWhen.length > 0));
+  assert.ok(acts.every((a) => Array.isArray(a.reasonCodes) && a.reasonCodes.length > 0));
+  assert.ok(typeof acts[0].findingRef === 'string' && acts[0].findingRef.startsWith('/'));
+});
+
+test('explicit heuristic mode echoes the label without changing strict actions', async () => {
+  const tools = makeTools();
+  const base = { dependencies: [{ id: 'd1', blocker: true, status: 'open' }], evidence: [], gates: [] };
+  const strict = JSON.parse(await tools.find((t) => t.name === 'tech_lead_progress_decide').execute({ contextJson: JSON.stringify(base) }));
+  const coach = JSON.parse(await tools.find((t) => t.name === 'tech_lead_progress_decide').execute({
+    contextJson: JSON.stringify(base), optionsJson: '{"guidanceMode":"heuristic"}',
+  }));
+  assert.equal(coach.data.guidance.mode, 'heuristic');
+  assert.deepEqual(coach.data.guidance.nextActions.map((a) => a.actionId), strict.data.guidance.nextActions.map((a) => a.actionId));
+  const invalid = JSON.parse(await tools.find((t) => t.name === 'tech_lead_progress_decide').execute({
+    contextJson: '{}', optionsJson: '{"guidanceMode":"yolo"}',
+  }));
+  assert.equal(invalid.ok, false);
+  assert.equal(invalid.errors[0].path, '/optionsJson/guidanceMode');
+});
+
+test('forcePivot is a valid lifecycle analysis, not an error', async () => {
+  const tools = makeTools();
+  const out = JSON.parse(await tools.find((t) => t.name === 'tech_lead_progress_decide').execute({
+    contextJson: '{}', optionsJson: '{"forcePivot":true}',
+  }));
+  assert.equal(out.ok, true);
+  assert.equal(out.data.outcome, 'PIVOT');
+  assert.match(JSON.stringify(out.data.guidance.decision), /PIVOT/);
+});
+
+test('critical path exposes readiness waves and honest scheduling semantics', () => {
+  // Edge orientation per implementation: `to` is the prerequisite, `from` depends on it.
+  const r = criticalPath(
+    [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
+    [{ from: 'b', to: 'a' }],
+  );
+  assert.equal(r.scheduleSemantics, 'topological-readiness-not-duration-criticality');
+  assert.deepEqual(r.readyNow.map((t) => t.id).sort(), ['a', 'c']);
+  const wave = r.nextWave.find((t) => t.id === 'b');
+  assert.ok(wave);
+  assert.deepEqual(wave.blockedBy, ['a']);
 });

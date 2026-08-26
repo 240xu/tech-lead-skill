@@ -1,31 +1,109 @@
-import { errorEnvelope, okEnvelope } from '../core/index.js';
+import { errorEnvelope, okEnvelope, makeAction, normalizeGuidance } from '../core/index.js';
 import { canonicalStringify, parseJsonFields, renderEnvelope, runGuarded } from '../protocol.js';
 
 const BLOCKING_FINDINGS = new Set(['CYCLE', 'INVALID_TASK_ID', 'DUPLICATE_TASK_ID']);
+const GUIDANCE_MODES = new Set([undefined, 'strict', 'heuristic']);
+
+function parseOptions(rawOptionsJson, operation) {
+  if (rawOptionsJson == null || rawOptionsJson === '') return { ok: true, value: {} };
+  const parsed = parseJsonFields({ optionsJson: rawOptionsJson }, ['optionsJson']);
+  if (!parsed.ok) return parsed;
+  const value = parsed.values.optionsJson;
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    return { ok: false, code: 'BAD_INPUT', errors: [{ code: 'BAD_INPUT', path: '/optionsJson', message: 'expected a JSON object' }] };
+  }
+  if (!GUIDANCE_MODES.has(value.guidanceMode)) {
+    return { ok: false, code: 'BAD_INPUT', errors: [{ code: 'BAD_INPUT', path: '/optionsJson/guidanceMode', message: 'guidanceMode must be "strict" or "heuristic"' }] };
+  }
+  return { ok: true, value };
+}
+
+function buildProgressGuidance(result, mode) {
+  const actions = [];
+  for (const ref of result.blockerRefs?.gate ?? []) {
+    actions.push(makeAction({
+      kind: 'gate',
+      targetId: ref.id,
+      reasonCodes: ['GATE_BLOCKED'],
+      findingRef: ref.path,
+      action: `Obtain a pass verdict for destructive gate "${ref.id}".`,
+      doneWhen: `gates contains an entry id ${ref.id} with status 'pass'`,
+      nextTool: 'tech_lead_gate_aggregate',
+    }));
+  }
+  for (const ref of result.blockerRefs?.dependency ?? []) {
+    actions.push(makeAction({
+      kind: 'dependency',
+      targetId: ref.id,
+      reasonCodes: ['DEPENDENCY_BLOCKED'],
+      findingRef: ref.path,
+      action: `Resolve or replace blocking dependency "${ref.id}".`,
+      doneWhen: `dependencies entry id ${ref.id} has status 'done' or blocker removed`,
+    }));
+  }
+  for (const ref of result.blockerRefs?.evidence ?? []) {
+    actions.push(makeAction({
+      kind: 'evidence',
+      targetId: ref.id,
+      reasonCodes: ['STALE_EVIDENCE'],
+      findingRef: ref.path,
+      action: `Refresh stale evidence "${ref.id}" against the current snapshot.`,
+      doneWhen: `evidence entry id ${ref.id} has stale !== true and its fingerprint matches the current snapshot`,
+      nextTool: 'tech_lead_evidence_freshness',
+    }));
+  }
+  for (const reason of result.reasons ?? []) {
+    if (reason.code !== 'MISSING_ID') continue;
+    actions.push(makeAction({
+      kind: 'safety',
+      targetId: reason.id,
+      reasonCodes: ['MISSING_ID'],
+      findingRef: reason.path,
+      action: `Give the record at ${reason.path} a stable non-empty id so blockers stay auditable.`,
+      doneWhen: `record at ${reason.path} has a non-empty string id`,
+    }));
+  }
+  const meaning = result.outcome === 'PIVOT'
+    ? 'Pivot requested: a falsified decision and its replacement hypothesis must be on record first.'
+    : result.outcome === 'PAUSE'
+      ? 'Continuing implementation would bypass an unresolved blocker.'
+      : undefined;
+  const guidance = normalizeGuidance({ mode, outcome: result.outcome, meaning, actions });
+  guidance.resumeWhen = [
+    'every priority-1 action reports its doneWhen predicate satisfied',
+    ...(result.outcome === 'PAUSE' ? ['no destructive gate is left unpassed'] : []),
+  ];
+  return guidance;
+}
 
 export function registerProgressTools(defineTool, core) {
   const output = [];
   const register = (name, description, parameters, execute) => output.push(defineTool({ name, description, parameters, output: { schema: { type: 'string' }, render: (_a, value) => [{ type: 'text', text: value }] }, execute }));
-  register('tech_lead_progress_decide', 'Decide the next lifecycle outcome (CONTINUE/PAUSE/SCOPE-DOWN/PIVOT/STOP). Trigger fields: dependencies[] pauses when an entry has blocker:true and status!=="done"; evidence[] pauses when an entry has stale:true; gates[] pauses when an entry has destructive:true and status!=="pass". optionsJson supports {forcePivot:true} which returns a PIVOT decision as an error envelope (code PIVOT_REQUESTED) — ok means "no blockers", not "call failed".', {
+  register('tech_lead_progress_decide', 'Decide the next lifecycle outcome (CONTINUE/PAUSE/SCOPE-DOWN/PIVOT/STOP). Every valid analysis returns ok:true; PAUSE/PIVOT carry data.guidance.nextActions (deterministic order, each with doneWhen) while ok:false is reserved for malformed or over-budget input. Trigger fields: dependencies[] pauses when an entry has blocker:true and status!=="done"; evidence[] pauses when an entry has stale:true; gates[] pauses when an entry has destructive:true and status!=="pass". optionsJson supports {forcePivot?:boolean, guidanceMode?:("strict"|"heuristic")}; heuristic mode only labels advisory heuristics and never changes strict actions.', {
     contextJson: { type: 'string', required: true, description: 'context snapshot JSON text with dependencies/evidence/gates arrays' },
-    optionsJson: { type: 'string', description: 'optional JSON text ({forcePivot?:boolean})' },
+    optionsJson: { type: 'string', description: 'optional JSON text ({forcePivot?:boolean, guidanceMode?:string})' },
   }, async (args) => {
     return runGuarded('progress_decide', () => {
       const input = parseJsonFields(args ?? {}, ['contextJson']);
       if (!input.ok) return renderEnvelope(errorEnvelope('progress_decide', input.code ?? 'BAD_INPUT', input.errors));
       let options = {};
+      let mode = 'strict';
       if (args.optionsJson != null && args.optionsJson !== '') {
-        const parsedOptions = parseJsonFields(args, ['optionsJson']);
+        const parsedOptions = parseOptions(args.optionsJson, 'progress_decide');
         if (!parsedOptions.ok) return renderEnvelope(errorEnvelope('progress_decide', parsedOptions.code ?? 'BAD_INPUT', parsedOptions.errors));
-        options = parsedOptions.values.optionsJson;
+        options = parsedOptions.value;
+        if (options.guidanceMode) mode = options.guidanceMode;
       }
       const result = core.progressDecide(input.values.contextJson, options);
-      return renderEnvelope(result.outcome === 'CONTINUE' ? okEnvelope('progress_decide', result) : errorEnvelope('progress_decide', result.reasons?.[0]?.code ?? 'PROGRESS_BLOCKED', result.reasons, result));
+      if (result.outcome === 'CONTINUE') return renderEnvelope(okEnvelope('progress_decide', result));
+      const enriched = { ...result, guidance: buildProgressGuidance(result, mode) };
+      return renderEnvelope(okEnvelope('progress_decide', enriched));
     });
   });
-  register('tech_lead_critical_path', 'Compute blockers, critical path, cycles (with cycleNodes), and parallel windows. Both inputs must be JSON arrays; graph findings (CYCLE / INVALID_TASK_ID / DUPLICATE_TASK_ID) are returned as envelope errors under code SCHEMA_INVALID.', {
+  register('tech_lead_critical_path', 'Compute blockers, critical path, cycles (with cycleNodes), parallel windows, and readiness waves (readyNow/nextWave). scheduleSemantics is topological-readiness-not-duration-criticality — this is not duration-weighted CPM. Graph findings (CYCLE / INVALID_TASK_ID / DUPLICATE_TASK_ID) are returned under code SCHEMA_INVALID.', {
     tasksJson: { type: 'string', required: true, description: '[{id,status?,blocker?}] as JSON text' },
-    dependenciesJson: { type: 'string', required: true, description: '[{from,to}] edge list as JSON text; from blocks to' },
+    dependenciesJson: { type: 'string', required: true, description: '[{from,to}] edge list as JSON text; `to` is the prerequisite and `from` depends on it' },
+    optionsJson: { type: 'string', description: 'optional JSON text ({guidanceMode?:string}); validated but advisory-only for this tool' },
   }, async (args) => {
     return runGuarded('critical_path', () => {
       const input = parseJsonFields(args ?? {}, ['tasksJson', 'dependenciesJson']);
@@ -33,6 +111,10 @@ export function registerProgressTools(defineTool, core) {
       const errors = [];
       if (!Array.isArray(input.values.tasksJson)) errors.push({ code: 'BAD_INPUT', path: 'tasksJson', message: 'expected JSON array of tasks' });
       if (!Array.isArray(input.values.dependenciesJson)) errors.push({ code: 'BAD_INPUT', path: 'dependenciesJson', message: 'expected JSON array of edges' });
+      if (args.optionsJson != null && args.optionsJson !== '') {
+        const parsedOptions = parseOptions(args.optionsJson, 'critical_path');
+        if (!parsedOptions.ok) return renderEnvelope(errorEnvelope('critical_path', parsedOptions.code ?? 'BAD_INPUT', parsedOptions.errors));
+      }
       if (errors.length) return renderEnvelope(errorEnvelope('critical_path', 'BAD_INPUT', errors));
       const result = core.criticalPath(input.values.tasksJson, input.values.dependenciesJson);
       const blocking = result.findings.filter((f) => BLOCKING_FINDINGS.has(f.code));
@@ -42,17 +124,17 @@ export function registerProgressTools(defineTool, core) {
       return renderEnvelope(okEnvelope('critical_path', result));
     });
   });
-  register('tech_lead_change_impact', 'Classify change impact (T0/T1/T2), reversibility, and Gate reopen requirements without applying the change. Trigger fields: irreversible (any truthy), publicInterface, modules[], assets[].', {
+  register('tech_lead_change_impact', 'Classify change impact (T0/T1/T2), reversibility, and Gate reopen requirements without applying the change. Returns triggeredBy provenance and per-gate reopen actions. Trigger fields: irreversible (any truthy), publicInterface, modules[], assets[].', {
     changeJson: { type: 'string', required: true, description: '{modules?:string[],assets?:string[],irreversible?,publicInterface?} as JSON text' },
     contextJson: { type: 'string', required: true, description: 'context snapshot JSON text ({gates?:[{id}]})' },
   }, async (args) => {
     return runGuarded('change_impact', () => {
       const input = parseJsonFields(args ?? {}, ['changeJson', 'contextJson']);
-      if (!input.ok) return renderEnvelope(errorEnvelope('change_impact', 'BAD_INPUT', input.errors));
+      if (!input.ok) return renderEnvelope(errorEnvelope('change_impact', input.code ?? 'BAD_INPUT', input.errors));
       return renderEnvelope(okEnvelope('change_impact', core.changeImpact(input.values.changeJson, input.values.contextJson)));
     });
   });
-  register('tech_lead_resume_reconcile', 'Compare two inline snapshots key-order-insensitively and report deterministic drift with the differing top-level keys.', {
+  register('tech_lead_resume_reconcile', 'Compare two inline snapshots key-order-insensitively and report deterministic drift with the differing top-level keys. Drift is a valid analysis (ok:true, data.drift=true), not a tool failure.', {
     previousJson: { type: 'string', required: true, description: 'previous snapshot JSON text' },
     currentJson: { type: 'string', required: true, description: 'current snapshot JSON text' },
   }, async (args) => {
@@ -64,7 +146,7 @@ export function registerProgressTools(defineTool, core) {
       const changed = JSON.stringify(previous) !== JSON.stringify(current);
       if (!changed) return renderEnvelope(okEnvelope('resume_reconcile', { drift: false }));
       const changedKeys = computeChangedKeys(previous, current);
-      return renderEnvelope(errorEnvelope('resume_reconcile', 'DRIFT_DETECTED', changedKeys.map((key) => ({ code: 'KEY_DRIFT', path: `/${key}`, message: `value differs at top-level key "${key}"` })), { drift: true, changedKeys }));
+      return renderEnvelope(okEnvelope('resume_reconcile', { drift: true, changedKeys }));
     });
   });
   return output;

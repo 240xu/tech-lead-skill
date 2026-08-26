@@ -131,7 +131,7 @@ const cases: Case[] = [
   {
     tool: 'tech_lead_resume_reconcile',
     args: { previousJson: JSON.stringify({ fingerprint: 'old' }), currentJson: JSON.stringify({ fingerprint: 'new' }) },
-    expect: (r) => r.ok === false && r.code === 'DRIFT_DETECTED',
+    expect: (r) => r.ok === true && r.data.drift === true && r.data.changedKeys.includes('fingerprint'),
   },
   {
     tool: 'tech_lead_gate_plan',

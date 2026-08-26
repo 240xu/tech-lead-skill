@@ -46,5 +46,25 @@ export function criticalPath(tasks, dependencies) {
   const active = (id) => nodes.get(id)?.status !== 'done';
   const critical = order.filter((id) => active(id) && (outgoing.get(id).length > 0 || originalIncoming.get(id) > 0));
   const parallelWindows = order.filter((id) => active(id) && originalIncoming.get(id) === 0 && outgoing.get(id).length === 0).map((id) => [id]);
-  return { blockers: order.filter((id) => nodes.get(id)?.blocker && active(id)), criticalPath: critical, parallelWindows, findings };
+  // Readiness waves: what can start now, and what unblocks right after.
+  // Topological readiness only — this is NOT duration-weighted CPM.
+  const doneSet = new Set(order.filter((id) => !active(id)));
+  const readyNow = order.filter((id) => active(id) && originalIncoming.get(id) === 0)
+    .map((id) => ({ id, reason: 'active task with no unfinished prerequisites' }));
+  const readyOrDone = new Set([...readyNow.map((t) => t.id), ...doneSet]);
+  // `outgoing[x]` holds the DEPENDENTS of x, so a task's blockers are its
+  // inbound parents: every p whose outgoing list contains the task.
+  const parentsOf = (id) => order.filter((p) => outgoing.get(p)?.includes(id));
+  const nextWave = order.filter((id) => active(id) && originalIncoming.get(id) > 0)
+    .map((id) => ({ id, blockedBy: parentsOf(id).filter((prereq) => !doneSet.has(prereq)) }))
+    .filter((task) => task.blockedBy.length > 0 && task.blockedBy.every((prereq) => readyNow.some((r) => r.id === prereq)));
+  return {
+    blockers: order.filter((id) => nodes.get(id)?.blocker && active(id)),
+    criticalPath: critical,
+    parallelWindows,
+    readyNow,
+    nextWave,
+    scheduleSemantics: 'topological-readiness-not-duration-criticality',
+    findings,
+  };
 }
