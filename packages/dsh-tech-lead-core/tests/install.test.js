@@ -31,5 +31,8 @@ test('version mismatch flagged against package version', () => {
 });
 
 test('hostile primitive file lists degrade to empty sets instead of throwing', () => {
-  assert.doesNotThrow(() => installAudit({ files: ['a'], version: '1' }, 'nope', 42, '1'));
+  const r = installAudit({ files: ['a'], version: '1' }, 'nope', 42, '1');
+  assert.deepEqual(r.missingManaged, ['a']);
+  assert.deepEqual(r.unmanaged, []);
+  assert.deepEqual(r.newInPackage, []);
 });

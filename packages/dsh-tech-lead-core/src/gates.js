@@ -46,6 +46,11 @@ export function gateAggregate(reports, plan = {}) {
       collect();
       return;
     }
+    if (!report.anchors.every((anchor) => typeof anchor === 'string' && anchor.trim().length > 0)) {
+      findings.push({ code: 'INVALID_REPORT', path: `/reports/${index}/anchors`, message: 'anchors must be non-empty strings' });
+      collect();
+      return;
+    }
     rolesSeen.add(report.role);
     validReports.push(report);
     collect();
@@ -56,7 +61,7 @@ export function gateAggregate(reports, plan = {}) {
   const missing = required.filter((role) => !validReports.some((report) => report.role === role));
   const pass = findings.length === 0 && missing.length === 0 && validReports.length >= quorum && rejects.length === 0 && conditionals.length === 0;
   const verdict = rejects.length ? 'reject' : pass ? 'pass' : 'conditional';
-  return { pass, verdict, findings, missingRoles: missing, unresolved: missing.length > 0 || rejects.length > 0 || conditionals.length > 0 };
+  return { pass, verdict, findings, missingRoles: missing, unresolved: missing.length > 0 || rejects.length > 0 || conditionals.length > 0 || findings.length > 0 };
 }
 
 export function gateReopen(previous = {}, current = {}) {

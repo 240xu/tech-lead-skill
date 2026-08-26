@@ -82,3 +82,9 @@ test('malformed ledger entries produce symmetric findings', () => {
   assert.equal(result.valid, false);
   assert.ok(result.findings.filter((f) => f.code === 'INVALID_LEDGER_ENTRY').length >= 2);
 });
+
+test('self-referencing evidence is flagged as a cycle', () => {
+  const result = evidenceGraphLint(context({ evidence: [{ id: 's1', supports: ['s1'] }] }));
+  assert.equal(result.valid, false);
+  assert.ok(result.findings.some((f) => f.code === 'CYCLE'));
+});

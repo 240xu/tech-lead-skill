@@ -111,7 +111,7 @@ ResultEnvelope v1 ---- text renderer for DSH
 
 `packages/dsh-tech-lead-plugin/src/` 按领域拆分工具定义：
 
-- `tools/basic.js`：现有 9 个工具的注册入口。
+- 现有 9 个工具的注册入口内联于 `tools.js`（未拆分独立 basic.js 模块）。
 - `tools/context.js`：上下文、证据图和假设工具。
 - `tools/progress.js`：推进、关键路径、影响和 reconcile 工具。
 - `tools/gates.js`：Gate plan/aggregate/reopen 工具。

@@ -62,3 +62,20 @@ test('duplicate-role reject still propagates verdict and findings', () => {
   assert.ok(result.findings.some((item) => item.id === 'r1'));
   assert.ok(result.findings.some((item) => item.code === 'DUPLICATE_ROLE'));
 });
+
+test('non-string anchor items invalidate the report instead of counting toward quorum', () => {
+  const result = gateAggregate([
+    { role: 'eng', verdict: 'pass', anchors: [123, null] },
+  ], { requiredRoles: ['eng'], quorum: 1 });
+  assert.equal(result.pass, false);
+  assert.ok(result.findings.some((f) => f.code === 'INVALID_REPORT' && f.path === '/reports/0/anchors'));
+});
+
+test('invalid plan marks the aggregation unresolved even when roles are filled', () => {
+  const result = gateAggregate([
+    { role: 'eng', verdict: 'pass', anchors: ['a'] },
+  ], { requiredRoles: ['eng'], quorum: 5 });
+  assert.equal(result.pass, false);
+  assert.equal(result.verdict, 'conditional');
+  assert.equal(result.unresolved, true);
+});

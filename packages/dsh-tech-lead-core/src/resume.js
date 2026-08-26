@@ -43,8 +43,8 @@ export function resumeCard(maybeState, maybeOpts = {}) {
   let maxAgeDays = 7;
   if (opts.maxAgeDays !== undefined) {
     const n = Number(opts.maxAgeDays);
-    if (Number.isFinite(n) && n >= 0) maxAgeDays = n;
-    else warnings.push(`maxAgeDays ${opts.maxAgeDays} invalid (need finite >= 0); using default 7`);
+    if (typeof opts.maxAgeDays === 'number' && Number.isFinite(n) && n >= 0) maxAgeDays = n;
+    else warnings.push('maxAgeDays must be a finite number >= 0; using default 7');
   }
   if (Number.isFinite(nowMs) && Array.isArray(state.evidence)) {
     for (const e of state.evidence) {
