@@ -205,15 +205,17 @@ export function apply(ctx: Context) {
     }
     for (const c of cases) {
       try {
-        if (c.expect(await execute(c))) { pass++; console.log(`PASS ${c.tool}`) }
-        else { failures.push(`pos:${c.tool}`); console.log(`FAIL ${c.tool}`) }
+        const raw = await execute(c)
+        if (c.expect(raw)) { pass++; console.log(`PASS ${c.tool}`) }
+        else { failures.push(`pos:${c.tool}`); console.log(`FAIL ${c.tool}: ${JSON.stringify(raw).slice(0, 240)}`) }
       } catch (err) { failures.push(`pos:${c.tool}`); console.log(`FAIL ${c.tool}: threw ${(err as Error).message}`) }
     }
     const allNeg = [...negCases, ...negCasesExtra];
     for (const c of allNeg) {
       try {
-        if (c.expect(await execute(c))) { negPass++; console.log(`NEG-PASS ${c.tool}`) }
-        else { failures.push(`neg:${c.tool}`); console.log(`NEG-FAIL ${c.tool}`) }
+        const rawNeg = await execute(c)
+        if (c.expect(rawNeg)) { negPass++; console.log(`NEG-PASS ${c.tool}`) }
+        else { failures.push(`neg:${c.tool}`); console.log(`NEG-FAIL ${c.tool}: ${JSON.stringify(rawNeg).slice(0, 240)}`) }
       } catch (err) { failures.push(`neg:${c.tool}`); console.log(`NEG-FAIL ${c.tool}: threw ${(err as Error).message}`) }
     }
     console.log(`TLT-PASS ${pass}/${cases.length}`)

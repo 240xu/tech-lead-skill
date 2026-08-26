@@ -27,6 +27,7 @@ export function apply(ctx) {
     validateContext, evidenceGraphLint, evidenceFreshness,
     progressDecide, criticalPath, changeImpact,
     gatePlan, gateAggregate, gateReopen, previewMutation,
+    getCapabilities,
   })) {
     ctx.tools.register(tool);
   }
